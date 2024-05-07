@@ -1,6 +1,13 @@
 [package]
 name = "web_cad_engine"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
 
+[build]
+target = "wasm32-unknown-unknown"
+rustflags = ["--cfg=web_sys_unstable_apis"]
+
 [dependencies]
+web-sys = { version = "0.3", features = ["console"] }
+wasm-bindgen = "0.2"
+env_logger = "0.11"
