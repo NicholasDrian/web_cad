@@ -1,6 +1,6 @@
-use crate::math::vec3::*;
-
 use wasm_bindgen::prelude::*;
+
+use crate::math::linear_algebra::vec3::Vec3;
 
 #[wasm_bindgen]
 #[derive(Debug, Copy, Clone, Default, PartialEq)]

@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use crate::math::{mat4::Mat4, vec3::*};
+use crate::math::linear_algebra::{mat4::Mat4, vec3::Vec3};
 
 pub enum CameraType {
     /// This is a first person shooter style camera.

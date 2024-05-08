@@ -1,8 +1,4 @@
-use crate::math::vec4::Vec4;
-
-use super::vec3::Vec3;
-
-use wasm_bindgen::prelude::*;
+use super::{vec3::Vec3, vec4::Vec4};
 
 /// column major 4x4 matrix.
 ///

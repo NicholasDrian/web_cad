@@ -1,4 +1,6 @@
-use super::{bounding_box::BoundingBox, mat4::Mat4, ray::Ray, vec3::Vec3};
+use crate::math::linear_algebra::{mat4::Mat4, vec3::Vec3};
+
+use super::{bounding_box::BoundingBox, ray::Ray};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Frustum {

@@ -1,4 +1,4 @@
-use crate::math::{utils::TINY_FLOAT, vec3::*};
+use crate::math::{linear_algebra::vec3::*, utils::TINY_FLOAT};
 
 #[test]
 pub fn test_dot() {

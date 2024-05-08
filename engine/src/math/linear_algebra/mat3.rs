@@ -1,4 +1,4 @@
-use crate::math::vec3::Vec3;
+use super::vec3::Vec3;
 
 /// column major 3x3 matrix.
 #[derive(Debug, PartialEq, Copy, Clone, Default)]

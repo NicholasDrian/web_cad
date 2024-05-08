@@ -1,5 +1,4 @@
-use crate::math::mat3::*;
-use crate::math::vec3::*;
+use crate::math::linear_algebra::{mat3::Mat3, vec3::Vec3};
 
 #[test]
 fn test_mul() {
