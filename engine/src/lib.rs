@@ -1,5 +1,7 @@
+pub mod instance;
 pub mod math;
 pub mod render;
+pub mod scene;
 
 use wasm_bindgen::prelude::*;
 
