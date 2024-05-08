@@ -1,5 +1,7 @@
+pub mod math;
+pub mod renderer;
+
 use wasm_bindgen::prelude::*;
-use web_sys::console;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
@@ -7,13 +9,13 @@ pub fn add(left: usize, right: usize) -> usize {
 
 #[wasm_bindgen(start)]
 pub fn init() {
-    env_logger::init();
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+    console_log::init_with_level(log::Level::Trace).expect("Could't initialize logger");
 }
 
 #[wasm_bindgen]
 pub fn hello_world() {
-    console::log_1(&"hello from rust".into());
+    log::info!("hello from rust");
 }
 
 #[cfg(test)]
