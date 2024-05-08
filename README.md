@@ -3,6 +3,8 @@ This repo contains a number of things:
   - Written in Rust, compiled to WASM, using WebGPU, targeting modern browsers.
   - currently a WIP
 - Basic examples of how to use the engine.
+  - to run an example, use ./run [example to run]
+  - for example, to run example_01, type ./run example_01
   - example_01
     - soon to come
   - example_02
@@ -11,3 +13,5 @@ This repo contains a number of things:
   - Soon to come
 
 This project is in its infancy, stay tuned for updates
+
+
