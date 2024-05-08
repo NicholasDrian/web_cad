@@ -9,6 +9,8 @@ pub mod tests;
 
 use wasm_bindgen::prelude::*;
 
+use crate::render::renderer::Renderer;
+
 #[wasm_bindgen(start)]
 pub fn init() {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -16,6 +18,7 @@ pub fn init() {
 }
 
 #[wasm_bindgen]
-pub fn hello_world() {
+pub async fn hello_world() {
     log::info!("hello from rust");
+    let renderer = Renderer::new().await;
 }
