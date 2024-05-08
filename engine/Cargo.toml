@@ -5,10 +5,9 @@ edition = "2021"
 
 [build]
 target = "wasm32-unknown-unknown"
-rustflags = ["--cfg=web_sys_unstable_apis"]
 
 [dependencies]
-web-sys = { version = "0.3", features = ["Navigator", "Gpu"] }
+web-sys = { version = "0.3", features = ["Navigator", "Gpu", "Window"] }
 wasm-bindgen = "0.2"
 env_logger = "0.11"
 console_error_panic_hook = "0.1"

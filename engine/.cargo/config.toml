@@ -1,0 +1,4 @@
+
+[build]
+#for use of unstable Navigator::Gpu api
+rustflags = ["--cfg=web_sys_unstable_apis"]
