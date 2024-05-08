@@ -3,11 +3,10 @@ pub mod math;
 pub mod render;
 pub mod scene;
 
-use wasm_bindgen::prelude::*;
+#[cfg(test)]
+pub mod tests;
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]
 pub fn init() {
@@ -18,15 +17,4 @@ pub fn init() {
 #[wasm_bindgen]
 pub fn hello_world() {
     log::info!("hello from rust");
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
 }
