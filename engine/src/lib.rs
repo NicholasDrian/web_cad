@@ -2,6 +2,7 @@ pub mod instance;
 pub mod math;
 pub mod render;
 pub mod scene;
+pub mod viewport;
 
 #[cfg(test)]
 pub mod tests;
