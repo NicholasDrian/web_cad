@@ -1,5 +1,5 @@
 pub mod math;
-pub mod renderer;
+pub mod render;
 
 use wasm_bindgen::prelude::*;
 
