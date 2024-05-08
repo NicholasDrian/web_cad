@@ -8,6 +8,7 @@ pub fn add(left: usize, right: usize) -> usize {
 #[wasm_bindgen(start)]
 pub fn init() {
     env_logger::init();
+    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
 }
 
 #[wasm_bindgen]
