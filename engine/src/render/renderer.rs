@@ -22,10 +22,6 @@ struct Vertex {
     pub normal: [f32; 3],
 }
 
-unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
-    ::core::slice::from_raw_parts((p as *const T) as *const u8, ::core::mem::size_of::<T>())
-}
-
 impl Vertex {
     pub fn desc() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
@@ -197,23 +193,11 @@ impl Renderer {
         &self.device
     }
 
-    /*
-    pub fn update_scene_uniforms(&self, scene: &Scene) {
-        let view_proj = scene.get_camera().get_view_proj();
-        let scene_uniforms = SceneUniforms { view_proj };
-        self.queue.write_buffer(&self.view_proj_buffer, 0, unsafe {
-            any_as_u8_slice(&scene_uniforms)
-        });
-    }
-    */
-
     pub fn render(
         &mut self,
         scene: &Scene,
         viewports: Vec<Viewport>,
     ) -> Result<(), wgpu::SurfaceError> {
-        //   self.update_scene_uniforms(scene);
-
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
