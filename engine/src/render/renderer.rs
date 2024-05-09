@@ -1,8 +1,6 @@
 use crate::{render::pipeline::*, scene::scene::Scene, viewport::viewport::Viewport};
 use wgpu::util::DeviceExt;
 
-use crate::viewport::camera::Camera;
-
 pub struct Renderer {
     device: wgpu::Device,
     instance: wgpu::Instance,
@@ -15,6 +13,9 @@ pub struct Renderer {
     index_buffer: wgpu::Buffer,
     num_indices: u32,
 }
+
+unsafe impl Send for Renderer {}
+unsafe impl Sync for Renderer {}
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -170,7 +171,7 @@ impl Renderer {
     pub fn render(
         &self,
         scene: &Scene,
-        viewports: Vec<Viewport>,
+        viewports: &Vec<Viewport>,
     ) -> Result<(), wgpu::SurfaceError> {
         let mut encoder = self
             .device
