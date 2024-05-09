@@ -19,9 +19,12 @@ pub fn init() {
 }
 
 #[wasm_bindgen]
-pub async fn hello_world(canvas: web_sys::HtmlCanvasElement) {
+pub async fn hello_world(canvases: Vec<web_sys::HtmlCanvasElement>) {
     log::info!("hello from rust");
-    let mut renderer = Renderer::new(canvas.clone()).await;
-    let mut viewport = Viewport::new(canvas, &renderer);
-    renderer.render(&Scene::new(), viewport);
+    let mut renderer = Renderer::new().await;
+    let mut viewports = canvases
+        .iter()
+        .map(|canvas| Viewport::new(canvas.clone(), &renderer))
+        .collect();
+    renderer.render(&Scene::new(), viewports);
 }

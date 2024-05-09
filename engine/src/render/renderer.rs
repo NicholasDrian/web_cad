@@ -1,5 +1,4 @@
 use crate::{render::pipeline::*, scene::scene::Scene, viewport::viewport::Viewport};
-use web_sys::{GpuAdapter, GpuDevice};
 use wgpu::util::DeviceExt;
 
 use crate::{math::linear_algebra::mat4::Mat4, viewport::camera::Camera};
@@ -11,7 +10,6 @@ pub struct Renderer {
     adapter: wgpu::Adapter,
     mesh_render_pipeline: wgpu::RenderPipeline,
     scene_bind_group: wgpu::BindGroup,
-    view_proj_buffer: wgpu::Buffer,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     num_indices: u32,
@@ -82,21 +80,7 @@ const VERTICES: &[Vertex] = &[
 const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4, /* padding */ 0];
 
 impl Renderer {
-    pub async fn new(canvas: web_sys::HtmlCanvasElement) -> Renderer {
-        //let gpu = web_sys::window().unwrap().navigator().gpu();
-
-        /*
-        // TODO: fail gracefully
-        let adapter: GpuAdapter = wasm_bindgen_futures::JsFuture::from(gpu.request_adapter())
-            .await
-            .unwrap()
-            .into();
-        let device: GpuDevice = wasm_bindgen_futures::JsFuture::from(adapter.request_device())
-            .await
-            .unwrap()
-            .into();
-            */
-
+    pub async fn new() -> Renderer {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::BROWSER_WEBGPU,
             ..Default::default()
@@ -197,7 +181,6 @@ impl Renderer {
             instance,
             mesh_render_pipeline,
             scene_bind_group,
-            view_proj_buffer,
             vertex_buffer,
             index_buffer,
             num_indices,
@@ -224,50 +207,60 @@ impl Renderer {
     }
     */
 
-    pub fn render(&mut self, scene: &Scene, viewport: Viewport) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(
+        &mut self,
+        scene: &Scene,
+        viewports: Vec<Viewport>,
+    ) -> Result<(), wgpu::SurfaceError> {
         //   self.update_scene_uniforms(scene);
-
-        let output = viewport.get_surface().get_current_texture()?;
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
 
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
             });
+        for viewport in viewports.iter() {
+            let output = viewport.get_surface().get_current_texture()?;
+            let view = output
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor::default());
 
-        {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-            });
+            {
+                let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Render Pass"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view: &view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color {
+                                r: 0.1,
+                                g: 0.2,
+                                b: 0.3,
+                                a: 1.0,
+                            }),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    occlusion_query_set: None,
+                    timestamp_writes: None,
+                });
 
-            render_pass.set_pipeline(&self.mesh_render_pipeline);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.set_bind_group(0, &self.scene_bind_group, &[]);
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+                render_pass.set_pipeline(&self.mesh_render_pipeline);
+                render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+                render_pass
+                    .set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                render_pass.set_bind_group(0, &self.scene_bind_group, &[]);
+                render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+            }
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
-        output.present();
+
+        for viewport in viewports {
+            let output = viewport.get_surface().get_current_texture()?;
+            output.present();
+        }
 
         Ok(())
     }
