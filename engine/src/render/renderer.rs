@@ -42,9 +42,8 @@ impl Vertex {
         }
     }
 }
-// We need this for Rust to store our data correctly for the shaders
+
 #[repr(C)]
-// This is so we can store this in a buffer
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct SceneUniforms {
     view_proj: Mat4,
@@ -73,7 +72,7 @@ const VERTICES: &[Vertex] = &[
     }, // E
 ];
 
-const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4, /* padding */ 0];
+const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 
 impl Renderer {
     pub async fn new() -> Renderer {
@@ -95,16 +94,10 @@ impl Renderer {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    required_features: wgpu::Features::empty(),
-                    // WebGL doesn't support all of wgpu's features, so if
-                    // we're building for the web we'll have to disable some.
-                    required_limits: if cfg!(target_arch = "wasm32") {
-                        wgpu::Limits::downlevel_webgl2_defaults()
-                    } else {
-                        wgpu::Limits::default()
-                    },
+                    required_features: wgpu::Features::default(),
+                    required_limits: wgpu::Limits::default(),
                 },
-                None, // Trace path
+                None,
             )
             .await
             .unwrap();
