@@ -10,7 +10,7 @@ pub mod tests;
 
 use wasm_bindgen::prelude::*;
 
-use crate::{render::renderer::Renderer, scene::scene::Scene};
+use crate::{render::renderer::Renderer, scene::scene::Scene, viewport::viewport::Viewport};
 
 #[wasm_bindgen(start)]
 pub fn init() {
@@ -21,6 +21,7 @@ pub fn init() {
 #[wasm_bindgen]
 pub async fn hello_world(canvas: web_sys::HtmlCanvasElement) {
     log::info!("hello from rust");
-    let mut renderer = Renderer::new(canvas).await;
-    renderer.render(&Scene::new());
+    let mut renderer = Renderer::new(canvas.clone()).await;
+    let mut viewport = Viewport::new(canvas, &renderer);
+    renderer.render(&Scene::new(), viewport);
 }

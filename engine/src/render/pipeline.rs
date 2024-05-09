@@ -8,7 +8,6 @@ pub enum PipelinePrimitive {
 
 pub fn create_render_pipeline(
     device: &wgpu::Device,
-    format: &wgpu::TextureFormat,
     layouts: &[&wgpu::BindGroupLayout],
     shader_module: &wgpu::ShaderModule,
     primitive: PipelinePrimitive,
@@ -61,7 +60,7 @@ pub fn create_render_pipeline(
             module: shader_module,
             entry_point: "fs_main",
             targets: &[Some(wgpu::ColorTargetState {
-                format: *format,
+                format: wgpu::TextureFormat::Bgra8Unorm,
                 blend: Some(wgpu::BlendState {
                     color: wgpu::BlendComponent::REPLACE,
                     alpha: wgpu::BlendComponent::REPLACE,

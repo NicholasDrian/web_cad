@@ -1,14 +1,14 @@
-use crate::{render::pipeline::*, scene::scene::Scene};
+use crate::{render::pipeline::*, scene::scene::Scene, viewport::viewport::Viewport};
 use web_sys::{GpuAdapter, GpuDevice};
 use wgpu::util::DeviceExt;
 
 use crate::{math::linear_algebra::mat4::Mat4, viewport::camera::Camera};
 
 pub struct Renderer {
-    surface: wgpu::Surface<'static>,
     device: wgpu::Device,
+    instance: wgpu::Instance,
     queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
+    adapter: wgpu::Adapter,
     mesh_render_pipeline: wgpu::RenderPipeline,
     scene_bind_group: wgpu::BindGroup,
     view_proj_buffer: wgpu::Buffer,
@@ -102,13 +102,10 @@ impl Renderer {
             ..Default::default()
         });
 
-        let surface_target = wgpu::SurfaceTarget::Canvas(canvas.clone());
-        let surface = instance.create_surface(surface_target).unwrap();
-
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
-                compatible_surface: Some(&surface),
+                compatible_surface: None,
                 force_fallback_adapter: false,
             })
             .await
@@ -131,33 +128,6 @@ impl Renderer {
             )
             .await
             .unwrap();
-
-        let surface_caps = surface.get_capabilities(&adapter);
-        // Shader code in this tutorial assumes an Srgb surface texture. Using a different
-        // one will result all the colors comming out darker. If you want to support non
-        // Srgb surfaces, you'll need to account for that when drawing to the frame.
-        let surface_format = surface_caps
-            .formats
-            .iter()
-            .copied()
-            .find(|f| f.is_srgb())
-            .unwrap_or(surface_caps.formats[0]);
-        let config = surface
-            .get_default_config(&adapter, canvas.width(), canvas.height())
-            .unwrap();
-        /*
-        let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface_format,
-            width: canvas.width(),
-            height: canvas.height(),
-            present_mode: surface_caps.present_modes[0],
-            alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![],
-            desired_maximum_frame_latency: ,
-        };
-        */
-        surface.configure(&device, &config);
 
         let mesh_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
@@ -214,7 +184,6 @@ impl Renderer {
 
         let mesh_render_pipeline = create_render_pipeline(
             &device,
-            &config.format,
             &[&scene_bind_group_layout],
             &mesh_shader,
             PipelinePrimitive::Mesh,
@@ -222,10 +191,10 @@ impl Renderer {
         );
 
         Renderer {
-            surface,
             device,
             queue,
-            config,
+            adapter,
+            instance,
             mesh_render_pipeline,
             scene_bind_group,
             view_proj_buffer,
@@ -233,6 +202,16 @@ impl Renderer {
             index_buffer,
             num_indices,
         }
+    }
+
+    pub fn get_instance(&self) -> &wgpu::Instance {
+        &self.instance
+    }
+    pub fn get_adapter(&self) -> &wgpu::Adapter {
+        &self.adapter
+    }
+    pub fn get_device(&self) -> &wgpu::Device {
+        &self.device
     }
 
     /*
@@ -245,10 +224,10 @@ impl Renderer {
     }
     */
 
-    pub fn render(&mut self, scene: &Scene) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, scene: &Scene, viewport: Viewport) -> Result<(), wgpu::SurfaceError> {
         //   self.update_scene_uniforms(scene);
 
-        let output = self.surface.get_current_texture()?;
+        let output = viewport.get_surface().get_current_texture()?;
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
