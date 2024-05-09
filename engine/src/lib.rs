@@ -1,3 +1,4 @@
+pub mod geometry;
 pub mod instance;
 pub mod math;
 pub mod render;
@@ -9,7 +10,7 @@ pub mod tests;
 
 use wasm_bindgen::prelude::*;
 
-use crate::render::renderer::Renderer;
+use crate::{render::renderer::Renderer, scene::scene::Scene};
 
 #[wasm_bindgen(start)]
 pub fn init() {
@@ -18,7 +19,8 @@ pub fn init() {
 }
 
 #[wasm_bindgen]
-pub async fn hello_world() {
+pub async fn hello_world(canvas: web_sys::HtmlCanvasElement) {
     log::info!("hello from rust");
-    let renderer = Renderer::new().await;
+    let mut renderer = Renderer::new(canvas).await;
+    renderer.render(&Scene::new());
 }

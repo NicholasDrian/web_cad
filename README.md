@@ -14,4 +14,5 @@ This repo contains a number of things:
 
 This project is in its infancy, stay tuned for updates
 
+Currently using unstable apis. Ill try to factor those out eventually.
 
