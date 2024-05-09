@@ -1,7 +1,14 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-	echo "missing arg, please specify what example to run"
+	echo "
+
+  [ERROR]: missing arg, please specify what to run.
+  Some examples:
+      $./run example_01
+      $./run web_cad
+
+    "
 	exit 1
 fi
 
