@@ -1,6 +1,9 @@
-use std::time::Instant;
+use std::{rc::Rc, time::Instant};
 
-use crate::math::linear_algebra::{mat4::Mat4, vec3::Vec3};
+use crate::{
+    math::linear_algebra::{mat4::Mat4, vec3::Vec3},
+    render::renderer::Renderer,
+};
 
 pub enum CameraType {
     /// This is a first person shooter style camera.
@@ -62,20 +65,16 @@ pub struct Camera {
     far_dist: f32,
     /// Set to none when out of date
     view_proj: Mat4,
+    view_proj_buffer: wgpu::Buffer,
     camera_type: CameraType,
     last_frame_time: Option<Instant>,
-}
-
-impl Default for Camera {
-    fn default() -> Camera {
-        Camera::new(CameraDescriptor::default())
-    }
+    renderer: Rc<Renderer>,
 }
 
 //TODO: toggle for auto motion... eventually
 impl Camera {
-    pub fn new(params: CameraDescriptor) -> Self {
-        let mut res = Self {
+    pub fn new(params: CameraDescriptor, renderer: Rc<Renderer>) -> Self {
+        let mut res = Camera {
             position: params.position,
             focal_point: params.focal_point,
             fovy: params.fovy,
@@ -85,7 +84,16 @@ impl Camera {
             up: params.up,
             camera_type: params.camera_type,
             view_proj: Mat4::identity(),
+            view_proj_buffer: renderer
+                .get_device()
+                .create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("camera view proj buffer"),
+                    size: 4 * 16,
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+                    mapped_at_creation: false,
+                }),
             last_frame_time: None,
+            renderer,
         };
         res.update_view_proj();
         res
@@ -145,5 +153,14 @@ impl Camera {
         let view = Mat4::look_at(&self.position, &self.focal_point, &self.up);
         let proj = Mat4::perspective(self.fovy, self.aspect, self.near_dist, self.far_dist);
         self.view_proj = Mat4::multiply(&proj, &view);
+        self.renderer.get_queue().write_buffer(
+            &self.view_proj_buffer,
+            0,
+            bytemuck::cast_slice(&[self.view_proj]),
+        );
+    }
+
+    pub fn get_view_proj_buffer(&self) -> &wgpu::Buffer {
+        &self.view_proj_buffer
     }
 }

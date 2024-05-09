@@ -8,6 +8,8 @@ pub mod viewport;
 #[cfg(test)]
 pub mod tests;
 
+use std::rc::Rc;
+
 use wasm_bindgen::prelude::*;
 
 use crate::{render::renderer::Renderer, scene::scene::Scene, viewport::viewport::Viewport};
@@ -21,10 +23,10 @@ pub fn init() {
 #[wasm_bindgen]
 pub async fn hello_world(canvases: Vec<web_sys::HtmlCanvasElement>) {
     log::info!("hello from rust");
-    let mut renderer = Renderer::new().await;
-    let mut viewports = canvases
+    let renderer = Rc::new(Renderer::new().await);
+    let viewports = canvases
         .iter()
-        .map(|canvas| Viewport::new(canvas.clone(), &renderer))
+        .map(|canvas| Viewport::new(canvas.clone(), renderer.clone()))
         .collect();
     renderer.render(&Scene::new(), viewports);
 }

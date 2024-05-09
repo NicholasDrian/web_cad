@@ -1,7 +1,7 @@
 use crate::{render::pipeline::*, scene::scene::Scene, viewport::viewport::Viewport};
 use wgpu::util::DeviceExt;
 
-use crate::{math::linear_algebra::mat4::Mat4, viewport::camera::Camera};
+use crate::viewport::camera::Camera;
 
 pub struct Renderer {
     device: wgpu::Device,
@@ -9,7 +9,8 @@ pub struct Renderer {
     queue: wgpu::Queue,
     adapter: wgpu::Adapter,
     mesh_render_pipeline: wgpu::RenderPipeline,
-    scene_bind_group: wgpu::BindGroup,
+    // This lives in renderer because it is needed for pipeline creation
+    viewport_bind_group_layout: wgpu::BindGroupLayout,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     num_indices: u32,
@@ -41,12 +42,6 @@ impl Vertex {
             ],
         }
     }
-}
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct SceneUniforms {
-    view_proj: Mat4,
 }
 
 const VERTICES: &[Vertex] = &[
@@ -120,7 +115,7 @@ impl Renderer {
         });
         let num_indices = INDICES.len() as u32;
 
-        let scene_bind_group_layout =
+        let viewport_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
@@ -135,29 +130,9 @@ impl Renderer {
                 label: Some("scene bind group"),
             });
 
-        let mut camera = Camera::default();
-
-        let view_proj = camera.get_view_proj();
-        let scene_uniforms = SceneUniforms { view_proj };
-
-        let view_proj_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("view_proj_buffer"),
-            contents: bytemuck::cast_slice(&[scene_uniforms]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        let scene_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("scene bind group"),
-            layout: &scene_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: view_proj_buffer.as_entire_binding(),
-            }],
-        });
-
         let mesh_render_pipeline = create_render_pipeline(
             &device,
-            &[&scene_bind_group_layout],
+            &[&viewport_bind_group_layout],
             &mesh_shader,
             PipelinePrimitive::Mesh,
             1u32,
@@ -169,7 +144,7 @@ impl Renderer {
             adapter,
             instance,
             mesh_render_pipeline,
-            scene_bind_group,
+            viewport_bind_group_layout,
             vertex_buffer,
             index_buffer,
             num_indices,
@@ -185,9 +160,15 @@ impl Renderer {
     pub fn get_device(&self) -> &wgpu::Device {
         &self.device
     }
+    pub fn get_viewport_bind_group_layout(&self) -> &wgpu::BindGroupLayout {
+        &self.viewport_bind_group_layout
+    }
+    pub fn get_queue(&self) -> &wgpu::Queue {
+        &self.queue
+    }
 
     pub fn render(
-        &mut self,
+        &self,
         scene: &Scene,
         viewports: Vec<Viewport>,
     ) -> Result<(), wgpu::SurfaceError> {
@@ -227,7 +208,7 @@ impl Renderer {
                 render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
                 render_pass
                     .set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-                render_pass.set_bind_group(0, &self.scene_bind_group, &[]);
+                render_pass.set_bind_group(0, viewport.get_bind_group(), &[]);
                 render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
             }
         }
