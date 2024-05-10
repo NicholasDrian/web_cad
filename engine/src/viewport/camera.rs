@@ -1,4 +1,8 @@
-use std::{rc::Rc, time::Instant};
+use std::{
+    rc::Rc,
+    sync::{Arc, Mutex},
+    time::Instant,
+};
 
 use crate::{
     math::linear_algebra::{mat4::Mat4, vec3::Vec3},
@@ -93,7 +97,7 @@ impl Camera {
                     mapped_at_creation: false,
                 }),
             last_frame_time: None,
-            renderer,
+            renderer: renderer.clone(),
         };
         res.update_view_proj();
         res

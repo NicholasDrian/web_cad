@@ -14,9 +14,6 @@ pub struct Renderer {
     num_indices: u32,
 }
 
-unsafe impl Send for Renderer {}
-unsafe impl Sync for Renderer {}
-
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 struct Vertex {

@@ -1,4 +1,7 @@
-use std::rc::Rc;
+use std::{
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
 use crate::math::linear_algebra::mat4::Mat4;
 use crate::render::renderer::Renderer;

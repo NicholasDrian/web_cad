@@ -9,11 +9,8 @@ pub mod viewport;
 #[cfg(test)]
 pub mod tests;
 
-/*
-* For global mutable threadsafe collections... one day
 #[macro_use]
 extern crate lazy_static;
-*/
 
 use wasm_bindgen::prelude::*;
 

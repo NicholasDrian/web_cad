@@ -1,9 +1,9 @@
 use wasm_bindgen::prelude::*;
-use web_sys::HtmlCanvasElement;
+use web_sys::{js_sys, HtmlCanvasElement};
 
-use crate::instance::Instance;
+use crate::instance::{Instance, InstanceHandle};
 
 #[wasm_bindgen]
-pub async fn create_instance(canvases: Vec<HtmlCanvasElement>) {
-    Instance::create(&canvases).await;
+pub async fn create_instance(canvases: Vec<HtmlCanvasElement>) -> InstanceHandle {
+    Instance::create(&canvases).await
 }
