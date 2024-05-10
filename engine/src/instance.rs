@@ -40,7 +40,6 @@ impl Instance {
             scene,
             viewports,
         };
-        instance.draw();
 
         let instance_handle = new_instance_handle();
 
@@ -52,5 +51,13 @@ impl Instance {
 
     pub fn draw(&self) {
         self.renderer.render(&self.scene, &self.viewports);
+    }
+
+    pub fn get_scene_mut(&mut self) -> &mut Scene {
+        &mut self.scene
+    }
+
+    pub fn get_renderer(&self) -> Rc<Renderer> {
+        self.renderer.clone()
     }
 }

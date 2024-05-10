@@ -1,5 +1,4 @@
 use crate::{render::pipeline::*, scene::scene::Scene, viewport::viewport::Viewport};
-use wgpu::util::DeviceExt;
 
 pub struct Renderer {
     device: wgpu::Device,
@@ -9,63 +8,7 @@ pub struct Renderer {
     mesh_render_pipeline: wgpu::RenderPipeline,
     // This lives in renderer because it is needed for pipeline creation
     viewport_bind_group_layout: wgpu::BindGroupLayout,
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    num_indices: u32,
 }
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    pub position: [f32; 3],
-    pub normal: [f32; 3],
-}
-
-impl Vertex {
-    pub fn desc() -> wgpu::VertexBufferLayout<'static> {
-        wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-                wgpu::VertexAttribute {
-                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                    shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-            ],
-        }
-    }
-}
-
-const VERTICES: &[Vertex] = &[
-    Vertex {
-        position: [-0.0868241, 0.49240386, 0.0],
-        normal: [0.5, 0.0, 0.5],
-    }, // A
-    Vertex {
-        position: [-0.49513406, 0.06958647, 0.0],
-        normal: [0.5, 0.0, 0.5],
-    }, // B
-    Vertex {
-        position: [-0.21918549, -0.44939706, 0.0],
-        normal: [0.5, 0.0, 0.5],
-    }, // C
-    Vertex {
-        position: [0.35966998, -0.3473291, 0.0],
-        normal: [0.5, 0.0, 0.5],
-    }, // D
-    Vertex {
-        position: [0.44147372, 0.2347359, 0.0],
-        normal: [0.5, 0.0, 0.5],
-    }, // E
-];
-
-const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 
 impl Renderer {
     pub async fn new() -> Renderer {
@@ -100,19 +43,6 @@ impl Renderer {
             source: wgpu::ShaderSource::Wgsl(include_str!("shaders/mesh_shader.wgsl").into()),
         });
 
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(INDICES),
-            usage: wgpu::BufferUsages::INDEX,
-        });
-        let num_indices = INDICES.len() as u32;
-
         let viewport_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
@@ -143,9 +73,6 @@ impl Renderer {
             instance,
             mesh_render_pipeline,
             viewport_bind_group_layout,
-            vertex_buffer,
-            index_buffer,
-            num_indices,
         }
     }
 
@@ -201,13 +128,17 @@ impl Renderer {
                     occlusion_query_set: None,
                     timestamp_writes: None,
                 });
+                render_pass.set_bind_group(0, viewport.get_bind_group(), &[]);
 
                 render_pass.set_pipeline(&self.mesh_render_pipeline);
-                render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-                render_pass
-                    .set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-                render_pass.set_bind_group(0, viewport.get_bind_group(), &[]);
-                render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+                for (id, mesh) in scene.get_meshes() {
+                    render_pass.set_vertex_buffer(0, mesh.get_vertex_buffer().slice(..));
+                    render_pass.set_index_buffer(
+                        mesh.get_index_buffer().slice(..),
+                        wgpu::IndexFormat::Uint32,
+                    );
+                    render_pass.draw_indexed(0..mesh.get_index_count(), 0, 0..1);
+                }
             }
         }
 

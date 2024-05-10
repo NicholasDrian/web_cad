@@ -10,6 +10,12 @@ pub struct Vec3 {
     pub z: f32,
 }
 
+impl Into<[f32; 3]> for Vec3 {
+    fn into(self) -> [f32; 3] {
+        [self.x, self.y, self.z]
+    }
+}
+
 #[wasm_bindgen]
 impl Vec3 {
     #[wasm_bindgen(constructor)]
