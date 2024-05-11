@@ -1,5 +1,5 @@
 This repo contains a number of things:
-- A CAD engine
+- A 3D CAD engine
   - Written in Rust, compiled to WASM, using WebGPU, targeting modern browsers.
   - currently a WIP
 - Basic examples of how to use the engine.

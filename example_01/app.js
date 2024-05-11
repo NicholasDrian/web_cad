@@ -8,7 +8,6 @@ let mesh_scene = engine.add_scene(instance);
 
 let polyline_scene = engine.add_scene(instance);
 
-
 const vertices = [
   new engine.Vec3(-0.0868241, 0.49240386, 0.0),
   new engine.Vec3(-0.49513406, 0.06958647, 0.0),
@@ -24,6 +23,9 @@ const normals = [
   new engine.Vec3(0, 1, 0),
   new engine.Vec3(1, 0, 0),
 ]
+
+// TODO: shouldn't need this duplication
+// TODO: make instance object thingy
 const poly_vertices = [
   new engine.Vec3(-0.0868241, 0.49240386, 0.0),
   new engine.Vec3(-0.49513406, 0.06958647, 0.0),
