@@ -2,13 +2,14 @@ use wasm_bindgen::prelude::*;
 
 use crate::{
     geometry::mesh::{Mesh, MeshVertex},
-    instance::{InstanceHandle, INSTANCES},
+    instance::{Handle, INSTANCES},
     math::linear_algebra::vec3::Vec3,
 };
 
 #[wasm_bindgen]
 pub fn add_mesh(
-    instance_handle: InstanceHandle,
+    instance_handle: Handle,
+    scene_handle: Handle,
     positions: Vec<Vec3>,
     normals: Vec<Vec3>,
     indices: Vec<u32>,
@@ -41,6 +42,6 @@ pub fn add_mesh(
         .unwrap()
         .get_mut(&instance_handle)
         .unwrap()
-        .get_scene_mut()
+        .get_scene_mut(scene_handle)
         .add_mesh(mesh);
 }

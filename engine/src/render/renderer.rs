@@ -92,62 +92,52 @@ impl Renderer {
         &self.queue
     }
 
-    pub fn render(
-        &self,
-        scene: &Scene,
-        viewports: &Vec<Viewport>,
-    ) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&self, scene: &Scene, viewport: &Viewport) -> Result<(), wgpu::SurfaceError> {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
             });
-        for viewport in viewports.iter() {
-            let output = viewport.get_surface().get_current_texture()?;
-            let view = output
-                .texture
-                .create_view(&wgpu::TextureViewDescriptor::default());
+        let output = viewport.get_surface().get_current_texture()?;
+        let view = output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
 
-            {
-                let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: Some("Render Pass"),
-                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        view: &view,
-                        resolve_target: None,
-                        ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(wgpu::Color {
-                                r: 0.1,
-                                g: 0.2,
-                                b: 0.3,
-                                a: 1.0,
-                            }),
-                            store: wgpu::StoreOp::Store,
-                        },
-                    })],
-                    depth_stencil_attachment: None,
-                    occlusion_query_set: None,
-                    timestamp_writes: None,
-                });
-                render_pass.set_bind_group(0, viewport.get_bind_group(), &[]);
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.1,
+                            g: 0.2,
+                            b: 0.3,
+                            a: 1.0,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                occlusion_query_set: None,
+                timestamp_writes: None,
+            });
+            render_pass.set_bind_group(0, viewport.get_bind_group(), &[]);
 
-                render_pass.set_pipeline(&self.mesh_render_pipeline);
-                for (id, mesh) in scene.get_meshes() {
-                    render_pass.set_vertex_buffer(0, mesh.get_vertex_buffer().slice(..));
-                    render_pass.set_index_buffer(
-                        mesh.get_index_buffer().slice(..),
-                        wgpu::IndexFormat::Uint32,
-                    );
-                    render_pass.draw_indexed(0..mesh.get_index_count(), 0, 0..1);
-                }
+            render_pass.set_pipeline(&self.mesh_render_pipeline);
+            for (id, mesh) in scene.get_meshes() {
+                render_pass.set_vertex_buffer(0, mesh.get_vertex_buffer().slice(..));
+                render_pass
+                    .set_index_buffer(mesh.get_index_buffer().slice(..), wgpu::IndexFormat::Uint32);
+                render_pass.draw_indexed(0..mesh.get_index_count(), 0, 0..1);
             }
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
 
-        for viewport in viewports {
-            let output = viewport.get_surface().get_current_texture()?;
-            output.present();
-        }
+        let output = viewport.get_surface().get_current_texture()?;
+        output.present();
 
         Ok(())
     }

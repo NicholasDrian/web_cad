@@ -4,9 +4,9 @@ use std::{collections::HashMap, rc::Rc};
 use crate::{render::renderer::Renderer, scene::scene::Scene, viewport::viewport::Viewport};
 use web_sys::HtmlCanvasElement;
 
-pub type InstanceHandle = u64;
-static mut INSTANCE_HANDLE_GENERATOR: Mutex<InstanceHandle> = Mutex::new(0u64);
-pub fn new_instance_handle() -> InstanceHandle {
+pub type Handle = u64;
+static mut INSTANCE_HANDLE_GENERATOR: Mutex<Handle> = Mutex::new(0u64);
+pub fn new_handle() -> Handle {
     unsafe {
         let mut changer = INSTANCE_HANDLE_GENERATOR.lock().unwrap();
         *changer += 1u64;
@@ -15,46 +15,59 @@ pub fn new_instance_handle() -> InstanceHandle {
 }
 
 lazy_static! {
-    pub static ref INSTANCES: Mutex<HashMap<InstanceHandle, Instance>> = Mutex::new(HashMap::new());
+    pub static ref INSTANCES: Mutex<HashMap<Handle, Instance>> = Mutex::new(HashMap::new());
 }
 
 pub struct Instance {
     // TODO: replace rc with lifetime
     renderer: Rc<Renderer>,
-    scene: Scene,
-    viewports: Vec<Viewport>,
+    // TODO: multiple scenes
+    scenes: HashMap<Handle, Scene>,
+    viewports: HashMap<Handle, Viewport>,
 }
 unsafe impl Send for Instance {}
 
 impl Instance {
-    pub async fn create(canvases: &[HtmlCanvasElement]) -> InstanceHandle {
-        let renderer = Rc::new(Renderer::new().await);
-        let scene = Scene::new();
-        let viewports = canvases
-            .iter()
-            .map(|canvas| Viewport::new(canvas.clone(), renderer.clone()))
-            .collect();
-
+    pub async fn create() -> Handle {
         let instance = Instance {
-            renderer,
-            scene,
-            viewports,
+            renderer: Rc::new(Renderer::new().await),
+            scenes: HashMap::new(),
+            viewports: HashMap::new(),
         };
 
-        let instance_handle = new_instance_handle();
-
-        let mut instances_changer = INSTANCES.lock().unwrap();
-        (*instances_changer).insert(instance_handle, instance);
-
-        instance_handle
+        let handle = new_handle();
+        (*INSTANCES.lock().unwrap()).insert(handle, instance);
+        handle
     }
 
-    pub fn draw(&self) {
-        self.renderer.render(&self.scene, &self.viewports);
+    pub fn add_viewport(&mut self, canvas: HtmlCanvasElement) -> Handle {
+        let viewport = Viewport::new(canvas, self.renderer.clone());
+        let handle = new_handle();
+        self.viewports.insert(handle, viewport);
+        handle
+    }
+    pub fn add_scene(&mut self) -> Handle {
+        let scene = Scene::new();
+        let handle = new_handle();
+        self.scenes.insert(handle, scene);
+        handle
     }
 
-    pub fn get_scene_mut(&mut self) -> &mut Scene {
-        &mut self.scene
+    pub fn draw_scene_to_viewport(&self, scene_handle: Handle, viewport_handle: Handle) {
+        let viewport = self.viewports.get(&viewport_handle).unwrap();
+        let scene = self.scenes.get(&scene_handle).unwrap();
+        self.renderer.render(scene, viewport);
+    }
+
+    pub fn draw_scene_to_all_viewports(&self, scene_handle: Handle) {
+        let scene = self.scenes.get(&scene_handle).unwrap();
+        for (_, viewport) in self.viewports.iter() {
+            self.renderer.render(scene, &viewport);
+        }
+    }
+
+    pub fn get_scene_mut(&mut self, scene_handle: Handle) -> &mut Scene {
+        self.scenes.get_mut(&scene_handle).unwrap()
     }
 
     pub fn get_renderer(&self) -> Rc<Renderer> {

@@ -1,14 +1,11 @@
-import { create_instance, draw, add_mesh, Vec3 } from '../engine/pkg'
+import { create_instance, add_viewport, draw_scene_to_all_viewports, add_mesh, Vec3, add_scene } from '../engine/pkg'
 
 console.log("running example 1");
 
 
-let canvas1 = document.createElement("canvas");
-document.body.appendChild(canvas1);
-let canvas2 = document.createElement("canvas");
-document.body.appendChild(canvas2);
 
-let instance_handle = await create_instance([canvas1, canvas2]);
+let instance_handle = await create_instance();
+let scene_handle = add_scene(instance_handle);
 
 
 const vertices = [
@@ -29,8 +26,17 @@ const normals = [
 
 const indices = [0, 1, 4, 1, 2, 4, 2, 3, 4];
 
-add_mesh(instance_handle, vertices, normals, indices);
+add_mesh(instance_handle, scene_handle, vertices, normals, indices);
 
-draw(instance_handle);
+let canvas1 = document.createElement("canvas");
+document.body.appendChild(canvas1);
+let canvas2 = document.createElement("canvas");
+document.body.appendChild(canvas2);
+
+add_viewport(instance_handle, canvas1);
+
+add_viewport(instance_handle, canvas2);
+
+draw_scene_to_all_viewports(instance_handle, scene_handle);
 
 
