@@ -1,7 +1,10 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    geometry::mesh::{Mesh, MeshVertex},
+    geometry::{
+        mesh::{Mesh, MeshVertex},
+        polyline::{Polyline, PolylineVertex},
+    },
     instance::{Handle, INSTANCES},
     math::linear_algebra::vec3::Vec3,
 };
@@ -44,4 +47,35 @@ pub fn add_mesh(
         .unwrap()
         .get_scene_mut(scene_handle)
         .add_mesh(mesh);
+}
+
+#[wasm_bindgen]
+pub fn add_polyline(instance_handle: Handle, scene_handle: Handle, positions: Vec<Vec3>) {
+    let verts: Vec<PolylineVertex> = positions
+        .iter()
+        .map(|pos| PolylineVertex {
+            position: (*pos).into(),
+        })
+        .collect();
+
+    // TODO: why do i need two gets????
+    // I currently hate the borrow checker
+    let polyline = Polyline::new(
+        INSTANCES
+            .lock()
+            .unwrap()
+            .get_mut(&instance_handle)
+            .unwrap()
+            .get_renderer()
+            .get_device(),
+        &verts[..],
+    );
+
+    INSTANCES
+        .lock()
+        .unwrap()
+        .get_mut(&instance_handle)
+        .unwrap()
+        .get_scene_mut(scene_handle)
+        .add_polyline(polyline);
 }

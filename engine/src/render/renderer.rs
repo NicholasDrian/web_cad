@@ -6,6 +6,7 @@ pub struct Renderer {
     queue: wgpu::Queue,
     adapter: wgpu::Adapter,
     mesh_render_pipeline: wgpu::RenderPipeline,
+    line_strip_render_pipeline: wgpu::RenderPipeline,
     // This lives in renderer because it is needed for pipeline creation
     viewport_bind_group_layout: wgpu::BindGroupLayout,
 }
@@ -42,6 +43,10 @@ impl Renderer {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("shaders/mesh_shader.wgsl").into()),
         });
+        let line_strip_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/line_strip_shader.wgsl").into()),
+        });
 
         let viewport_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -65,6 +70,13 @@ impl Renderer {
             PipelinePrimitive::Mesh,
             1u32,
         );
+        let line_strip_render_pipeline = create_render_pipeline(
+            &device,
+            &[&viewport_bind_group_layout],
+            &line_strip_shader,
+            PipelinePrimitive::LineStrip,
+            1u32,
+        );
 
         Renderer {
             device,
@@ -72,6 +84,7 @@ impl Renderer {
             adapter,
             instance,
             mesh_render_pipeline,
+            line_strip_render_pipeline,
             viewport_bind_group_layout,
         }
     }
@@ -131,6 +144,12 @@ impl Renderer {
                 render_pass
                     .set_index_buffer(mesh.get_index_buffer().slice(..), wgpu::IndexFormat::Uint32);
                 render_pass.draw_indexed(0..mesh.get_index_count(), 0, 0..1);
+            }
+
+            render_pass.set_pipeline(&self.line_strip_render_pipeline);
+            for (id, polyline) in scene.get_polylines() {
+                render_pass.set_vertex_buffer(0, polyline.get_vertex_buffer().slice(..));
+                render_pass.draw(0..polyline.get_vertex_count(), 0..1);
             }
         }
 

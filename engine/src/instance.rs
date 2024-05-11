@@ -1,14 +1,14 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{render::renderer::Renderer, scene::scene::Scene, viewport::viewport::Viewport};
 use web_sys::HtmlCanvasElement;
 
 pub type Handle = u64;
-static mut INSTANCE_HANDLE_GENERATOR: Mutex<Handle> = Mutex::new(0u64);
+static mut HANDLE_GENERATOR: Mutex<Handle> = Mutex::new(0u64);
 pub fn new_handle() -> Handle {
     unsafe {
-        let mut changer = INSTANCE_HANDLE_GENERATOR.lock().unwrap();
+        let mut changer = HANDLE_GENERATOR.lock().unwrap();
         *changer += 1u64;
         *changer
     }
@@ -19,9 +19,7 @@ lazy_static! {
 }
 
 pub struct Instance {
-    // TODO: replace rc with lifetime
     renderer: Rc<Renderer>,
-    // TODO: multiple scenes
     scenes: HashMap<Handle, Scene>,
     viewports: HashMap<Handle, Viewport>,
 }

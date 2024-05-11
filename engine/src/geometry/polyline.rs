@@ -19,6 +19,7 @@ pub static POLYLINE_VERTEX_BUFFER_LAYOUT: wgpu::VertexBufferLayout<'static> =
 
 pub struct Polyline {
     vertex_buffer: wgpu::Buffer,
+    vertex_count: u32,
 }
 
 impl Polyline {
@@ -28,10 +29,17 @@ impl Polyline {
             contents: bytemuck::cast_slice(verts),
             usage: wgpu::BufferUsages::VERTEX,
         });
-        Polyline { vertex_buffer }
+        Polyline {
+            vertex_buffer,
+            vertex_count: verts.len() as u32,
+        }
     }
 
     pub fn get_vertex_buffer(&self) -> &wgpu::Buffer {
         &self.vertex_buffer
+    }
+
+    pub fn get_vertex_count(&self) -> u32 {
+        self.vertex_count
     }
 }

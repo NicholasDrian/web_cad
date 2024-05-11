@@ -1,7 +1,8 @@
-use crate::geometry::mesh::MESH_VERTEX_BUFFER_LAYOUT;
+use crate::geometry::{mesh::MESH_VERTEX_BUFFER_LAYOUT, polyline::POLYLINE_VERTEX_BUFFER_LAYOUT};
 
 pub enum PipelinePrimitive {
     Mesh,
+    LineStrip,
     Lines,
     Points,
 }
@@ -17,6 +18,7 @@ pub fn create_render_pipeline(
         device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some(match primitive {
                 PipelinePrimitive::Mesh => "Triangle Pipeline Layout",
+                PipelinePrimitive::LineStrip => "Line Strip Pipeline Layout",
                 PipelinePrimitive::Lines => "Curve Pipeline Layout",
                 PipelinePrimitive::Points => "Surface Pipeline Layout",
             }),
@@ -27,14 +29,16 @@ pub fn create_render_pipeline(
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: Some(match primitive {
             PipelinePrimitive::Mesh => "Triangle Pipeline",
-            PipelinePrimitive::Lines => "Curve Pipeline",
+            PipelinePrimitive::Lines => "Lines Pipeline",
             PipelinePrimitive::Points => "Surface Pipeline",
+            PipelinePrimitive::LineStrip => "Line Strip Pipeline",
         }),
         primitive: wgpu::PrimitiveState {
             topology: match primitive {
                 PipelinePrimitive::Points => wgpu::PrimitiveTopology::PointList,
                 PipelinePrimitive::Lines => wgpu::PrimitiveTopology::LineList,
                 PipelinePrimitive::Mesh => wgpu::PrimitiveTopology::TriangleList,
+                PipelinePrimitive::LineStrip => wgpu::PrimitiveTopology::LineStrip,
             },
             strip_index_format: None,
 
@@ -51,6 +55,7 @@ pub fn create_render_pipeline(
             entry_point: "vs_main",
             buffers: &[match primitive {
                 PipelinePrimitive::Mesh => MESH_VERTEX_BUFFER_LAYOUT.clone(),
+                PipelinePrimitive::LineStrip => POLYLINE_VERTEX_BUFFER_LAYOUT.clone(),
                 PipelinePrimitive::Points => todo!(),
                 PipelinePrimitive::Lines => todo!(),
             }][..],
