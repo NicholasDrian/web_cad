@@ -2,7 +2,6 @@ use super::vec4::Vec4;
 
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
 #[derive(Debug, Copy, Clone, Default, PartialEq)]
 pub struct Vec3 {
     pub x: f32,
@@ -10,19 +9,7 @@ pub struct Vec3 {
     pub z: f32,
 }
 
-impl From<Vec3> for [f32; 3] {
-    fn from(val: Vec3) -> Self {
-        [val.x, val.y, val.z]
-    }
-}
-
-#[wasm_bindgen]
 impl Vec3 {
-    #[wasm_bindgen(constructor)]
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
-        Self { x, y, z }
-    }
-
     pub fn dot(a: &Vec3, b: &Vec3) -> f32 {
         a.x * b.x + a.y * b.y + a.z * b.z
     }

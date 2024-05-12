@@ -8,36 +8,28 @@ let mesh_scene = engine.add_scene(instance);
 
 let polyline_scene = engine.add_scene(instance);
 
-const vertices = [
-  new engine.Vec3(-0.0868241, 0.49240386, 0.0),
-  new engine.Vec3(-0.49513406, 0.06958647, 0.0),
-  new engine.Vec3(-0.21918549, -0.44939706, 0.0),
-  new engine.Vec3(0.35966998, -0.3473291, 0.0),
-  new engine.Vec3(0.44147372, 0.2347359, 0.0),
-];
-
 const normals = [
-  new engine.Vec3(0, 0, 1),
-  new engine.Vec3(0, 1, 0),
-  new engine.Vec3(1, 0, 0),
-  new engine.Vec3(0, 1, 0),
-  new engine.Vec3(1, 0, 0),
+  0, 0, 1,
+  0, 1, 0,
+  1, 0, 0,
+  0, 1, 0,
+  1, 0, 0,
 ]
 
 // TODO: shouldn't need this duplication
 // TODO: make instance object thingy
-const poly_vertices = [
-  new engine.Vec3(-0.0868241, 0.49240386, 0.0),
-  new engine.Vec3(-0.49513406, 0.06958647, 0.0),
-  new engine.Vec3(-0.21918549, -0.44939706, 0.0),
-  new engine.Vec3(0.35966998, -0.3473291, 0.0),
-  new engine.Vec3(0.44147372, 0.2347359, 0.0),
+const vertices = [
+  -0.0868241, 0.49240386, 0.0,
+  -0.49513406, 0.06958647, 0.0,
+  -0.21918549, -0.44939706, 0.0,
+  0.35966998, -0.3473291, 0.0,
+  0.44147372, 0.2347359, 0.0,
 ];
 
 const indices = [0, 1, 4, 1, 2, 4, 2, 3, 4];
 
 engine.add_mesh(instance, mesh_scene, vertices, normals, indices);
-engine.add_polyline(instance, polyline_scene, poly_vertices);
+engine.add_polyline(instance, polyline_scene, vertices);
 
 let canvas1 = document.createElement("canvas");
 document.body.appendChild(canvas1);

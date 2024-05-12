@@ -6,25 +6,23 @@ use crate::{
         polyline::{Polyline, PolylineVertex},
     },
     instance::{Handle, INSTANCES},
-    math::linear_algebra::vec3::Vec3,
 };
 
 #[wasm_bindgen]
 pub fn add_mesh(
     instance_handle: Handle,
     scene_handle: Handle,
-    positions: Vec<Vec3>,
-    normals: Vec<Vec3>,
-    indices: Vec<u32>,
+    positions: &[f32],
+    normals: &[f32],
+    indices: &[u32],
 ) {
-    let verts: Vec<MeshVertex> = positions
-        .iter()
-        .zip(normals.iter())
-        .map(|(pos, norm)| MeshVertex {
-            position: (*pos).into(),
-            normal: (*norm).into(),
+    let mut verts: Vec<MeshVertex> = Vec::new();
+    for i in 0..positions.len() / 3 {
+        verts.push(MeshVertex {
+            position: [positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]],
+            normal: [normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]],
         })
-        .collect();
+    }
 
     // TODO: why do i need two gets????
     // I currently hate the borrow checker
@@ -37,7 +35,7 @@ pub fn add_mesh(
             .get_renderer()
             .get_device(),
         &verts[..],
-        &indices[..],
+        indices,
     );
 
     INSTANCES
@@ -50,16 +48,13 @@ pub fn add_mesh(
 }
 
 #[wasm_bindgen]
-pub fn add_polyline(instance_handle: Handle, scene_handle: Handle, positions: Vec<Vec3>) {
-    let verts: Vec<PolylineVertex> = positions
-        .iter()
-        .map(|pos| PolylineVertex {
-            position: (*pos).into(),
-        })
-        .collect();
-
-    // TODO: why do i need two gets????
-    // I currently hate the borrow checker
+pub fn add_polyline(instance_handle: Handle, scene_handle: Handle, positions: &[f32]) {
+    let mut verts: Vec<PolylineVertex> = Vec::new();
+    for i in 0..positions.len() / 3 {
+        verts.push(PolylineVertex {
+            position: [positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]],
+        });
+    }
     let polyline = Polyline::new(
         INSTANCES
             .lock()
