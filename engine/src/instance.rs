@@ -1,7 +1,10 @@
 use std::sync::Mutex;
 use std::{collections::HashMap, rc::Rc};
 
-use crate::{render::renderer::Renderer, scene::scene::Scene, viewport::viewport::Viewport};
+use crate::scene::scene_interface::Scene;
+use crate::{
+    render::renderer::Renderer, scene::scene::SceneInternal, viewport::viewport::Viewport,
+};
 use web_sys::HtmlCanvasElement;
 
 pub type Handle = u64;
@@ -15,19 +18,19 @@ pub fn new_handle() -> Handle {
 }
 
 lazy_static! {
-    pub static ref INSTANCES: Mutex<HashMap<Handle, Instance>> = Mutex::new(HashMap::new());
+    pub static ref INSTANCES: Mutex<HashMap<Handle, InstanceInternal>> = Mutex::new(HashMap::new());
 }
 
-pub struct Instance {
+pub struct InstanceInternal {
     renderer: Rc<Renderer>,
-    scenes: HashMap<Handle, Scene>,
+    scenes: HashMap<Handle, SceneInternal>,
     viewports: HashMap<Handle, Viewport>,
 }
-unsafe impl Send for Instance {}
+unsafe impl Send for InstanceInternal {}
 
-impl Instance {
+impl InstanceInternal {
     pub async fn create() -> Handle {
-        let instance = Instance {
+        let instance = InstanceInternal {
             renderer: Rc::new(Renderer::new().await),
             scenes: HashMap::new(),
             viewports: HashMap::new(),
@@ -45,26 +48,26 @@ impl Instance {
         handle
     }
     pub fn add_scene(&mut self) -> Handle {
-        let scene = Scene::new();
+        let scene = SceneInternal::new();
         let handle = new_handle();
         self.scenes.insert(handle, scene);
         handle
     }
 
-    pub fn draw_scene_to_viewport(&self, scene_handle: Handle, viewport_handle: Handle) {
+    pub fn draw_scene_to_viewport(&self, scene: Scene, viewport_handle: Handle) {
         let viewport = self.viewports.get(&viewport_handle).unwrap();
-        let scene = self.scenes.get(&scene_handle).unwrap();
+        let scene = self.scenes.get(&scene.get_handle()).unwrap();
         self.renderer.render(scene, viewport);
     }
 
-    pub fn draw_scene_to_all_viewports(&self, scene_handle: Handle) {
-        let scene = self.scenes.get(&scene_handle).unwrap();
+    pub fn draw_scene_to_all_viewports(&self, scene: Scene) {
+        let scene = self.scenes.get(&scene.get_handle()).unwrap();
         for (_, viewport) in self.viewports.iter() {
             self.renderer.render(scene, &viewport);
         }
     }
 
-    pub fn get_scene_mut(&mut self, scene_handle: Handle) -> &mut Scene {
+    pub fn get_scene_mut(&mut self, scene_handle: Handle) -> &mut SceneInternal {
         self.scenes.get_mut(&scene_handle).unwrap()
     }
 

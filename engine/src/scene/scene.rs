@@ -8,16 +8,16 @@ use crate::geometry::{
     surface::Surface,
 };
 
-pub struct Scene {
+pub struct SceneInternal {
     curves: HashMap<GeometryId, Curve>,
     surfaces: HashMap<GeometryId, Surface>,
     polylines: HashMap<GeometryId, Polyline>,
     meshes: HashMap<GeometryId, Mesh>,
 }
 
-impl Scene {
-    pub fn new() -> Scene {
-        Scene {
+impl SceneInternal {
+    pub fn new() -> SceneInternal {
+        SceneInternal {
             curves: HashMap::new(),
             surfaces: HashMap::new(),
             polylines: HashMap::new(),

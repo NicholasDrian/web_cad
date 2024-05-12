@@ -1,53 +1,67 @@
 use wasm_bindgen::prelude::*;
-use web_sys::{js_sys, HtmlCanvasElement};
+use web_sys::HtmlCanvasElement;
 
-use crate::instance::{Handle, Instance, INSTANCES};
+use crate::{
+    instance::{Handle, InstanceInternal, INSTANCES},
+    scene::scene_interface::Scene,
+};
 
+/// Instance that wrapper that is available in JS
 #[wasm_bindgen]
-pub async fn create_instance() -> Handle {
-    Instance::create().await
+pub struct Instance {
+    /// Handle to interanal wasm instance
+    handle: Handle,
 }
 
 #[wasm_bindgen]
-pub fn add_viewport(instance_handle: Handle, canvas: HtmlCanvasElement) -> Handle {
-    INSTANCES
-        .lock()
-        .unwrap()
-        .get_mut(&instance_handle)
-        .unwrap()
-        .add_viewport(canvas)
-}
+impl Instance {
+    #[wasm_bindgen(constructor)]
+    pub async fn new() -> Instance {
+        Instance {
+            handle: InstanceInternal::create().await,
+        }
+    }
 
-#[wasm_bindgen]
-pub fn add_scene(instance_handle: Handle) -> Handle {
-    INSTANCES
-        .lock()
-        .unwrap()
-        .get_mut(&instance_handle)
-        .unwrap()
-        .add_scene()
-}
+    #[wasm_bindgen]
+    pub fn add_viewport(&self, canvas: HtmlCanvasElement) -> Handle {
+        INSTANCES
+            .lock()
+            .unwrap()
+            .get_mut(&self.handle)
+            .unwrap()
+            .add_viewport(canvas)
+    }
 
-#[wasm_bindgen]
-pub fn draw_scene_to_all_viewports(instance_handle: Handle, scene_handle: Handle) {
-    INSTANCES
-        .lock()
-        .unwrap()
-        .get(&instance_handle)
-        .unwrap()
-        .draw_scene_to_all_viewports(scene_handle);
-}
+    #[wasm_bindgen]
+    pub fn add_scene(&self) -> Scene {
+        Scene::new(
+            self.handle,
+            INSTANCES
+                .lock()
+                .unwrap()
+                .get_mut(&self.handle)
+                .unwrap()
+                .add_scene(),
+        )
+    }
 
-#[wasm_bindgen]
-pub fn draw_scene_to_viewport(
-    instance_handle: Handle,
-    scene_handle: Handle,
-    viewport_handle: Handle,
-) {
-    INSTANCES
-        .lock()
-        .unwrap()
-        .get(&instance_handle)
-        .unwrap()
-        .draw_scene_to_viewport(scene_handle, viewport_handle);
+    #[wasm_bindgen]
+    pub fn draw_scene_to_all_viewports(&self, scene: Scene) {
+        INSTANCES
+            .lock()
+            .unwrap()
+            .get(&self.handle)
+            .unwrap()
+            .draw_scene_to_all_viewports(scene);
+    }
+
+    #[wasm_bindgen]
+    pub fn draw_scene_to_viewport(&self, scene: Scene, viewport_handle: Handle) {
+        INSTANCES
+            .lock()
+            .unwrap()
+            .get(&self.handle)
+            .unwrap()
+            .draw_scene_to_viewport(scene, viewport_handle);
+    }
 }

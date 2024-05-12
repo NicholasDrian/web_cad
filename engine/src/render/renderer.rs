@@ -1,4 +1,4 @@
-use crate::{render::pipeline::*, scene::scene::Scene, viewport::viewport::Viewport};
+use crate::{render::pipeline::*, scene::scene::SceneInternal, viewport::viewport::Viewport};
 
 pub struct Renderer {
     device: wgpu::Device,
@@ -105,7 +105,11 @@ impl Renderer {
         &self.queue
     }
 
-    pub fn render(&self, scene: &Scene, viewport: &Viewport) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(
+        &self,
+        scene: &SceneInternal,
+        viewport: &Viewport,
+    ) -> Result<(), wgpu::SurfaceError> {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
