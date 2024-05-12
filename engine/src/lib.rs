@@ -3,6 +3,7 @@ pub mod instance;
 pub mod instance_interface;
 pub mod math;
 pub mod render;
+pub mod samplers;
 pub mod scene;
 pub mod viewport;
 

@@ -1,6 +1,8 @@
 use std::sync::Mutex;
 use std::{collections::HashMap, rc::Rc};
 
+use crate::samplers::curve_sampler::CurveSampler;
+use crate::samplers::surface_sampler::SurfaceSampler;
 use crate::scene::scene_interface::Scene;
 use crate::viewport::viewport_interface::Viewport;
 use crate::{
@@ -26,15 +28,22 @@ pub struct InstanceInternal {
     renderer: Rc<Renderer>,
     scenes: HashMap<Handle, SceneInternal>,
     viewports: HashMap<Handle, ViewportInternal>,
+    curve_sampler: CurveSampler,
+    surface_sampler: SurfaceSampler,
 }
 unsafe impl Send for InstanceInternal {}
 
 impl InstanceInternal {
     pub async fn create() -> Handle {
+        let renderer = Rc::new(Renderer::new().await);
+        let curve_sampler = CurveSampler::new(renderer.clone());
+        let surface_sampler = SurfaceSampler::new(renderer.clone());
         let instance = InstanceInternal {
-            renderer: Rc::new(Renderer::new().await),
             scenes: HashMap::new(),
             viewports: HashMap::new(),
+            curve_sampler,
+            surface_sampler,
+            renderer,
         };
 
         let handle = new_handle();
