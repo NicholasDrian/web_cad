@@ -9,7 +9,7 @@ use crate::render::renderer::Renderer;
 use super::camera::{Camera, CameraDescriptor};
 use web_sys::HtmlCanvasElement;
 
-pub struct Viewport {
+pub struct ViewportInternal {
     camera: Camera,
     canvas: HtmlCanvasElement,
     surface: wgpu::Surface<'static>,
@@ -22,8 +22,8 @@ pub struct ViewportUniforms {
     view_proj: Mat4,
 }
 
-impl Viewport {
-    pub fn new(canvas: HtmlCanvasElement, renderer: Rc<Renderer>) -> Viewport {
+impl ViewportInternal {
+    pub fn new(canvas: HtmlCanvasElement, renderer: Rc<Renderer>) -> ViewportInternal {
         let surface_target = wgpu::SurfaceTarget::Canvas(canvas.clone());
         let surface = renderer
             .get_instance()
@@ -47,7 +47,7 @@ impl Viewport {
                 }],
             });
 
-        Viewport {
+        ViewportInternal {
             camera,
             canvas,
             surface,

@@ -3,7 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::scene::scene_interface::Scene;
 use crate::{
-    render::renderer::Renderer, scene::scene::SceneInternal, viewport::viewport::Viewport,
+    render::renderer::Renderer, scene::scene::SceneInternal, viewport::viewport::ViewportInternal,
 };
 use web_sys::HtmlCanvasElement;
 
@@ -24,7 +24,7 @@ lazy_static! {
 pub struct InstanceInternal {
     renderer: Rc<Renderer>,
     scenes: HashMap<Handle, SceneInternal>,
-    viewports: HashMap<Handle, Viewport>,
+    viewports: HashMap<Handle, ViewportInternal>,
 }
 unsafe impl Send for InstanceInternal {}
 
@@ -42,7 +42,7 @@ impl InstanceInternal {
     }
 
     pub fn create_viewport(&mut self, canvas: HtmlCanvasElement) -> Handle {
-        let viewport = Viewport::new(canvas, self.renderer.clone());
+        let viewport = ViewportInternal::new(canvas, self.renderer.clone());
         let handle = new_handle();
         self.viewports.insert(handle, viewport);
         handle
