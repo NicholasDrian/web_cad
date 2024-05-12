@@ -7,7 +7,7 @@ struct SceneUniforms {
 
 
 struct VertexInput {
-    @location(0) position: vec3<f32>,
+    @location(0) position: vec4<f32>,
 };
 
 struct VertexOutput {
@@ -19,7 +19,7 @@ fn vs_main(
     in: VertexInput,
 ) -> VertexOutput {
     var out: VertexOutput;
-    out.clip_position = scene_uniforms.model_view * vec4<f32>(in.position, 1.0);
+    out.clip_position = scene_uniforms.model_view * in.position;
     return out;
 }
 

@@ -3,8 +3,8 @@ use wgpu::util::DeviceExt;
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct MeshVertex {
-    pub position: [f32; 3],
-    pub normal: [f32; 3],
+    pub position: [f32; 4],
+    pub normal: [f32; 4],
 }
 
 pub static MESH_VERTEX_BUFFER_LAYOUT: wgpu::VertexBufferLayout<'static> =
@@ -15,12 +15,12 @@ pub static MESH_VERTEX_BUFFER_LAYOUT: wgpu::VertexBufferLayout<'static> =
             wgpu::VertexAttribute {
                 offset: 0,
                 shader_location: 0,
-                format: wgpu::VertexFormat::Float32x3,
+                format: wgpu::VertexFormat::Float32x4,
             },
             wgpu::VertexAttribute {
-                offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                offset: std::mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
                 shader_location: 1,
-                format: wgpu::VertexFormat::Float32x3,
+                format: wgpu::VertexFormat::Float32x4,
             },
         ],
     };

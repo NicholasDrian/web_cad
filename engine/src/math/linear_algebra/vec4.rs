@@ -1,8 +1,7 @@
-use wasm_bindgen::prelude::*;
-
 use crate::math::linear_algebra::vec3::Vec3;
 
-#[derive(Debug, Copy, Clone, Default, PartialEq)]
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vec4 {
     pub x: f32,
     pub y: f32,

@@ -1,8 +1,6 @@
-use std::rc::Rc;
-
 use crate::{
     math::linear_algebra::vec3::Vec3,
-    render::renderer::Renderer,
+    math::linear_algebra::vec4::Vec4,
     samplers::{curve_sampler::CurveSampler, params::SAMPLES_PER_SEGMENT},
 };
 
@@ -17,15 +15,27 @@ pub struct Curve {
 }
 
 impl Curve {
-    pub fn new(
+    pub async fn new(
         curve_sampler: &CurveSampler,
         degree: u32,
         controls: Vec<Vec3>,
         weights: Vec<f32>,
         knots: Vec<f32>,
     ) -> Curve {
-        let vertex_buffer = curve_sampler.sample_curve(degree, &controls, &weights, &knots);
-        let vertex_count = SAMPLES_PER_SEGMENT * (controls.len() as u32 - 1);
+        let weighted_controls: Vec<Vec4> = controls
+            .iter()
+            .zip(weights.iter())
+            .map(|(control, weight)| Vec4 {
+                x: control.x * weight,
+                y: control.y * weight,
+                z: control.z * weight,
+                w: *weight,
+            })
+            .collect();
+        let vertex_buffer = curve_sampler
+            .sample_curve(degree, &weighted_controls, &knots)
+            .await;
+        let vertex_count = SAMPLES_PER_SEGMENT * (controls.len() as u32 - 1) + 1;
         Curve {
             degree,
             controls,

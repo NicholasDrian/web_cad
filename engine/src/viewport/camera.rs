@@ -92,7 +92,7 @@ impl Camera {
                 .get_device()
                 .create_buffer(&wgpu::BufferDescriptor {
                     label: Some("camera view proj buffer"),
-                    size: 4 * 16,
+                    size: std::mem::size_of::<Mat4>() as u64,
                     usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                     mapped_at_creation: false,
                 }),

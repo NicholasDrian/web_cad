@@ -31,8 +31,13 @@ impl Scene {
         let mut verts: Vec<MeshVertex> = Vec::new();
         for i in 0..positions.len() / 3 {
             verts.push(MeshVertex {
-                position: [positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]],
-                normal: [normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]],
+                position: [
+                    positions[i * 3],
+                    positions[i * 3 + 1],
+                    positions[i * 3 + 2],
+                    1.0,
+                ],
+                normal: [normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2], 0.0],
             })
         }
 
@@ -64,7 +69,12 @@ impl Scene {
         let mut verts: Vec<PolylineVertex> = Vec::new();
         for i in 0..positions.len() / 3 {
             verts.push(PolylineVertex {
-                position: [positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]],
+                position: [
+                    positions[i * 3],
+                    positions[i * 3 + 1],
+                    positions[i * 3 + 2],
+                    1.0,
+                ],
             });
         }
         let polyline = Polyline::new(

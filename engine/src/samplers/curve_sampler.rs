@@ -1,6 +1,17 @@
 use std::rc::Rc;
 
-use crate::{math::linear_algebra::vec3::Vec3, render::renderer::Renderer};
+use crate::{
+    math::linear_algebra::vec4::Vec4, render::renderer::Renderer,
+    samplers::params::SAMPLES_PER_SEGMENT,
+};
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct CurveSamplerUniforms {
+    control_count: u32,
+    knot_count: u32,
+    degree: u32,
+}
 
 pub struct CurveSampler {
     renderer: Rc<Renderer>,
@@ -88,7 +99,7 @@ impl CurveSampler {
             .get_device()
             .create_buffer(&wgpu::BufferDescriptor {
                 label: Some("curve sampler uniform buffer"),
-                size: 12, // TODO: use sizeof
+                size: std::mem::size_of::<CurveSamplerUniforms>() as u64,
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
                 mapped_at_creation: false,
             });
@@ -122,13 +133,136 @@ impl CurveSampler {
         }
     }
 
-    pub fn sample_curve(
+    pub async fn sample_curve(
         &self,
         degree: u32,
-        controls: &[Vec3],
-        weights: &[f32],
+        weighted_controls: &[Vec4],
         knots: &[f32],
     ) -> wgpu::Buffer {
-        todo!()
+        self.renderer.get_queue().write_buffer(
+            &self.uniform_buffer,
+            0,
+            bytemuck::cast_slice(&[CurveSamplerUniforms {
+                control_count: weighted_controls.len() as u32,
+                knot_count: knots.len() as u32,
+                degree,
+            }]),
+        );
+
+        let sample_count: u64 =
+            SAMPLES_PER_SEGMENT as u64 * (weighted_controls.len() as u64 - 1) + 1;
+
+        let samples: wgpu::Buffer =
+            self.renderer
+                .get_device()
+                .create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("curve sampler output sample buffer"),
+                    size: sample_count * 16,
+                    usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+                    mapped_at_creation: false,
+                });
+        let output: wgpu::Buffer =
+            self.renderer
+                .get_device()
+                .create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("curve sampler output buffer"),
+                    size: sample_count * 16,
+                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                    mapped_at_creation: false,
+                });
+        let basis_funcs: wgpu::Buffer =
+            self.renderer
+                .get_device()
+                .create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("curve sampler basis funcs buffer"),
+                    size: sample_count * (degree as u64 + 1) * 4,
+                    usage: wgpu::BufferUsages::STORAGE,
+                    mapped_at_creation: false,
+                });
+
+        let control_point_buffer: wgpu::Buffer =
+            self.renderer
+                .get_device()
+                .create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("curve sample control point buffer"),
+                    size: weighted_controls.len() as u64 * std::mem::size_of::<Vec4>() as u64,
+                    usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+                    mapped_at_creation: false,
+                });
+        self.renderer.get_queue().write_buffer(
+            &control_point_buffer,
+            0,
+            bytemuck::cast_slice(weighted_controls),
+        );
+
+        let knot_buffer: wgpu::Buffer =
+            self.renderer
+                .get_device()
+                .create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("curve sample knot buffer"),
+                    size: knots.len() as u64 * std::mem::size_of::<f32>() as u64,
+                    usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+                    mapped_at_creation: false,
+                });
+        self.renderer
+            .get_queue()
+            .write_buffer(&knot_buffer, 0, bytemuck::cast_slice(knots));
+
+        let bind_group: wgpu::BindGroup =
+            self.renderer
+                .get_device()
+                .create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("curve sampler bind group"),
+                    layout: &self.bind_group_layout,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: self.uniform_buffer.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: control_point_buffer.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 2,
+                            resource: knot_buffer.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 3,
+                            resource: basis_funcs.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 4,
+                            resource: samples.as_entire_binding(),
+                        },
+                    ],
+                });
+
+        let mut encoder =
+            self.renderer
+                .get_device()
+                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("curve sampler command encoder"),
+                });
+
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("curve sampler compute pass"),
+                timestamp_writes: None,
+            });
+
+            compute_pass.set_pipeline(&self.pipeline);
+            compute_pass.set_bind_group(0, &bind_group, &[]);
+            compute_pass.dispatch_workgroups(sample_count as u32, 1, 1);
+        }
+
+        encoder.copy_buffer_to_buffer(&samples, 0, &output, 0, sample_count * 16);
+
+        self.renderer.get_queue().submit([encoder.finish()]);
+
+        todo!();
+        //        self.renderer.get_queue().on_submitted_work_done().await;
+
+        output
     }
 }

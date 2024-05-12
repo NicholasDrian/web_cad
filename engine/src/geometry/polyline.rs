@@ -3,7 +3,7 @@ use wgpu::util::DeviceExt;
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct PolylineVertex {
-    pub position: [f32; 3],
+    pub position: [f32; 4],
 }
 
 pub static POLYLINE_VERTEX_BUFFER_LAYOUT: wgpu::VertexBufferLayout<'static> =
@@ -13,7 +13,7 @@ pub static POLYLINE_VERTEX_BUFFER_LAYOUT: wgpu::VertexBufferLayout<'static> =
         attributes: &[wgpu::VertexAttribute {
             offset: 0,
             shader_location: 0,
-            format: wgpu::VertexFormat::Float32x3,
+            format: wgpu::VertexFormat::Float32x4,
         }],
     };
 
