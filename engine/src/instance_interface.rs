@@ -23,17 +23,17 @@ impl Instance {
     }
 
     #[wasm_bindgen]
-    pub fn add_viewport(&self, canvas: HtmlCanvasElement) -> Handle {
+    pub fn create_viewport(&self, canvas: HtmlCanvasElement) -> Handle {
         INSTANCES
             .lock()
             .unwrap()
             .get_mut(&self.handle)
             .unwrap()
-            .add_viewport(canvas)
+            .create_viewport(canvas)
     }
 
     #[wasm_bindgen]
-    pub fn add_scene(&self) -> Scene {
+    pub fn create_scene(&self) -> Scene {
         Scene::new(
             self.handle,
             INSTANCES
@@ -41,7 +41,7 @@ impl Instance {
                 .unwrap()
                 .get_mut(&self.handle)
                 .unwrap()
-                .add_scene(),
+                .create_scene(),
         )
     }
 

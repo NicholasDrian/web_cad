@@ -4,8 +4,8 @@ console.log("running example 1");
 
 let instance = await new Instance();
 
-let mesh_scene = instance.add_scene();
-let polyline_scene = instance.add_scene();
+let mesh_scene = instance.create_scene();
+let polyline_scene = instance.create_scene();
 
 const normals = [
   0, 0, 1,
@@ -35,8 +35,8 @@ document.body.appendChild(canvas1);
 let canvas2 = document.createElement("canvas");
 document.body.appendChild(canvas2);
 
-let mesh_viewport = instance.add_viewport(canvas1);
-let polyline_viewport = instance.add_viewport(canvas2);
+let mesh_viewport = instance.create_viewport(canvas1);
+let polyline_viewport = instance.create_viewport(canvas2);
 
 instance.draw_scene_to_viewport(mesh_scene, mesh_viewport);
 instance.draw_scene_to_viewport(polyline_scene, polyline_viewport);

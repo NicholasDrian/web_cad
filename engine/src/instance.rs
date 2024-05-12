@@ -41,13 +41,13 @@ impl InstanceInternal {
         handle
     }
 
-    pub fn add_viewport(&mut self, canvas: HtmlCanvasElement) -> Handle {
+    pub fn create_viewport(&mut self, canvas: HtmlCanvasElement) -> Handle {
         let viewport = Viewport::new(canvas, self.renderer.clone());
         let handle = new_handle();
         self.viewports.insert(handle, viewport);
         handle
     }
-    pub fn add_scene(&mut self) -> Handle {
+    pub fn create_scene(&mut self) -> Handle {
         let scene = SceneInternal::new();
         let handle = new_handle();
         self.scenes.insert(handle, scene);
