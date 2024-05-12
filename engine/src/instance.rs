@@ -2,6 +2,7 @@ use std::sync::Mutex;
 use std::{collections::HashMap, rc::Rc};
 
 use crate::scene::scene_interface::Scene;
+use crate::viewport::viewport_interface::Viewport;
 use crate::{
     render::renderer::Renderer, scene::scene::SceneInternal, viewport::viewport::ViewportInternal,
 };
@@ -54,8 +55,8 @@ impl InstanceInternal {
         handle
     }
 
-    pub fn draw_scene_to_viewport(&self, scene: Scene, viewport_handle: Handle) {
-        let viewport = self.viewports.get(&viewport_handle).unwrap();
+    pub fn draw_scene_to_viewport(&self, scene: Scene, viewport: Viewport) {
+        let viewport = self.viewports.get(&viewport.get_handle()).unwrap();
         let scene = self.scenes.get(&scene.get_handle()).unwrap();
         self.renderer.render(scene, viewport);
     }

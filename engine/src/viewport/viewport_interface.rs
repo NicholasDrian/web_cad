@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 use crate::instance::Handle;
 
 #[wasm_bindgen]
-struct Viewport {
+pub struct Viewport {
     instance_handle: Handle,
     viewport_handle: Handle,
 }
@@ -16,5 +16,8 @@ impl Viewport {
             instance_handle,
             viewport_handle,
         }
+    }
+    pub fn get_handle(&self) -> Handle {
+        self.viewport_handle
     }
 }

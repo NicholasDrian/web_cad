@@ -4,9 +4,10 @@ use web_sys::HtmlCanvasElement;
 use crate::{
     instance::{Handle, InstanceInternal, INSTANCES},
     scene::scene_interface::Scene,
+    viewport::viewport_interface::Viewport,
 };
 
-/// Instance that wrapper that is available in JS
+/// Instance wrapper that is available in JS
 #[wasm_bindgen]
 pub struct Instance {
     /// Handle to interanal wasm instance
@@ -23,13 +24,16 @@ impl Instance {
     }
 
     #[wasm_bindgen]
-    pub fn create_viewport(&self, canvas: HtmlCanvasElement) -> Handle {
-        INSTANCES
-            .lock()
-            .unwrap()
-            .get_mut(&self.handle)
-            .unwrap()
-            .create_viewport(canvas)
+    pub fn create_viewport(&self, canvas: HtmlCanvasElement) -> Viewport {
+        Viewport::new(
+            self.handle,
+            INSTANCES
+                .lock()
+                .unwrap()
+                .get_mut(&self.handle)
+                .unwrap()
+                .create_viewport(canvas),
+        )
     }
 
     #[wasm_bindgen]
@@ -56,12 +60,12 @@ impl Instance {
     }
 
     #[wasm_bindgen]
-    pub fn draw_scene_to_viewport(&self, scene: Scene, viewport_handle: Handle) {
+    pub fn draw_scene_to_viewport(&self, scene: Scene, viewport: Viewport) {
         INSTANCES
             .lock()
             .unwrap()
             .get(&self.handle)
             .unwrap()
-            .draw_scene_to_viewport(scene, viewport_handle);
+            .draw_scene_to_viewport(scene, viewport);
     }
 }

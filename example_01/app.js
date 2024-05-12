@@ -7,6 +7,7 @@ let instance = await new Instance();
 let mesh_scene = instance.create_scene();
 let polyline_scene = instance.create_scene();
 
+// Flat list for performance
 const normals = [
   0, 0, 1,
   0, 1, 0,
@@ -15,7 +16,7 @@ const normals = [
   1, 0, 0,
 ]
 
-// TODO: make instance object thingy
+// Flat list for performance
 const vertices = [
   -0.0868241, 0.49240386, 0.0,
   -0.49513406, 0.06958647, 0.0,
