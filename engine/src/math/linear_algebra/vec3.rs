@@ -10,9 +10,9 @@ pub struct Vec3 {
     pub z: f32,
 }
 
-impl Into<[f32; 3]> for Vec3 {
-    fn into(self) -> [f32; 3] {
-        [self.x, self.y, self.z]
+impl From<Vec3> for [f32; 3] {
+    fn from(val: Vec3) -> Self {
+        [val.x, val.y, val.z]
     }
 }
 
