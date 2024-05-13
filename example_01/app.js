@@ -6,6 +6,7 @@ let instance = await new Instance();
 
 let mesh_scene = instance.create_scene();
 let polyline_scene = instance.create_scene();
+let curve_scene = instance.create_scene();
 
 // Flat list for performance
 const normals = [
@@ -29,6 +30,7 @@ const indices = [0, 1, 4, 1, 2, 4, 2, 3, 4];
 
 mesh_scene.add_mesh(vertices, normals, indices);
 polyline_scene.add_polyline(vertices);
+await curve_scene.add_curve(2, vertices, [], []);
 
 let canvas1 = document.createElement("canvas");
 document.body.appendChild(canvas1);
@@ -36,10 +38,15 @@ document.body.appendChild(canvas1);
 let canvas2 = document.createElement("canvas");
 document.body.appendChild(canvas2);
 
+let canvas3 = document.createElement("canvas");
+document.body.appendChild(canvas3);
+
 let mesh_viewport = instance.create_viewport(canvas1);
 let polyline_viewport = instance.create_viewport(canvas2);
+let curve_viewport = instance.create_viewport(canvas3);
 
 instance.draw_scene_to_viewport(mesh_scene, mesh_viewport);
 instance.draw_scene_to_viewport(polyline_scene, polyline_viewport);
+instance.draw_scene_to_viewport(curve_scene, curve_viewport);
 
 

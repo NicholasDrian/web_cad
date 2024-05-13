@@ -157,6 +157,10 @@ impl Renderer {
                 render_pass.set_vertex_buffer(0, polyline.get_vertex_buffer().slice(..));
                 render_pass.draw(0..polyline.get_vertex_count(), 0..1);
             }
+            for (id, curve) in scene.get_curves() {
+                render_pass.set_vertex_buffer(0, curve.get_vertex_buffer().slice(..));
+                render_pass.draw(0..curve.get_vertex_count(), 0..1);
+            }
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));

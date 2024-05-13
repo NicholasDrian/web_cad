@@ -84,4 +84,11 @@ impl InstanceInternal {
     pub fn get_renderer(&self) -> Rc<Renderer> {
         self.renderer.clone()
     }
+
+    pub fn get_curve_sampler(&self) -> &CurveSampler {
+        &self.curve_sampler
+    }
+    pub fn get_surface_sampler(&self) -> &SurfaceSampler {
+        &self.surface_sampler
+    }
 }

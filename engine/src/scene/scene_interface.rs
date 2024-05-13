@@ -2,10 +2,12 @@ use wasm_bindgen::prelude::*;
 
 use crate::{
     geometry::{
+        curve::Curve,
         mesh::{Mesh, MeshVertex},
         polyline::{Polyline, PolylineVertex},
     },
     instance::{Handle, INSTANCES},
+    math::linear_algebra::vec3::Vec3,
 };
 
 #[wasm_bindgen]
@@ -95,5 +97,48 @@ impl Scene {
             .unwrap()
             .get_scene_mut(self.scene_handle)
             .add_polyline(polyline);
+    }
+
+    #[wasm_bindgen]
+    pub async fn add_curve(
+        &self,
+        degree: u32,
+        controls: &[f32],
+        // Leave empty for default values
+        weights: &[f32],
+        // Leave empty for default values
+        knots: &[f32],
+    ) {
+        let mut control_points: Vec<Vec3> = Vec::new();
+        for i in 0..controls.len() / 3 {
+            control_points.push(Vec3 {
+                x: controls[i * 3],
+                y: controls[i * 3 + 1],
+                z: controls[i * 3 + 2],
+            });
+        }
+
+        // TODO: this warning indicates performance issues
+        let curve = Curve::new(
+            INSTANCES
+                .lock()
+                .unwrap()
+                .get_mut(&self.instance_handle)
+                .unwrap()
+                .get_curve_sampler(),
+            degree,
+            control_points,
+            weights,
+            knots,
+        )
+        .await;
+
+        INSTANCES
+            .lock()
+            .unwrap()
+            .get_mut(&self.instance_handle)
+            .unwrap()
+            .get_scene_mut(self.scene_handle)
+            .add_curve(curve);
     }
 }

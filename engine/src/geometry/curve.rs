@@ -19,15 +19,19 @@ impl Curve {
         curve_sampler: &CurveSampler,
         degree: u32,
         controls: Vec<Vec3>,
-        mut weights: Vec<f32>,
-        mut knots: Vec<f32>,
+        mut weights: &[f32],
+        mut knots: &[f32],
     ) -> Curve {
-        if knots.is_empty() {
-            knots = Self::default_knot_vector(controls.len(), degree);
-        }
-        if weights.is_empty() {
-            weights = vec![1.0; controls.len()];
-        }
+        let knots = if knots.len() == 0 {
+            Self::default_knot_vector(controls.len(), degree)
+        } else {
+            knots.to_vec()
+        };
+        let weights = if weights.len() == 0 {
+            vec![1.0; controls.len()]
+        } else {
+            weights.to_vec()
+        };
         let weighted_controls: Vec<Vec4> = controls
             .iter()
             .zip(weights.iter())
