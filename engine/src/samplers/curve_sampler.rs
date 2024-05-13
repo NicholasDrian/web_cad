@@ -260,12 +260,7 @@ impl CurveSampler {
 
         self.renderer.get_queue().submit([encoder.finish()]);
 
-        // NOTE: this needs to be tested
         self.renderer.get_device().poll(wgpu::Maintain::Wait);
-        /*
-                todo!();
-                //self.renderer.get_queue().on_submitted_work_done().await;
-        */
 
         output
     }

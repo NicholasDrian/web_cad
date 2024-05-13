@@ -16,8 +16,9 @@ pub struct Instance {
 
 #[wasm_bindgen]
 impl Instance {
-    #[wasm_bindgen(constructor)]
-    pub async fn new() -> Instance {
+    // Not using contructor because async constructor doesnt play well with wasm_bindgen.
+    #[wasm_bindgen]
+    pub async fn new_instance() -> Instance {
         Instance {
             handle: InstanceInternal::create().await,
         }
