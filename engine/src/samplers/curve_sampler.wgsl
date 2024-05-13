@@ -1,5 +1,4 @@
 
-// TODO:
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> weightedControls: array<vec4<f32>>;
 @group(0) @binding(2) var<storage, read> knots: array<f32>;
@@ -26,11 +25,6 @@ fn span(u: f32) -> u32 {
   }
   return l;
 }
-
-
-// Need scratch pad mem for basis funcs? ay ya yiy
-// Weary of unsigned int underflow....
-// res has large w...
 
 @compute @workgroup_size(1,1,1) 
 fn main(
