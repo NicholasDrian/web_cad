@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::geometry::{
     curve::Curve,
-    geometry_id::{new_geometry_id, GeometryId},
+    geometry::{new_geometry_id, GeometryId},
     mesh::Mesh,
     polyline::Polyline,
     surface::Surface,

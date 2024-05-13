@@ -1,5 +1,7 @@
 use wgpu::util::DeviceExt;
 
+use super::geometry::Geometry;
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct MeshVertex {
@@ -62,3 +64,5 @@ impl Mesh {
         self.index_count
     }
 }
+
+impl Geometry for Mesh {}

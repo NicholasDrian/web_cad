@@ -4,6 +4,8 @@ use crate::{
     samplers::{curve_sampler::CurveSampler, params::SAMPLES_PER_SEGMENT},
 };
 
+use super::geometry::Geometry;
+
 pub struct Curve {
     degree: u32,
     controls: Vec<Vec3>,
@@ -78,3 +80,5 @@ impl Curve {
         res
     }
 }
+
+impl Geometry for Curve {}

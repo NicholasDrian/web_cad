@@ -41,6 +41,7 @@ document.body.appendChild(canvas2);
 let canvas3 = document.createElement("canvas");
 document.body.appendChild(canvas3);
 
+
 let mesh_viewport = instance.create_viewport(canvas1);
 let polyline_viewport = instance.create_viewport(canvas2);
 let curve_viewport = instance.create_viewport(canvas3);

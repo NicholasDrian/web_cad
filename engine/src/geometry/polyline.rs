@@ -1,5 +1,7 @@
 use wgpu::util::DeviceExt;
 
+use super::geometry::Geometry;
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct PolylineVertex {
@@ -43,3 +45,5 @@ impl Polyline {
         self.vertex_count
     }
 }
+
+impl Geometry for Polyline {}

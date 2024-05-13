@@ -1,5 +1,5 @@
 pub mod curve;
-pub mod geometry_id;
+pub mod geometry;
 pub mod mesh;
 pub mod polyline;
 pub mod surface;

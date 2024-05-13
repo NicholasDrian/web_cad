@@ -35,7 +35,7 @@ impl Default for CameraDescriptor {
             position: Vec3 {
                 x: 0.0,
                 y: 1.0,
-                z: -10.0,
+                z: -3.0,
             },
             focal_point: Vec3 {
                 x: 0.0,

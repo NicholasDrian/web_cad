@@ -11,3 +11,6 @@ pub fn new_geometry_id() -> GeometryId {
         *changer
     }
 }
+
+// TODO: time for polymorphism
+pub trait Geometry {}
