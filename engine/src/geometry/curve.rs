@@ -19,9 +19,15 @@ impl Curve {
         curve_sampler: &CurveSampler,
         degree: u32,
         controls: Vec<Vec3>,
-        weights: Vec<f32>,
-        knots: Vec<f32>,
+        mut weights: Vec<f32>,
+        mut knots: Vec<f32>,
     ) -> Curve {
+        if knots.is_empty() {
+            knots = Self::default_knot_vector(controls.len(), degree);
+        }
+        if weights.is_empty() {
+            weights = vec![1.0; controls.len()];
+        }
         let weighted_controls: Vec<Vec4> = controls
             .iter()
             .zip(weights.iter())
@@ -52,5 +58,19 @@ impl Curve {
 
     pub fn get_vertex_count(&self) -> u32 {
         self.vertex_count
+    }
+
+    fn default_knot_vector(control_count: usize, degree: u32) -> Vec<f32> {
+        let mut res = Vec::new();
+        for _ in 0..=degree {
+            res.push(0.0);
+        }
+        for i in 1..control_count - degree as usize {
+            res.push(i as f32);
+        }
+        for _ in 0..=degree {
+            res.push(control_count as f32 - degree as f32);
+        }
+        res
     }
 }
