@@ -258,9 +258,11 @@ impl CurveSampler {
 
         encoder.copy_buffer_to_buffer(&samples, 0, &output, 0, sample_count * 16);
 
-        self.renderer.get_queue().submit([encoder.finish()]);
+        let idx = self.renderer.get_queue().submit([encoder.finish()]);
 
-        self.renderer.get_device().poll(wgpu::Maintain::Wait);
+        self.renderer
+            .get_device()
+            .poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
         output
     }
