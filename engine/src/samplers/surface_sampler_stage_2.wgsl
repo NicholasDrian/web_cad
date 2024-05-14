@@ -2,7 +2,8 @@
 
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> weightedControls: array<vec4<f32>>;
-@group(0) @binding(3) var<storage, read> basisFuncs: array<f32>;
+@group(0) @binding(2) var<storage, read> basis_funcs_u: array<f32>;
+@group(0) @binding(3) var<storage, read> basis_funcs_v: array<f32>;
 @group(0) @binding(4) var<storage, read_write> samples: array<vec4<f32>>;
 
 struct Params {

@@ -106,7 +106,7 @@ impl Scene {
     ///     point2.x...
     ///
     #[wasm_bindgen]
-    pub async fn add_curve(
+    pub fn add_curve(
         &self,
         degree: u32,
         controls: &[f32],
@@ -136,8 +136,7 @@ impl Scene {
             control_points,
             weights,
             knots,
-        )
-        .await;
+        );
 
         INSTANCES
             .lock()

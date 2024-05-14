@@ -17,12 +17,12 @@ pub struct Curve {
 }
 
 impl Curve {
-    pub async fn new(
+    pub fn new(
         curve_sampler: &CurveSampler,
         degree: u32,
         controls: Vec<Vec3>,
-        mut weights: &[f32],
-        mut knots: &[f32],
+        weights: &[f32],
+        knots: &[f32],
     ) -> Curve {
         let knots = if knots.len() == 0 {
             Self::default_knot_vector(controls.len(), degree)
@@ -44,9 +44,7 @@ impl Curve {
                 w: *weight,
             })
             .collect();
-        let vertex_buffer = curve_sampler
-            .sample_curve(degree, &weighted_controls, &knots)
-            .await;
+        let vertex_buffer = curve_sampler.sample_curve(degree, &weighted_controls, &knots);
         let vertex_count = SAMPLES_PER_SEGMENT * (controls.len() as u32 - 1) + 1;
         Curve {
             degree,

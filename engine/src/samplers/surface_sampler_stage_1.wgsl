@@ -2,8 +2,8 @@
 // this creates tables of basis funcs evaludated for each sample.
 
 @group(0) @binding(0) var<uniform> params: Params;
-@group(0) @binding(2) var<storage, read> knots: array<f32>;
-@group(0) @binding(4) var<storage, read_write> basis_funcs: array<f32>;
+@group(0) @binding(1) var<storage, read> knots: array<f32>;
+@group(0) @binding(2) var<storage, read_write> basis_funcs: array<f32>;
 
 struct Params {
   control_count: u32,
@@ -27,7 +27,7 @@ fn span(u: f32) -> u32 {
 }
 
 @compute @workgroup_size(1,1,1) 
-fn main(
+fn main_u(
   @builtin(global_invocation_id) id: vec3<u32>,
   @builtin(num_workgroups) size: vec3<u32>
   ) {
@@ -50,3 +50,10 @@ fn main(
   }
 }
 
+@compute @workgroup_size(1,1,1) 
+fn main_v(
+  @builtin(global_invocation_id) id: vec3<u32>,
+  @builtin(num_workgroups) size: vec3<u32>
+  ) {
+
+}

@@ -17,37 +17,98 @@ use crate::{
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct SurfaceSamplerUniforms {
+pub struct SurfaceSamplerStage1Uniforms {
+    control_count: u32,
+    knot_count: u32,
+    degree: u32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct SurfaceSamplerStage2Uniforms {
     control_count_u: u32,
-    knot_count_u: u32,
     degree_u: u32,
     control_count_v: u32,
-    knot_count_v: u32,
     degree_v: u32,
 }
 
 pub struct SurfaceSampler {
     renderer: Rc<Renderer>,
-    shader: wgpu::ShaderModule,
-    bind_group_layout: wgpu::BindGroupLayout,
-    uniform_buffer: wgpu::Buffer,
-    pipeline: wgpu::ComputePipeline,
+    shader_module_stage_1: wgpu::ShaderModule,
+    shader_module_stage_2: wgpu::ShaderModule,
+    bind_group_layout_stage_1: wgpu::BindGroupLayout,
+    bind_group_layout_stage_2: wgpu::BindGroupLayout,
+    pipeline_stage_1_u: wgpu::ComputePipeline,
+    pipeline_stage_1_v: wgpu::ComputePipeline,
+    pipeline_stage_2: wgpu::ComputePipeline,
 }
 
 impl SurfaceSampler {
     pub fn new(renderer: Rc<Renderer>) -> SurfaceSampler {
-        let shader = renderer
-            .get_device()
-            .create_shader_module(wgpu::ShaderModuleDescriptor {
-                label: Some("curve sampler compute shader"),
-                source: wgpu::ShaderSource::Wgsl(include_str!("curve_sampler.wgsl").into()),
-            });
-
-        let bind_group_layout =
+        let shader_module_stage_1 =
+            renderer
+                .get_device()
+                .create_shader_module(wgpu::ShaderModuleDescriptor {
+                    label: Some("surface sampler stage 1 compute shader"),
+                    source: wgpu::ShaderSource::Wgsl(
+                        include_str!("surface_sampler_stage_1.wgsl").into(),
+                    ),
+                });
+        let shader_module_stage_2 =
+            renderer
+                .get_device()
+                .create_shader_module(wgpu::ShaderModuleDescriptor {
+                    label: Some("surface sampler stage 2 compute shader"),
+                    source: wgpu::ShaderSource::Wgsl(
+                        include_str!("surface_sampler_stage_2.wgsl").into(),
+                    ),
+                });
+        let bind_group_layout_stage_1 =
             renderer
                 .get_device()
                 .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                    label: Some("curve sampler bind group layout"),
+                    label: Some("surface sampler stage 2 bind group layout"),
+
+                    entries: &[
+                        // Params
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                has_dynamic_offset: false,
+                                min_binding_size: None,
+                            },
+                            count: None,
+                        },
+                        // Knots
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                                has_dynamic_offset: false,
+                                min_binding_size: None,
+                            },
+                            count: None,
+                        },
+                        // Basis Funcs
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                has_dynamic_offset: false,
+                                min_binding_size: None,
+                            },
+                            count: None,
+                        },
+                    ],
+                });
+        let bind_group_layout_stage_2 =
+            renderer
+                .get_device()
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: Some("surface sampler stage 2 bind group layout"),
 
                     entries: &[
                         // Params
@@ -72,7 +133,7 @@ impl SurfaceSampler {
                             },
                             count: None,
                         },
-                        // Knots
+                        // Basis Funcs U
                         wgpu::BindGroupLayoutEntry {
                             binding: 2,
                             visibility: wgpu::ShaderStages::COMPUTE,
@@ -83,12 +144,12 @@ impl SurfaceSampler {
                             },
                             count: None,
                         },
-                        // Basis Funcs
+                        // Basis Funcs V
                         wgpu::BindGroupLayoutEntry {
                             binding: 3,
                             visibility: wgpu::ShaderStages::COMPUTE,
                             ty: wgpu::BindingType::Buffer {
-                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                ty: wgpu::BufferBindingType::Storage { read_only: true },
                                 has_dynamic_offset: false,
                                 min_binding_size: None,
                             },
@@ -108,47 +169,117 @@ impl SurfaceSampler {
                     ],
                 });
 
-        let uniform_buffer = renderer
-            .get_device()
-            .create_buffer(&wgpu::BufferDescriptor {
-                label: Some("curve sampler uniform buffer"),
-                size: std::mem::size_of::<SurfaceSamplerUniforms>() as u64,
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-                mapped_at_creation: false,
-            });
-
-        let pipeline_layout =
+        let pipeline_layout_stage_1 =
             renderer
                 .get_device()
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                    label: Some("curve sampler pipeline layout"),
-                    bind_group_layouts: &[&bind_group_layout],
+                    label: Some("surface sampler pipeline layout stage 1"),
+                    bind_group_layouts: &[&bind_group_layout_stage_1],
+                    push_constant_ranges: &[],
+                });
+        let pipeline_layout_stage_2 =
+            renderer
+                .get_device()
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("surface sampler pipeline layout stage 2"),
+                    bind_group_layouts: &[&bind_group_layout_stage_2],
                     push_constant_ranges: &[],
                 });
 
-        let pipeline =
+        let pipeline_stage_1_u =
             renderer
                 .get_device()
                 .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-                    label: Some("curve sampler pipeline"),
-                    layout: Some(&pipeline_layout),
-                    module: &shader,
+                    label: Some("surface sampler pipeline"),
+                    layout: Some(&pipeline_layout_stage_1),
+                    module: &shader_module_stage_1,
+                    entry_point: "main",
+                    compilation_options: wgpu::PipelineCompilationOptions::default(),
+                });
+
+        let pipeline_stage_1_v =
+            renderer
+                .get_device()
+                .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                    label: Some("surface sampler pipeline"),
+                    layout: Some(&pipeline_layout_stage_1),
+                    module: &shader_module_stage_1,
+                    entry_point: "main",
+                    compilation_options: wgpu::PipelineCompilationOptions::default(),
+                });
+        let pipeline_stage_2 =
+            renderer
+                .get_device()
+                .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                    label: Some("surface sampler pipeline"),
+                    layout: Some(&pipeline_layout_stage_2),
+                    module: &shader_module_stage_2,
                     entry_point: "main",
                     compilation_options: wgpu::PipelineCompilationOptions::default(),
                 });
 
         SurfaceSampler {
             renderer,
-            shader,
-            bind_group_layout,
-            uniform_buffer,
-            pipeline,
+            shader_module_stage_1,
+            shader_module_stage_2,
+            bind_group_layout_stage_1,
+            bind_group_layout_stage_2,
+            pipeline_stage_1_u,
+            pipeline_stage_1_v,
+            pipeline_stage_2,
         }
     }
 
-    fn create_basis_funcs() -> (wgpu::Buffer, wgpu::Buffer) {}
+    fn create_basis_funcs(
+        &self,
+        control_count_u: u32,
+        degree_u: u32,
+        control_count_v: u32,
+        degree_v: u32,
+        knots_u: &[f32],
+        knots_v: &[f32],
+    ) -> (wgpu::Buffer, wgpu::Buffer) {
+        let uniform_buffer_u = self
+            .renderer
+            .get_device()
+            .create_buffer(&wgpu::BufferDescriptor {
+                label: Some("surface sampler stage 1 U uniform buffer"),
+                size: std::mem::size_of::<SurfaceSamplerStage1Uniforms>() as u64,
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            });
+        let uniform_buffer_v = self
+            .renderer
+            .get_device()
+            .create_buffer(&wgpu::BufferDescriptor {
+                label: Some("surface sampler stage 1 V uniform buffer"),
+                size: std::mem::size_of::<SurfaceSamplerStage1Uniforms>() as u64,
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            });
+        self.renderer.get_queue().write_buffer(
+            &uniform_buffer_u,
+            0,
+            bytemuck::cast_slice(&[SurfaceSamplerStage1Uniforms {
+                control_count: control_count_u,
+                knot_count: knots_u.len() as u32,
+                degree: degree_u,
+            }]),
+        );
+        self.renderer.get_queue().write_buffer(
+            &uniform_buffer_v,
+            0,
+            bytemuck::cast_slice(&[SurfaceSamplerStage1Uniforms {
+                control_count: control_count_v,
+                knot_count: knots_v.len() as u32,
+                degree: degree_v,
+            }]),
+        );
+        // TODO
+        todo!();
+    }
 
-    pub async fn sample_curve(
+    pub fn sample_surface(
         &self,
         degree_u: u32,
         degree_v: u32,
@@ -158,15 +289,23 @@ impl SurfaceSampler {
         knots_u: &[f32],
         knots_v: &[f32],
     ) -> wgpu::Buffer {
+        let uniform_buffer = self
+            .renderer
+            .get_device()
+            .create_buffer(&wgpu::BufferDescriptor {
+                label: Some("surface sampler stage 2 uniform buffer"),
+                size: std::mem::size_of::<SurfaceSamplerStage2Uniforms>() as u64,
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            });
+
         self.renderer.get_queue().write_buffer(
-            &self.uniform_buffer,
+            &uniform_buffer,
             0,
-            bytemuck::cast_slice(&[SurfaceSamplerUniforms {
+            bytemuck::cast_slice(&[SurfaceSamplerStage2Uniforms {
                 control_count_u,
-                knot_count_u: knots_u.len() as u32,
                 degree_u,
                 control_count_v,
-                knot_count_v: knots_v.len() as u32,
                 degree_v,
             }]),
         );
@@ -178,7 +317,7 @@ impl SurfaceSampler {
             self.renderer
                 .get_device()
                 .create_buffer(&wgpu::BufferDescriptor {
-                    label: Some("curve sampler output sample buffer"),
+                    label: Some("surface sampler output sample buffer"),
                     size: sample_count_u * sample_count_v * 16,
                     usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
                     mapped_at_creation: false,
@@ -187,35 +326,26 @@ impl SurfaceSampler {
             self.renderer
                 .get_device()
                 .create_buffer(&wgpu::BufferDescriptor {
-                    label: Some("curve sampler output buffer"),
+                    label: Some("surface sampler output buffer"),
                     size: sample_count_u * sample_count_v * 16,
                     usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
                     mapped_at_creation: false,
                 });
-        let basis_funcs_u: wgpu::Buffer =
-            self.renderer
-                .get_device()
-                .create_buffer(&wgpu::BufferDescriptor {
-                    label: Some("curve sampler basis funcs buffer"),
-                    size: sample_count_u * (degree_u as u64 + 1) * 4,
-                    usage: wgpu::BufferUsages::STORAGE,
-                    mapped_at_creation: false,
-                });
-        let basis_funcs_v: wgpu::Buffer =
-            self.renderer
-                .get_device()
-                .create_buffer(&wgpu::BufferDescriptor {
-                    label: Some("curve sampler basis funcs buffer"),
-                    size: sample_count_v * (degree_v as u64 + 1) * 4,
-                    usage: wgpu::BufferUsages::STORAGE,
-                    mapped_at_creation: false,
-                });
+
+        let (basis_funcs_u, basis_funcs_v) = self.create_basis_funcs(
+            control_count_v,
+            degree_u,
+            control_count_v,
+            degree_v,
+            knots_u,
+            knots_v,
+        );
 
         let control_point_buffer: wgpu::Buffer =
             self.renderer
                 .get_device()
                 .create_buffer(&wgpu::BufferDescriptor {
-                    label: Some("curve sample control point buffer"),
+                    label: Some("surface sample control point buffer"),
                     size: weighted_controls.len() as u64 * std::mem::size_of::<Vec4>() as u64,
                     usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
                     mapped_at_creation: false,
@@ -226,29 +356,16 @@ impl SurfaceSampler {
             bytemuck::cast_slice(weighted_controls),
         );
 
-        let knot_buffer: wgpu::Buffer =
-            self.renderer
-                .get_device()
-                .create_buffer(&wgpu::BufferDescriptor {
-                    label: Some("curve sample knot buffer"),
-                    size: knots.len() as u64 * std::mem::size_of::<f32>() as u64,
-                    usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-                    mapped_at_creation: false,
-                });
-        self.renderer
-            .get_queue()
-            .write_buffer(&knot_buffer, 0, bytemuck::cast_slice(knots));
-
         let bind_group: wgpu::BindGroup =
             self.renderer
                 .get_device()
                 .create_bind_group(&wgpu::BindGroupDescriptor {
-                    label: Some("curve sampler bind group"),
-                    layout: &self.bind_group_layout,
+                    label: Some("surface sampler bind group"),
+                    layout: &self.bind_group_layout_stage_2,
                     entries: &[
                         wgpu::BindGroupEntry {
                             binding: 0,
-                            resource: self.uniform_buffer.as_entire_binding(),
+                            resource: uniform_buffer.as_entire_binding(),
                         },
                         wgpu::BindGroupEntry {
                             binding: 1,
@@ -256,11 +373,11 @@ impl SurfaceSampler {
                         },
                         wgpu::BindGroupEntry {
                             binding: 2,
-                            resource: knot_buffer.as_entire_binding(),
+                            resource: basis_funcs_u.as_entire_binding(),
                         },
                         wgpu::BindGroupEntry {
                             binding: 3,
-                            resource: basis_funcs.as_entire_binding(),
+                            resource: basis_funcs_v.as_entire_binding(),
                         },
                         wgpu::BindGroupEntry {
                             binding: 4,
@@ -273,21 +390,27 @@ impl SurfaceSampler {
             self.renderer
                 .get_device()
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                    label: Some("curve sampler command encoder"),
+                    label: Some("surface sampler command encoder"),
                 });
 
         {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: Some("curve sampler compute pass"),
+                label: Some("surface sampler compute pass"),
                 timestamp_writes: None,
             });
 
-            compute_pass.set_pipeline(&self.pipeline);
+            compute_pass.set_pipeline(&self.pipeline_stage_2);
             compute_pass.set_bind_group(0, &bind_group, &[]);
-            compute_pass.dispatch_workgroups(sample_count as u32, 1, 1);
+            compute_pass.dispatch_workgroups(sample_count_u as u32, sample_count_v as u32, 1);
         }
 
-        encoder.copy_buffer_to_buffer(&samples, 0, &output, 0, sample_count * 16);
+        encoder.copy_buffer_to_buffer(
+            &samples,
+            0,
+            &output,
+            0,
+            sample_count_u * sample_count_v * 16,
+        );
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
 

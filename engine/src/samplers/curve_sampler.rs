@@ -17,7 +17,6 @@ pub struct CurveSampler {
     renderer: Rc<Renderer>,
     shader: wgpu::ShaderModule,
     bind_group_layout: wgpu::BindGroupLayout,
-    uniform_buffer: wgpu::Buffer,
     pipeline: wgpu::ComputePipeline,
 }
 
@@ -95,15 +94,6 @@ impl CurveSampler {
                     ],
                 });
 
-        let uniform_buffer = renderer
-            .get_device()
-            .create_buffer(&wgpu::BufferDescriptor {
-                label: Some("curve sampler uniform buffer"),
-                size: std::mem::size_of::<CurveSamplerUniforms>() as u64,
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-                mapped_at_creation: false,
-            });
-
         let pipeline_layout =
             renderer
                 .get_device()
@@ -128,26 +118,25 @@ impl CurveSampler {
             renderer,
             shader,
             bind_group_layout,
-            uniform_buffer,
             pipeline,
         }
     }
 
-    pub async fn sample_curve(
+    pub fn sample_curve(
         &self,
         degree: u32,
         weighted_controls: &[Vec4],
         knots: &[f32],
     ) -> wgpu::Buffer {
-        self.renderer.get_queue().write_buffer(
-            &self.uniform_buffer,
-            0,
-            bytemuck::cast_slice(&[CurveSamplerUniforms {
-                control_count: weighted_controls.len() as u32,
-                knot_count: knots.len() as u32,
-                degree,
-            }]),
-        );
+        let uniform_buffer = self
+            .renderer
+            .get_device()
+            .create_buffer(&wgpu::BufferDescriptor {
+                label: Some("curve sampler uniform buffer"),
+                size: std::mem::size_of::<CurveSamplerUniforms>() as u64,
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            });
 
         let sample_count: u64 =
             SAMPLES_PER_SEGMENT as u64 * (weighted_controls.len() as u64 - 1) + 1;
@@ -208,6 +197,16 @@ impl CurveSampler {
             .get_queue()
             .write_buffer(&knot_buffer, 0, bytemuck::cast_slice(knots));
 
+        self.renderer.get_queue().write_buffer(
+            &uniform_buffer,
+            0,
+            bytemuck::cast_slice(&[CurveSamplerUniforms {
+                control_count: weighted_controls.len() as u32,
+                knot_count: knots.len() as u32,
+                degree,
+            }]),
+        );
+
         let bind_group: wgpu::BindGroup =
             self.renderer
                 .get_device()
@@ -217,7 +216,7 @@ impl CurveSampler {
                     entries: &[
                         wgpu::BindGroupEntry {
                             binding: 0,
-                            resource: self.uniform_buffer.as_entire_binding(),
+                            resource: uniform_buffer.as_entire_binding(),
                         },
                         wgpu::BindGroupEntry {
                             binding: 1,
