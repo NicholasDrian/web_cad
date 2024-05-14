@@ -163,7 +163,9 @@ impl Renderer {
             }
         }
 
-        self.queue.submit(std::iter::once(encoder.finish()));
+        let idx = self.queue.submit(std::iter::once(encoder.finish()));
+        self.device
+            .poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
         let output = viewport.get_surface().get_current_texture()?;
         output.present();

@@ -99,6 +99,12 @@ impl Scene {
             .add_polyline(polyline);
     }
 
+    /// Controls ar packed into a flat list of floats for performance and ease
+    /// The structure of the controls is as follows:
+    ///     point0.x, point0.y, point0.z,
+    ///     point1.x, point1.y, point1.z,
+    ///     point2.x...
+    ///
     #[wasm_bindgen]
     pub async fn add_curve(
         &self,
@@ -140,5 +146,33 @@ impl Scene {
             .unwrap()
             .get_scene_mut(self.scene_handle)
             .add_curve(curve);
+    }
+
+    /// Controls should be row major, and U major
+    /// The layout is as follows:
+    ///
+    ///     U ----->
+    ///   V 0, 1, 2,
+    ///   | 3, 4, 5,
+    ///   v 6, 7, 8,
+    ///
+    /// In the above diagram, each number represents 3 floats, x, y, and z,
+    ///
+    /// Weights have the same layout.
+    ///
+    #[wasm_bindgen]
+    pub async fn add_surface(
+        &self,
+        degree_u: u32,
+        degree_v: u32,
+        controls: &[f32],
+        // Leave empty for default values
+        weights: &[f32],
+        // Leave empty for default values
+        knots_u: &[f32],
+        // Leave empty for default values
+        knots_v: &[f32],
+    ) {
+        todo!();
     }
 }
