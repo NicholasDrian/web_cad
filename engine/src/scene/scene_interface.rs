@@ -105,6 +105,8 @@ impl Scene {
     ///     point1.x, point1.y, point1.z,
     ///     point2.x...
     ///
+    /// This function blocks until GPU is done creating curve
+    ///
     #[wasm_bindgen]
     pub fn add_curve(
         &self,
@@ -158,6 +160,8 @@ impl Scene {
     /// In the above diagram, each number represents 3 floats, x, y, and z,
     ///
     /// Weights have the same layout.
+    ///
+    /// This function blocks until GPU is done creating surface.
     ///
     #[wasm_bindgen]
     pub async fn add_surface(

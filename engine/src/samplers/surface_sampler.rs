@@ -275,8 +275,140 @@ impl SurfaceSampler {
                 degree: degree_v,
             }]),
         );
-        // TODO
-        todo!();
+        let knot_buffer_u: wgpu::Buffer =
+            self.renderer
+                .get_device()
+                .create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("surface sample knot u buffer"),
+                    size: knots_u.len() as u64 * std::mem::size_of::<f32>() as u64,
+                    usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+                    mapped_at_creation: false,
+                });
+        self.renderer
+            .get_queue()
+            .write_buffer(&knot_buffer_u, 0, bytemuck::cast_slice(knots_u));
+
+        let knot_buffer_v: wgpu::Buffer =
+            self.renderer
+                .get_device()
+                .create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("surface sample knot v buffer"),
+                    size: knots_v.len() as u64 * std::mem::size_of::<f32>() as u64,
+                    usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+                    mapped_at_creation: false,
+                });
+        self.renderer
+            .get_queue()
+            .write_buffer(&knot_buffer_v, 0, bytemuck::cast_slice(knots_v));
+
+        let sample_count_u: u64 = SAMPLES_PER_SEGMENT as u64 * (control_count_u as u64 - 1) + 1;
+        let sample_count_v: u64 = SAMPLES_PER_SEGMENT as u64 * (control_count_v as u64 - 1) + 1;
+        let basis_funcs_u: wgpu::Buffer =
+            self.renderer
+                .get_device()
+                .create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("surface sampler basis funcs u buffer"),
+                    size: sample_count_u * (degree_u as u64 + 1) * 4,
+                    usage: wgpu::BufferUsages::STORAGE,
+                    mapped_at_creation: false,
+                });
+        let basis_funcs_v: wgpu::Buffer =
+            self.renderer
+                .get_device()
+                .create_buffer(&wgpu::BufferDescriptor {
+                    label: Some("surface sampler basis funcs v buffer"),
+                    size: sample_count_v * (degree_v as u64 + 1) * 4,
+                    usage: wgpu::BufferUsages::STORAGE,
+                    mapped_at_creation: false,
+                });
+
+        let bind_group_u: wgpu::BindGroup =
+            self.renderer
+                .get_device()
+                .create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("surface sampler bind group"),
+                    layout: &self.bind_group_layout_stage_1,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: uniform_buffer_u.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: knot_buffer_u.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 2,
+                            resource: basis_funcs_u.as_entire_binding(),
+                        },
+                    ],
+                });
+
+        let bind_group_v: wgpu::BindGroup =
+            self.renderer
+                .get_device()
+                .create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("surface sampler bind group"),
+                    layout: &self.bind_group_layout_stage_1,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: uniform_buffer_v.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: knot_buffer_v.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 2,
+                            resource: basis_funcs_v.as_entire_binding(),
+                        },
+                    ],
+                });
+
+        let mut encoder_u =
+            self.renderer
+                .get_device()
+                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("surface sampler stage 1 command encoder"),
+                });
+        let mut encoder_v =
+            self.renderer
+                .get_device()
+                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("surface sampler stage 1 command encoder"),
+                });
+
+        {
+            let mut compute_pass_u = encoder_u.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("surface sampler stage 1 u compute pass"),
+                timestamp_writes: None,
+            });
+            let mut compute_pass_v = encoder_v.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("surface sampler stage 1 u compute pass"),
+                timestamp_writes: None,
+            });
+
+            compute_pass_u.set_pipeline(&self.pipeline_stage_1_u);
+            compute_pass_u.set_bind_group(0, &bind_group_u, &[]);
+            compute_pass_u.dispatch_workgroups(sample_count_u as u32, sample_count_v as u32, 1);
+
+            compute_pass_v.set_pipeline(&self.pipeline_stage_1_v);
+            compute_pass_v.set_bind_group(0, &bind_group_v, &[]);
+            compute_pass_v.dispatch_workgroups(sample_count_u as u32, sample_count_v as u32, 1);
+        }
+
+        let idx_u = self.renderer.get_queue().submit([encoder_u.finish()]);
+        let idx_v = self.renderer.get_queue().submit([encoder_v.finish()]);
+
+        self.renderer
+            .get_device()
+            .poll(wgpu::Maintain::WaitForSubmissionIndex(idx_u));
+        self.renderer
+            .get_device()
+            .poll(wgpu::Maintain::WaitForSubmissionIndex(idx_v));
+
+        (basis_funcs_u, basis_funcs_v)
     }
 
     pub fn sample_surface(
@@ -390,12 +522,12 @@ impl SurfaceSampler {
             self.renderer
                 .get_device()
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                    label: Some("surface sampler command encoder"),
+                    label: Some("surface sampler stage 2 command encoder"),
                 });
 
         {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: Some("surface sampler compute pass"),
+                label: Some("surface sampler stage 2 compute pass"),
                 timestamp_writes: None,
             });
 
