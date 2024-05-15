@@ -5,7 +5,7 @@ use crate::{
     samplers::params::SAMPLES_PER_SEGMENT,
 };
 
-use super::utils::create_spans;
+use super::utils::{create_span_buffer, create_spans};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -131,6 +131,8 @@ impl CurveSampler {
         knots: &[f32],
     ) -> wgpu::Buffer {
         let device = self.renderer.get_device();
+        let queue = self.renderer.get_queue();
+
         let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("curve sampler uniform buffer"),
             size: std::mem::size_of::<CurveSamplerUniforms>() as u64,
@@ -166,7 +168,7 @@ impl CurveSampler {
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        self.renderer.get_queue().write_buffer(
+        queue.write_buffer(
             &control_point_buffer,
             0,
             bytemuck::cast_slice(weighted_controls),
@@ -178,23 +180,11 @@ impl CurveSampler {
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        self.renderer
-            .get_queue()
-            .write_buffer(&knot_buffer, 0, bytemuck::cast_slice(knots));
+        queue.write_buffer(&knot_buffer, 0, bytemuck::cast_slice(knots));
 
-        let spans = create_spans(knots, degree, sample_count as u32);
+        let span_buffer = create_span_buffer(device, queue, knots, degree, sample_count as u32);
 
-        let span_buffer: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("curve sample knot buffer"),
-            size: sample_count * std::mem::size_of::<u32>() as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-        self.renderer
-            .get_queue()
-            .write_buffer(&span_buffer, 0, bytemuck::cast_slice(&spans[..]));
-
-        self.renderer.get_queue().write_buffer(
+        queue.write_buffer(
             &uniform_buffer,
             0,
             bytemuck::cast_slice(&[CurveSamplerUniforms {
@@ -252,7 +242,7 @@ impl CurveSampler {
 
         encoder.copy_buffer_to_buffer(&samples, 0, &output, 0, sample_count * 16);
 
-        let idx = self.renderer.get_queue().submit([encoder.finish()]);
+        let idx = queue.submit([encoder.finish()]);
 
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 

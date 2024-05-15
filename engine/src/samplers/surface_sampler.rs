@@ -15,6 +15,8 @@ use crate::{
     samplers::params::SAMPLES_PER_SEGMENT,
 };
 
+use super::utils::{create_span_buffer, create_spans};
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct SurfaceSamplerStage1Uniforms {
@@ -237,10 +239,12 @@ impl SurfaceSampler {
         &self,
         control_count_u: u32,
         degree_u: u32,
+        knots_u: &[f32],
+        span_buffer_u: &wgpu::Buffer,
         control_count_v: u32,
         degree_v: u32,
-        knots_u: &[f32],
         knots_v: &[f32],
+        span_buffer_v: &wgpu::Buffer,
     ) -> (wgpu::Buffer, wgpu::Buffer) {
         let device = self.renderer.get_device();
         let queue = self.renderer.get_queue();
@@ -319,6 +323,10 @@ impl SurfaceSampler {
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
+                    resource: span_buffer_u.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
                     resource: basis_funcs_u.as_entire_binding(),
                 },
             ],
@@ -338,6 +346,10 @@ impl SurfaceSampler {
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
+                    resource: span_buffer_v.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
                     resource: basis_funcs_v.as_entire_binding(),
                 },
             ],
@@ -424,13 +436,20 @@ impl SurfaceSampler {
             mapped_at_creation: false,
         });
 
+        let span_buffer_u =
+            create_span_buffer(device, queue, knots_u, degree_u, sample_count_u as u32);
+        let span_buffer_v =
+            create_span_buffer(device, queue, knots_v, degree_v, sample_count_v as u32);
+
         let (basis_funcs_u, basis_funcs_v) = self.create_basis_funcs(
-            control_count_v,
+            control_count_u,
             degree_u,
+            knots_u,
+            &span_buffer_u,
             control_count_v,
             degree_v,
-            knots_u,
             knots_v,
+            &span_buffer_v,
         );
 
         let control_point_buffer: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
