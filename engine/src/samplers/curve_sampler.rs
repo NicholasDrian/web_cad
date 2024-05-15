@@ -1,7 +1,8 @@
 use std::rc::Rc;
 
 use crate::{
-    math::linear_algebra::vec4::Vec4, render::renderer::Renderer,
+    math::linear_algebra::vec4::Vec4,
+    render::{buffer::create_and_write_buffer, renderer::Renderer},
     samplers::params::SAMPLES_PER_SEGMENT,
 };
 
@@ -133,12 +134,18 @@ impl CurveSampler {
         let device = self.renderer.get_device();
         let queue = self.renderer.get_queue();
 
-        let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("curve sampler uniform buffer"),
-            size: std::mem::size_of::<CurveSamplerUniforms>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
+        let uniform_buffer = create_and_write_buffer(
+            device,
+            queue,
+            "curve sampler uniform buffer",
+            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            false,
+            bytemuck::cast_slice(&[CurveSamplerUniforms {
+                control_count: weighted_controls.len() as u32,
+                knot_count: knots.len() as u32,
+                degree,
+            }]),
+        );
 
         let sample_count: u64 =
             SAMPLES_PER_SEGMENT as u64 * (weighted_controls.len() as u64 - 1) + 1;
@@ -183,16 +190,6 @@ impl CurveSampler {
         queue.write_buffer(&knot_buffer, 0, bytemuck::cast_slice(knots));
 
         let span_buffer = create_span_buffer(device, queue, knots, degree, sample_count as u32);
-
-        queue.write_buffer(
-            &uniform_buffer,
-            0,
-            bytemuck::cast_slice(&[CurveSamplerUniforms {
-                control_count: weighted_controls.len() as u32,
-                knot_count: knots.len() as u32,
-                degree,
-            }]),
-        );
 
         let bind_group: wgpu::BindGroup = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("curve sampler bind group"),
