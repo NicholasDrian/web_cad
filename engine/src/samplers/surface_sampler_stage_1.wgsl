@@ -3,7 +3,8 @@
 
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> knots: array<f32>;
-@group(0) @binding(2) var<storage, read_write> basis_funcs: array<f32>;
+@group(0) @binding(2) var<storage, read> spans: array<u32>;
+@group(0) @binding(3) var<storage, read_write> basis_funcs: array<f32>;
 
 struct Params {
   control_count: u32,
