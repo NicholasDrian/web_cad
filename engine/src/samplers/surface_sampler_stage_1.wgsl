@@ -12,20 +12,6 @@ struct Params {
   degree: u32,
 };
 
-fn span(u: f32) -> u32 {
-  let n: u32 = params.knotCount - params.degree - 2;
-  var l: u32 = params.degree;
-  var h: u32 = n;
-  while l < h {
-    let m = (l + h) / 2;
-    if (u >= knots[m + 1]) {
-      l = m + 1;
-    } else {
-      h = m;
-    }
-  }
-  return l;
-}
 
 @compute @workgroup_size(1,1,1) 
 fn main_u(
