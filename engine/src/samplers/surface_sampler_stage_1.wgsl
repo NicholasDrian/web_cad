@@ -20,9 +20,9 @@ fn main_u(
   ) {
 
   let u: f32 = f32(id.x) / f32(size.x) * knots[params.knot_count - 1];
-  let s: u32 = span(u);
-
+  let s: u32 = spans[id.x];
   let offset: u32 = id.x * (params.degree + 1);
+
   basis_funcs[offset] = 1.0;
   for (var j: u32 = 1; j <= params.degree; j++) {
     var saved: f32 = 0;

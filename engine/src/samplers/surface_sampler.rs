@@ -17,7 +17,7 @@ use crate::{
     samplers::params::SAMPLES_PER_SEGMENT,
 };
 
-use super::utils::{create_span_buffer, create_spans};
+use super::utils::create_span_buffer;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -58,7 +58,6 @@ impl SurfaceSampler {
         let bind_group_layout_stage_1 =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("surface sampler stage 2 bind group layout"),
-
                 entries: &[
                     // Params
                     wgpu::BindGroupLayoutEntry {
@@ -106,6 +105,7 @@ impl SurfaceSampler {
                     },
                 ],
             });
+
         let bind_group_layout_stage_2 =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("surface sampler stage 2 bind group layout"),
@@ -284,15 +284,16 @@ impl SurfaceSampler {
 
         let sample_count_u: u64 = SAMPLES_PER_SEGMENT as u64 * (control_count_u as u64 - 1) + 1;
         let sample_count_v: u64 = SAMPLES_PER_SEGMENT as u64 * (control_count_v as u64 - 1) + 1;
+
         let basis_funcs_u: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("surface sampler basis funcs u buffer"),
-            size: sample_count_u * (degree_u as u64 + 1) * 4,
+            size: sample_count_u * (degree_u + 1) as u64 * std::mem::size_of::<f32>() as u64,
             usage: wgpu::BufferUsages::STORAGE,
             mapped_at_creation: false,
         });
         let basis_funcs_v: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("surface sampler basis funcs v buffer"),
-            size: sample_count_v * (degree_v as u64 + 1) * 4,
+            size: sample_count_v * (degree_v + 1) as u64 * std::mem::size_of::<f32>() as u64,
             usage: wgpu::BufferUsages::STORAGE,
             mapped_at_creation: false,
         });
