@@ -5,6 +5,7 @@ use crate::{
         curve::Curve,
         mesh::{Mesh, MeshVertex},
         polyline::{Polyline, PolylineVertex},
+        surface::Surface,
     },
     instance::{Handle, INSTANCES},
     math::linear_algebra::vec3::Vec3,
@@ -164,7 +165,7 @@ impl Scene {
     /// This function blocks until GPU is done creating surface.
     ///
     #[wasm_bindgen]
-    pub async fn add_surface(
+    pub fn add_surface(
         &self,
         degree_u: u32,
         degree_v: u32,

@@ -4,7 +4,7 @@ use crate::{
     samplers::{curve_sampler::CurveSampler, params::SAMPLES_PER_SEGMENT},
 };
 
-use super::geometry::Geometry;
+use super::{geometry::Geometry, utils::default_knot_vector};
 
 pub struct Curve {
     degree: u32,
@@ -25,7 +25,7 @@ impl Curve {
         knots: &[f32],
     ) -> Curve {
         let knots = if knots.len() == 0 {
-            Self::default_knot_vector(controls.len(), degree)
+            default_knot_vector(controls.len(), degree)
         } else {
             knots.to_vec()
         };
@@ -62,20 +62,6 @@ impl Curve {
 
     pub fn get_vertex_count(&self) -> u32 {
         self.vertex_count
-    }
-
-    fn default_knot_vector(control_count: usize, degree: u32) -> Vec<f32> {
-        let mut res = Vec::new();
-        for _ in 0..=degree {
-            res.push(0.0);
-        }
-        for i in 1..control_count - degree as usize {
-            res.push(i as f32);
-        }
-        for _ in 0..=degree {
-            res.push(control_count as f32 - degree as f32);
-        }
-        res
     }
 }
 
