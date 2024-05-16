@@ -39,8 +39,7 @@ pub struct SurfaceSampler {
     renderer: Rc<Renderer>,
     bind_group_layout_stage_1: wgpu::BindGroupLayout,
     bind_group_layout_stage_2: wgpu::BindGroupLayout,
-    pipeline_stage_1_u: wgpu::ComputePipeline,
-    pipeline_stage_1_v: wgpu::ComputePipeline,
+    pipeline_stage_1: wgpu::ComputePipeline,
     pipeline_stage_2: wgpu::ComputePipeline,
 }
 
@@ -204,7 +203,7 @@ impl SurfaceSampler {
                 push_constant_ranges: &[],
             });
 
-        let pipeline_stage_1_u = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        let pipeline_stage_1 = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
             label: Some("surface sampler pipeline"),
             layout: Some(&pipeline_layout_stage_1),
             module: &shader_module_stage_1,
@@ -212,13 +211,6 @@ impl SurfaceSampler {
             compilation_options: wgpu::PipelineCompilationOptions::default(),
         });
 
-        let pipeline_stage_1_v = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: Some("surface sampler pipeline"),
-            layout: Some(&pipeline_layout_stage_1),
-            module: &shader_module_stage_1,
-            entry_point: "main",
-            compilation_options: wgpu::PipelineCompilationOptions::default(),
-        });
         let pipeline_stage_2 = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
             label: Some("surface sampler pipeline"),
             layout: Some(&pipeline_layout_stage_2),
@@ -231,8 +223,7 @@ impl SurfaceSampler {
             renderer,
             bind_group_layout_stage_1,
             bind_group_layout_stage_2,
-            pipeline_stage_1_u,
-            pipeline_stage_1_v,
+            pipeline_stage_1,
             pipeline_stage_2,
         }
     }
@@ -361,11 +352,11 @@ impl SurfaceSampler {
                 timestamp_writes: None,
             });
 
-            compute_pass_u.set_pipeline(&self.pipeline_stage_1_u);
+            compute_pass_u.set_pipeline(&self.pipeline_stage_1);
             compute_pass_u.set_bind_group(0, &bind_group_u, &[]);
             compute_pass_u.dispatch_workgroups(sample_count_u as u32, 1, 1);
 
-            compute_pass_v.set_pipeline(&self.pipeline_stage_1_v);
+            compute_pass_v.set_pipeline(&self.pipeline_stage_1);
             compute_pass_v.set_bind_group(0, &bind_group_v, &[]);
             compute_pass_v.dispatch_workgroups(sample_count_v as u32, 1, 1);
         }

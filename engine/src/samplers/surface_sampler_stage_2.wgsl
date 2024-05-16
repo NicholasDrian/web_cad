@@ -21,14 +21,20 @@ struct Params {
       @builtin(num_workgroups) size: vec3<u32>
       ) {
 
-    let sample = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+    var sample = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+    let span_u = spans_u[id.x];
+    let span_v = spans_v[id.y];
+    let u_offset = id.x * (params.degree_u + 1);
+    let v_offset = id.y * (params.degree_v + 1);
 
-    for (let i: u32 = 0; i <= params.degree_u; i++) {
-      for (let j: u32 = 0; j <= params.degree_v; j++) {
-        let idx = i + j * size.x;
-        sample += this.weighted_controls[idx] * (basis_funcs_v[idx] * basis_funcs_u[idx]);
+    for (var i: u32 = 0; i <= params.degree_u; i++) {
+      for (var j: u32 = 0; j <= params.degree_v; j++) {
+        let x_idx = span_u - params.degree_u + i;
+        let y_idx = span_v - params.degree_v + j;
+        let idx = x_idx + y_idx * size.x;
+        sample += weighted_controls[0] * (basis_funcs_u[u_offset + i] * basis_funcs_v[v_offset + j]);
       }
     }
-    return vec3.create(res[0] / res[3], res[1] / res[3], res[2] / res[3]);
+    samples[id.x + id.y * size.x] = sample;
 
   }
