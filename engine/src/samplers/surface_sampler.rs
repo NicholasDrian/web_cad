@@ -84,7 +84,7 @@ impl SurfaceSampler {
                     },
                     // Spans
                     wgpu::BindGroupLayoutEntry {
-                        binding: 1,
+                        binding: 2,
                         visibility: wgpu::ShaderStages::COMPUTE,
                         ty: wgpu::BindingType::Buffer {
                             ty: wgpu::BufferBindingType::Storage { read_only: true },
@@ -95,7 +95,7 @@ impl SurfaceSampler {
                     },
                     // Basis Funcs
                     wgpu::BindGroupLayoutEntry {
-                        binding: 2,
+                        binding: 3,
                         visibility: wgpu::ShaderStages::COMPUTE,
                         ty: wgpu::BindingType::Buffer {
                             ty: wgpu::BufferBindingType::Storage { read_only: false },
@@ -258,7 +258,7 @@ impl SurfaceSampler {
                 knot_count: knots_u.len() as u32,
                 degree: degree_u,
             }]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: wgpu::BufferUsages::UNIFORM,
         });
 
         let uniform_buffer_v = device.create_buffer_init(&BufferInitDescriptor {
@@ -268,24 +268,19 @@ impl SurfaceSampler {
                 knot_count: knots_v.len() as u32,
                 degree: degree_v,
             }]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: wgpu::BufferUsages::UNIFORM,
         });
 
-        let knot_buffer_u: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let knot_buffer_u = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("surface sample knot u buffer"),
-            size: knots_u.len() as u64 * std::mem::size_of::<f32>() as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
+            contents: bytemuck::cast_slice(knots_u),
+            usage: wgpu::BufferUsages::STORAGE,
         });
-        queue.write_buffer(&knot_buffer_u, 0, bytemuck::cast_slice(knots_u));
-
-        let knot_buffer_v: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let knot_buffer_v = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("surface sample knot v buffer"),
-            size: knots_v.len() as u64 * std::mem::size_of::<f32>() as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
+            contents: bytemuck::cast_slice(knots_v),
+            usage: wgpu::BufferUsages::STORAGE,
         });
-        queue.write_buffer(&knot_buffer_v, 0, bytemuck::cast_slice(knots_v));
 
         let sample_count_u: u64 = SAMPLES_PER_SEGMENT as u64 * (control_count_u as u64 - 1) + 1;
         let sample_count_v: u64 = SAMPLES_PER_SEGMENT as u64 * (control_count_v as u64 - 1) + 1;
@@ -349,10 +344,10 @@ impl SurfaceSampler {
         });
 
         let mut encoder_u = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("surface sampler stage 1 command encoder"),
+            label: Some("surface sampler stage 1 u command encoder"),
         });
         let mut encoder_v = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("surface sampler stage 1 command encoder"),
+            label: Some("surface sampler stage 1 v command encoder"),
         });
 
         {
@@ -367,11 +362,11 @@ impl SurfaceSampler {
 
             compute_pass_u.set_pipeline(&self.pipeline_stage_1_u);
             compute_pass_u.set_bind_group(0, &bind_group_u, &[]);
-            compute_pass_u.dispatch_workgroups(sample_count_u as u32, sample_count_v as u32, 1);
+            compute_pass_u.dispatch_workgroups(sample_count_u as u32, 1, 1);
 
             compute_pass_v.set_pipeline(&self.pipeline_stage_1_v);
             compute_pass_v.set_bind_group(0, &bind_group_v, &[]);
-            compute_pass_v.dispatch_workgroups(sample_count_u as u32, sample_count_v as u32, 1);
+            compute_pass_v.dispatch_workgroups(sample_count_v as u32, 1, 1);
         }
 
         let idx_u = queue.submit([encoder_u.finish()]);
@@ -395,23 +390,17 @@ impl SurfaceSampler {
     ) -> wgpu::Buffer {
         let device = self.renderer.get_device();
         let queue = self.renderer.get_queue();
-        let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("surface sampler stage 2 uniform buffer"),
-            size: std::mem::size_of::<SurfaceSamplerStage2Uniforms>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
 
-        queue.write_buffer(
-            &uniform_buffer,
-            0,
-            bytemuck::cast_slice(&[SurfaceSamplerStage2Uniforms {
+        let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("surface sampler stage 2 uniform buffer"),
+            contents: bytemuck::cast_slice(&[SurfaceSamplerStage2Uniforms {
                 control_count_u,
                 degree_u,
                 control_count_v,
                 degree_v,
             }]),
-        );
+            usage: wgpu::BufferUsages::UNIFORM,
+        });
 
         let sample_count_u: u64 = SAMPLES_PER_SEGMENT as u64 * (control_count_u as u64 - 1) + 1;
         let sample_count_v: u64 = SAMPLES_PER_SEGMENT as u64 * (control_count_v as u64 - 1) + 1;
@@ -429,10 +418,8 @@ impl SurfaceSampler {
             mapped_at_creation: false,
         });
 
-        let span_buffer_u =
-            create_span_buffer(device, queue, knots_u, degree_u, sample_count_u as u32);
-        let span_buffer_v =
-            create_span_buffer(device, queue, knots_v, degree_v, sample_count_v as u32);
+        let span_buffer_u = create_span_buffer(device, knots_u, degree_u, sample_count_u as u32);
+        let span_buffer_v = create_span_buffer(device, knots_v, degree_v, sample_count_v as u32);
 
         let (basis_funcs_u, basis_funcs_v) = self.create_basis_funcs(
             control_count_u,
@@ -445,17 +432,11 @@ impl SurfaceSampler {
             &span_buffer_v,
         );
 
-        let control_point_buffer: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let control_point_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("surface sample control point buffer"),
-            size: weighted_controls.len() as u64 * std::mem::size_of::<Vec4>() as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
+            contents: bytemuck::cast_slice(weighted_controls),
+            usage: wgpu::BufferUsages::STORAGE,
         });
-        queue.write_buffer(
-            &control_point_buffer,
-            0,
-            bytemuck::cast_slice(weighted_controls),
-        );
 
         let bind_group: wgpu::BindGroup = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("surface sampler bind group"),

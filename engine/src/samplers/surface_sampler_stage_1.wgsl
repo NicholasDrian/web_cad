@@ -19,21 +19,21 @@ fn main_u(
   @builtin(num_workgroups) size: vec3<u32>
   ) {
 
-  let u: f32 = f32(id.x) / f32(size.x) * knots[params.knotCount - 1];
+  let u: f32 = f32(id.x) / f32(size.x) * knots[params.knot_count - 1];
   let s: u32 = span(u);
 
   let offset: u32 = id.x * (params.degree + 1);
-  basisFuncs[offset] = 1.0;
+  basis_funcs[offset] = 1.0;
   for (var j: u32 = 1; j <= params.degree; j++) {
     var saved: f32 = 0;
     for (var r: u32 = 0; r < j; r++) {
       let left: f32 = u - knots[s - (j - r) + 1];
       let right: f32 = knots[s + r + 1] - u;
-      let temp: f32 = basisFuncs[r + offset] / (right + left);
-      basisFuncs[r + offset] = saved + right * temp;
+      let temp: f32 = basis_funcs[r + offset] / (right + left);
+      basis_funcs[r + offset] = saved + right * temp;
       saved = left * temp;
     }
-    basisFuncs[j + offset] = saved;
+    basis_funcs[j + offset] = saved;
   }
 }
 

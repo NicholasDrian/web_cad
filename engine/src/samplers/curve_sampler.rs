@@ -142,7 +142,7 @@ impl CurveSampler {
                 knot_count: knots.len() as u32,
                 degree,
             }]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: wgpu::BufferUsages::UNIFORM,
         });
 
         let sample_count: u64 =
@@ -167,27 +167,19 @@ impl CurveSampler {
             mapped_at_creation: false,
         });
 
-        let control_point_buffer: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let control_point_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("curve sample control point buffer"),
-            size: weighted_controls.len() as u64 * std::mem::size_of::<Vec4>() as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
+            contents: bytemuck::cast_slice(weighted_controls),
+            usage: wgpu::BufferUsages::STORAGE,
         });
-        queue.write_buffer(
-            &control_point_buffer,
-            0,
-            bytemuck::cast_slice(weighted_controls),
-        );
 
-        let knot_buffer: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let knot_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("curve sample knot buffer"),
-            size: knots.len() as u64 * std::mem::size_of::<f32>() as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
+            contents: bytemuck::cast_slice(knots),
+            usage: wgpu::BufferUsages::STORAGE,
         });
-        queue.write_buffer(&knot_buffer, 0, bytemuck::cast_slice(knots));
 
-        let span_buffer = create_span_buffer(device, queue, knots, degree, sample_count as u32);
+        let span_buffer = create_span_buffer(device, knots, degree, sample_count as u32);
 
         let bind_group: wgpu::BindGroup = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("curve sampler bind group"),
