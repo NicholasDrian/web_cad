@@ -1,12 +1,13 @@
 use std::rc::Rc;
 
+use wgpu::util::DeviceExt;
+
 use crate::{
-    math::linear_algebra::vec4::Vec4,
-    render::{buffer::create_and_write_buffer, renderer::Renderer},
+    math::linear_algebra::vec4::Vec4, render::renderer::Renderer,
     samplers::params::SAMPLES_PER_SEGMENT,
 };
 
-use super::utils::{create_span_buffer, create_spans};
+use super::utils::create_span_buffer;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -134,18 +135,15 @@ impl CurveSampler {
         let device = self.renderer.get_device();
         let queue = self.renderer.get_queue();
 
-        let uniform_buffer = create_and_write_buffer(
-            device,
-            queue,
-            "curve sampler uniform buffer",
-            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            false,
-            bytemuck::cast_slice(&[CurveSamplerUniforms {
+        let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("curve sampler uniform buffer"),
+            contents: bytemuck::cast_slice(&[CurveSamplerUniforms {
                 control_count: weighted_controls.len() as u32,
                 knot_count: knots.len() as u32,
                 degree,
             }]),
-        );
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
 
         let sample_count: u64 =
             SAMPLES_PER_SEGMENT as u64 * (weighted_controls.len() as u64 - 1) + 1;

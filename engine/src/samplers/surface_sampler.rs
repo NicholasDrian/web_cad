@@ -10,6 +10,8 @@
 
 use std::rc::Rc;
 
+use wgpu::util::{BufferInitDescriptor, DeviceExt};
+
 use crate::{
     math::linear_algebra::vec4::Vec4, render::renderer::Renderer,
     samplers::params::SAMPLES_PER_SEGMENT,
@@ -248,36 +250,27 @@ impl SurfaceSampler {
     ) -> (wgpu::Buffer, wgpu::Buffer) {
         let device = self.renderer.get_device();
         let queue = self.renderer.get_queue();
-        let uniform_buffer_u = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("surface sampler stage 1 U uniform buffer"),
-            size: std::mem::size_of::<SurfaceSamplerStage1Uniforms>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-        let uniform_buffer_v = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("surface sampler stage 1 V uniform buffer"),
-            size: std::mem::size_of::<SurfaceSamplerStage1Uniforms>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-        queue.write_buffer(
-            &uniform_buffer_u,
-            0,
-            bytemuck::cast_slice(&[SurfaceSamplerStage1Uniforms {
+
+        let uniform_buffer_u = device.create_buffer_init(&BufferInitDescriptor {
+            label: Some("surface sampler stage 1 u uniform buffer"),
+            contents: bytemuck::cast_slice(&[SurfaceSamplerStage1Uniforms {
                 control_count: control_count_u,
                 knot_count: knots_u.len() as u32,
                 degree: degree_u,
             }]),
-        );
-        queue.write_buffer(
-            &uniform_buffer_v,
-            0,
-            bytemuck::cast_slice(&[SurfaceSamplerStage1Uniforms {
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+
+        let uniform_buffer_v = device.create_buffer_init(&BufferInitDescriptor {
+            label: Some("surface sampler stage 1 v uniform buffer"),
+            contents: bytemuck::cast_slice(&[SurfaceSamplerStage1Uniforms {
                 control_count: control_count_v,
                 knot_count: knots_v.len() as u32,
                 degree: degree_v,
             }]),
-        );
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+
         let knot_buffer_u: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("surface sample knot u buffer"),
             size: knots_u.len() as u64 * std::mem::size_of::<f32>() as u64,

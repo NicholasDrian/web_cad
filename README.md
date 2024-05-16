@@ -14,4 +14,4 @@ This repo contains a number of things:
 
 This project is in its infancy, stay tuned for updates
 
-TODO: factor span out of surface sampler stage 1.
+TODO: make samplers and such async
