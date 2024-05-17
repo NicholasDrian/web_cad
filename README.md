@@ -14,4 +14,7 @@ This repo contains a number of things:
 
 This project is in its infancy, stay tuned for updates
 
-TODO: make samplers and such async
+TODO: make samplers and such async better
+TODO: gumball as aditional feature
+TODO: raytracing as aditional feature
+TODO: frustum tracing as aditional feature

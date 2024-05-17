@@ -17,18 +17,18 @@ use crate::{
     samplers::params::SAMPLES_PER_SEGMENT,
 };
 
-use super::utils::create_span_buffer;
+use super::{index_buffer_generator::IndexBufferGenerator, utils::create_span_buffer};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct SurfaceSamplerStage1Uniforms {
+struct SurfaceSamplerStage1Uniforms {
     control_count: u32,
     knot_count: u32,
     degree: u32,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct SurfaceSamplerStage2Uniforms {
+struct SurfaceSamplerStage2Uniforms {
     control_count_u: u32,
     degree_u: u32,
     control_count_v: u32,
@@ -41,6 +41,7 @@ pub struct SurfaceSampler {
     bind_group_layout_stage_2: wgpu::BindGroupLayout,
     pipeline_stage_1: wgpu::ComputePipeline,
     pipeline_stage_2: wgpu::ComputePipeline,
+    index_buffer_generator: IndexBufferGenerator,
 }
 
 impl SurfaceSampler {
@@ -220,11 +221,12 @@ impl SurfaceSampler {
         });
 
         SurfaceSampler {
-            renderer,
+            renderer: renderer.clone(),
             bind_group_layout_stage_1,
             bind_group_layout_stage_2,
             pipeline_stage_1,
             pipeline_stage_2,
+            index_buffer_generator: IndexBufferGenerator::new(device),
         }
     }
 
@@ -379,7 +381,7 @@ impl SurfaceSampler {
         control_count_v: u32,
         knots_u: &[f32],
         knots_v: &[f32],
-    ) -> wgpu::Buffer {
+    ) -> (wgpu::Buffer, wgpu::Buffer) {
         let device = self.renderer.get_device();
         let queue = self.renderer.get_queue();
 
@@ -403,7 +405,7 @@ impl SurfaceSampler {
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
-        let output: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let vertex_buffer: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("surface sampler output buffer"),
             size: sample_count_u * sample_count_v * 16,
             usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
@@ -452,6 +454,14 @@ impl SurfaceSampler {
                 },
                 wgpu::BindGroupEntry {
                     binding: 4,
+                    resource: span_buffer_u.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 5,
+                    resource: span_buffer_v.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 6,
                     resource: samples.as_entire_binding(),
                 },
             ],
@@ -475,7 +485,7 @@ impl SurfaceSampler {
         encoder.copy_buffer_to_buffer(
             &samples,
             0,
-            &output,
+            &vertex_buffer,
             0,
             sample_count_u * sample_count_v * 16,
         );
@@ -484,6 +494,13 @@ impl SurfaceSampler {
 
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
-        output
+        let index_buffer = self.index_buffer_generator.get_index_buffer(
+            device,
+            queue,
+            sample_count_u as u32,
+            sample_count_v as u32,
+        );
+
+        (index_buffer, vertex_buffer)
     }
 }

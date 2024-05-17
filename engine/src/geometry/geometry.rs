@@ -13,4 +13,6 @@ pub fn new_geometry_id() -> GeometryId {
 }
 
 // TODO: time for polymorphism
-pub trait Geometry {}
+pub trait Geometry {
+    fn rotate_about_z(&mut self, radians: f32);
+}

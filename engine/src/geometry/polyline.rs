@@ -46,4 +46,8 @@ impl Polyline {
     }
 }
 
-impl Geometry for Polyline {}
+impl Geometry for Polyline {
+    fn rotate_about_z(&mut self, radians: f32) {
+        todo!()
+    }
+}

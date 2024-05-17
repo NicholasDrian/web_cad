@@ -65,4 +65,8 @@ impl Mesh {
     }
 }
 
-impl Geometry for Mesh {}
+impl Geometry for Mesh {
+    fn rotate_about_z(&mut self, radians: f32) {
+        todo!()
+    }
+}

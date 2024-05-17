@@ -151,6 +151,14 @@ impl Renderer {
                     .set_index_buffer(mesh.get_index_buffer().slice(..), wgpu::IndexFormat::Uint32);
                 render_pass.draw_indexed(0..mesh.get_index_count(), 0, 0..1);
             }
+            for (id, surface) in scene.get_surfaces() {
+                render_pass.set_vertex_buffer(0, surface.get_vertex_buffer().slice(..));
+                render_pass.set_index_buffer(
+                    surface.get_index_buffer().slice(..),
+                    wgpu::IndexFormat::Uint32,
+                );
+                render_pass.draw_indexed(0..surface.get_index_count(), 0, 0..1);
+            }
 
             render_pass.set_pipeline(&self.line_strip_render_pipeline);
             for (id, polyline) in scene.get_polylines() {

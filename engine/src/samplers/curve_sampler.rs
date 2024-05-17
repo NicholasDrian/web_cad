@@ -11,7 +11,7 @@ use super::utils::create_span_buffer;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct CurveSamplerUniforms {
+struct CurveSamplerUniforms {
     control_count: u32,
     knot_count: u32,
     degree: u32,

@@ -18,7 +18,7 @@ pub struct Surface {
     /// Leave empty for default values
     knots_v: Vec<f32>,
     vertex_buffer: wgpu::Buffer,
-    vertex_count: u32,
+    index_count: u32,
     index_buffer: wgpu::Buffer,
 }
 
@@ -39,6 +39,11 @@ impl Surface {
         } else {
             knots_u.to_vec()
         };
+        let knots_v = if knots_v.len() == 0 {
+            default_knot_vector(control_count_v as usize, degree_v)
+        } else {
+            knots_v.to_vec()
+        };
         let weights = if weights.len() == 0 {
             vec![1.0; controls.len()]
         } else {
@@ -54,7 +59,7 @@ impl Surface {
                 w: *weight,
             })
             .collect();
-        let vertex_buffer = surface_sampler.sample_surface(
+        let (index_buffer, vertex_buffer) = surface_sampler.sample_surface(
             degree_u,
             degree_v,
             &weighted_controls[..],
@@ -63,27 +68,35 @@ impl Surface {
             &knots_u[..],
             &knots_v[..],
         );
-        let vertex_count = SAMPLES_PER_SEGMENT
-            * (control_count_u - 1)
-            * SAMPLES_PER_SEGMENT
-            * (control_count_v - 1);
-
-        let index_buffer = todo!();
+        let index_count = (control_count_u - 1) * (control_count_v - 1) * 6;
 
         Self {
-            controls: todo!(),
-            control_count_u: todo!(),
-            control_count_v: todo!(),
-            degree_u: todo!(),
-            degree_v: todo!(),
-            weights: todo!(),
-            knots_u: todo!(),
-            knots_v: todo!(),
+            controls,
+            control_count_u,
+            control_count_v,
+            degree_u,
+            degree_v,
+            weights,
+            knots_u,
+            knots_v,
             vertex_buffer,
-            vertex_count,
+            index_count,
             index_buffer,
         }
     }
+    pub fn get_index_buffer(&self) -> &wgpu::Buffer {
+        &self.index_buffer
+    }
+    pub fn get_vertex_buffer(&self) -> &wgpu::Buffer {
+        &self.vertex_buffer
+    }
+    pub fn get_index_count(&self) -> u32 {
+        self.index_count
+    }
 }
 
-impl Geometry for Surface {}
+impl Geometry for Surface {
+    fn rotate_about_z(&mut self, radians: f32) {
+        todo!()
+    }
+}

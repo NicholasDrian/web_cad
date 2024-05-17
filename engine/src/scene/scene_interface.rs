@@ -170,6 +170,8 @@ impl Scene {
         degree_u: u32,
         degree_v: u32,
         controls: &[f32],
+        control_count_u: u32,
+        control_count_v: u32,
         // Leave empty for default values
         weights: &[f32],
         // Leave empty for default values
@@ -177,6 +179,38 @@ impl Scene {
         // Leave empty for default values
         knots_v: &[f32],
     ) {
-        todo!();
+        let mut control_points: Vec<Vec3> = Vec::new();
+        for i in 0..controls.len() / 3 {
+            control_points.push(Vec3 {
+                x: controls[i * 3],
+                y: controls[i * 3 + 1],
+                z: controls[i * 3 + 2],
+            });
+        }
+        // TODO: this warning indicates performance issues
+        let surface = Surface::new(
+            INSTANCES
+                .lock()
+                .unwrap()
+                .get_mut(&self.instance_handle)
+                .unwrap()
+                .get_surface_sampler(),
+            control_count_u,
+            control_count_v,
+            degree_u,
+            degree_v,
+            control_points,
+            weights,
+            knots_u,
+            knots_v,
+        );
+
+        INSTANCES
+            .lock()
+            .unwrap()
+            .get_mut(&self.instance_handle)
+            .unwrap()
+            .get_scene_mut(self.scene_handle)
+            .add_surface(surface);
     }
 }

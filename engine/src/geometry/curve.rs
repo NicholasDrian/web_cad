@@ -65,4 +65,8 @@ impl Curve {
     }
 }
 
-impl Geometry for Curve {}
+impl Geometry for Curve {
+    fn rotate_about_z(&mut self, radians: f32) {
+        todo!()
+    }
+}
