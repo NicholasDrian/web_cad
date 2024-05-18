@@ -1,5 +1,5 @@
 // In phase1 the basis funcs are evaluated.
-// this creates tables of basis funcs evaludated for each sample.
+// this creates basis funcs evaludated for each u.
 
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> knots: array<f32>;

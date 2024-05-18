@@ -39,8 +39,10 @@ pub struct SurfaceSampler {
     renderer: Rc<Renderer>,
     bind_group_layout_stage_1: wgpu::BindGroupLayout,
     bind_group_layout_stage_2: wgpu::BindGroupLayout,
+    bind_group_layout_stage_3: wgpu::BindGroupLayout,
     pipeline_stage_1: wgpu::ComputePipeline,
     pipeline_stage_2: wgpu::ComputePipeline,
+    pipeline_stage_3: wgpu::ComputePipeline,
     index_buffer_generator: IndexBufferGenerator,
 }
 
@@ -54,6 +56,10 @@ impl SurfaceSampler {
         let shader_module_stage_2 = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("surface sampler stage 2 compute shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("surface_sampler_stage_2.wgsl").into()),
+        });
+        let shader_module_stage_3 = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("surface sampler stage 3 compute shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("surface_sampler_stage_3.wgsl").into()),
         });
         let bind_group_layout_stage_1 =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -190,6 +196,23 @@ impl SurfaceSampler {
                     },
                 ],
             });
+        let bind_group_layout_stage_3 =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("surface sampler stage 3 bind group layout"),
+                entries: &[
+                    // Vertex_buffer
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::COMPUTE,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Storage { read_only: false },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    },
+                ],
+            });
 
         let pipeline_layout_stage_1 =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -203,9 +226,15 @@ impl SurfaceSampler {
                 bind_group_layouts: &[&bind_group_layout_stage_2],
                 push_constant_ranges: &[],
             });
+        let pipeline_layout_stage_3 =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("surface sampler pipeline layout stage 3"),
+                bind_group_layouts: &[&bind_group_layout_stage_3],
+                push_constant_ranges: &[],
+            });
 
         let pipeline_stage_1 = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: Some("surface sampler pipeline"),
+            label: Some("surface sampler pipeline stage 1"),
             layout: Some(&pipeline_layout_stage_1),
             module: &shader_module_stage_1,
             entry_point: "main",
@@ -213,9 +242,16 @@ impl SurfaceSampler {
         });
 
         let pipeline_stage_2 = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: Some("surface sampler pipeline"),
+            label: Some("surface sampler pipeline stage 2"),
             layout: Some(&pipeline_layout_stage_2),
             module: &shader_module_stage_2,
+            entry_point: "main",
+            compilation_options: wgpu::PipelineCompilationOptions::default(),
+        });
+        let pipeline_stage_3 = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            label: Some("surface sampler pipeline stage 3"),
+            layout: Some(&pipeline_layout_stage_3),
+            module: &shader_module_stage_3,
             entry_point: "main",
             compilation_options: wgpu::PipelineCompilationOptions::default(),
         });
@@ -224,8 +260,10 @@ impl SurfaceSampler {
             renderer: renderer.clone(),
             bind_group_layout_stage_1,
             bind_group_layout_stage_2,
+            bind_group_layout_stage_3,
             pipeline_stage_1,
             pipeline_stage_2,
+            pipeline_stage_3,
             index_buffer_generator: IndexBufferGenerator::new(device),
         }
     }
@@ -466,6 +504,15 @@ impl SurfaceSampler {
                 },
             ],
         });
+        let bind_group_stage_3: wgpu::BindGroup =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("surface sampler bind group"),
+                layout: &self.bind_group_layout_stage_3,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: samples.as_entire_binding(),
+                }],
+            });
 
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("surface sampler stage 2 command encoder"),
@@ -479,6 +526,16 @@ impl SurfaceSampler {
 
             compute_pass.set_pipeline(&self.pipeline_stage_2);
             compute_pass.set_bind_group(0, &bind_group, &[]);
+            compute_pass.dispatch_workgroups(sample_count_u as u32, sample_count_v as u32, 1);
+        }
+
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("surface sampler stage 2 compute pass"),
+                timestamp_writes: None,
+            });
+            compute_pass.set_pipeline(&self.pipeline_stage_3);
+            compute_pass.set_bind_group(0, &bind_group_stage_3, &[]);
             compute_pass.dispatch_workgroups(sample_count_u as u32, sample_count_v as u32, 1);
         }
 

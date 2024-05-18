@@ -1,4 +1,4 @@
-
+// compute samples
 
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> weighted_controls: array<vec4<f32>>;
@@ -35,7 +35,6 @@ struct Params {
         sample += weighted_controls[idx] * (basis_funcs_u[u_offset + i] * basis_funcs_v[v_offset + j]);
       }
     }
+    sample /= sample.w;
     samples[(id.x + id.y * size.x) * 2] = sample;
-    samples[(id.x + id.y * size.x) * 2 + 1] = vec4<f32>(0.0, 1.0, 1.0, 1.0);
-
   }
