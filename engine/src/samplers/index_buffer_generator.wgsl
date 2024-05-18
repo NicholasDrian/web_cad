@@ -10,7 +10,6 @@ struct Params {
 @compute @workgroup_size(1,1,1) 
 fn main(
   @builtin(global_invocation_id) id: vec3<u32>,
-  @builtin(num_workgroups) size: vec3<u32>
   ) {
   let offset = id.y * (params.count_u - 1) * 6;
   for (var i: u32 = 0; i < params.count_u - 1; i++) {

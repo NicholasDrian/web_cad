@@ -68,7 +68,9 @@ impl Surface {
             &knots_u[..],
             &knots_v[..],
         );
-        let index_count = (control_count_u - 1) * (control_count_v - 1) * 6;
+        let sample_count_u = SAMPLES_PER_SEGMENT * (control_count_u - 1) + 1;
+        let sample_count_v = SAMPLES_PER_SEGMENT * (control_count_v - 1) + 1;
+        let index_count = (sample_count_u - 1) * (sample_count_v - 1) * 6;
 
         Self {
             controls,

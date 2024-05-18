@@ -401,13 +401,13 @@ impl SurfaceSampler {
 
         let samples: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("surface sampler output sample buffer"),
-            size: sample_count_u * sample_count_v * 16,
+            size: sample_count_u * sample_count_v * 16 * 2,
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
         let vertex_buffer: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("surface sampler output buffer"),
-            size: sample_count_u * sample_count_v * 16,
+            size: sample_count_u * sample_count_v * 16 * 2,
             usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
@@ -487,7 +487,7 @@ impl SurfaceSampler {
             0,
             &vertex_buffer,
             0,
-            sample_count_u * sample_count_v * 16,
+            sample_count_u * sample_count_v * 16 * 2,
         );
 
         let idx = queue.submit([encoder.finish()]);

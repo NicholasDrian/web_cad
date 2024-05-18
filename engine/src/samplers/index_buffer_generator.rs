@@ -86,7 +86,7 @@ impl IndexBufferGenerator {
 
         let index_buffer: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("surface index buffer"),
-            size: ((count_u - 1) * (count_v - 1) * 6) as u64,
+            size: ((count_u - 1) * (count_v - 1) * 6 * std::mem::size_of::<u32>() as u32) as u64,
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::INDEX,
             mapped_at_creation: false,
         });
@@ -124,7 +124,7 @@ impl IndexBufferGenerator {
 
             compute_pass.set_pipeline(&self.pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
-            compute_pass.dispatch_workgroups(1, count_v, 1);
+            compute_pass.dispatch_workgroups(1, count_v - 1, 1);
         }
 
         let idx = queue.submit([encoder.finish()]);

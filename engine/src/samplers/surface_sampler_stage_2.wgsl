@@ -29,12 +29,13 @@ struct Params {
 
     for (var i: u32 = 0; i <= params.degree_u; i++) {
       for (var j: u32 = 0; j <= params.degree_v; j++) {
-        let x_idx = span_u - params.degree_u + i;
-        let y_idx = span_v - params.degree_v + j;
-        let idx = x_idx + y_idx * size.x;
-        sample += weighted_controls[0] * (basis_funcs_u[u_offset + i] * basis_funcs_v[v_offset + j]);
+        let idx_x = span_u - params.degree_u + i;
+        let idx_y = span_v - params.degree_v + j;
+        let idx = idx_x + idx_y * params.control_count_u;
+        sample += weighted_controls[idx] * (basis_funcs_u[u_offset + i] * basis_funcs_v[v_offset + j]);
       }
     }
-    samples[id.x + id.y * size.x] = sample;
+    samples[(id.x + id.y * size.x) * 2] = sample;
+    samples[(id.x + id.y * size.x) * 2 + 1] = vec4<f32>(0.0, 1.0, 1.0, 1.0);
 
   }
