@@ -1,6 +1,8 @@
 use crate::math::{linear_algebra::vec3::*, utils::TINY_FLOAT};
 
-#[test]
+use wasm_bindgen_test::*;
+
+#[wasm_bindgen_test]
 pub fn test_dot() {
     let a = Vec3 {
         x: 1.0,
@@ -15,7 +17,7 @@ pub fn test_dot() {
     assert_eq!(Vec3::dot(&a, &b), 32.0);
 }
 
-#[test]
+#[wasm_bindgen_test]
 pub fn test_cross() {
     let a = Vec3 {
         x: 1.0,
@@ -35,7 +37,7 @@ pub fn test_cross() {
     assert_eq!(Vec3::cross(&a, &b), axb);
 }
 
-#[test]
+#[wasm_bindgen_test]
 pub fn test_normalize() {
     let a = Vec3 {
         x: 0.0,
@@ -51,7 +53,7 @@ pub fn test_normalize() {
     assert!((b.to_normalized().len() - 1.0).abs() < TINY_FLOAT);
 }
 
-#[test]
+#[wasm_bindgen_test]
 pub fn test_len() {
     let a = Vec3 {
         x: 1.0,

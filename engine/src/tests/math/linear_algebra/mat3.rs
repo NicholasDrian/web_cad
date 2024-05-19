@@ -1,6 +1,8 @@
 use crate::math::linear_algebra::{mat3::Mat3, vec3::Vec3};
 
-#[test]
+use wasm_bindgen_test::*;
+
+#[wasm_bindgen_test]
 fn test_mul() {
     let m_a = Mat3 {
         nums: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
@@ -18,7 +20,7 @@ fn test_mul() {
     assert_eq!(Mat3::multiply(&m_a, &m_i), m_a);
     assert_eq!(Mat3::multiply(&m_i, &m_a), m_a);
 }
-#[test]
+#[wasm_bindgen_test]
 fn test_transform() {
     let m_t = Mat3 {
         nums: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],

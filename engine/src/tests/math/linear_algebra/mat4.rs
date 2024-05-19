@@ -1,7 +1,9 @@
 use crate::math::linear_algebra::mat4::*;
 use crate::math::linear_algebra::vec4::*;
 
-#[test]
+use wasm_bindgen_test::*;
+
+#[wasm_bindgen_test]
 fn test_mul() {
     let m_i = Mat4::identity();
     let m_a = Mat4::new(&[
@@ -20,7 +22,7 @@ fn test_mul() {
     assert_eq!(Mat4::multiply(&m_a, &m_b), m_ab);
 }
 
-#[test]
+#[wasm_bindgen_test]
 fn test_transform() {
     let m_i = Mat4::identity();
     let m_t = Mat4::new(&[
@@ -40,4 +42,14 @@ fn test_transform() {
     };
     assert_eq!(m_i.transform(&v), v);
     assert_eq!(m_t.transform(&v), tv);
+}
+
+#[wasm_bindgen_test]
+fn test_rotate_point_axis() {
+    assert!(false);
+}
+
+#[wasm_bindgen_test]
+fn translate() {
+    assert!(false);
 }

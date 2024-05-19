@@ -19,4 +19,7 @@ use wasm_bindgen::prelude::*;
 pub fn init() {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
     console_log::init_with_level(log::Level::Trace).expect("Could't initialize logger");
+
+    #[cfg(test)]
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 }

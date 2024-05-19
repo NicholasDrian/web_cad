@@ -236,6 +236,15 @@ impl Mat4 {
         }
     }
 
+    pub fn translate(v: Vec3) -> Mat4 {
+        todo!();
+    }
+
+    /// Rotates theta radians around a center point with a given axis of rotation.
+    pub fn rotate_point_axis(point: Vec3, axis: Vec3, radians: f32) -> Mat4 {
+        todo!();
+    }
+
     pub fn transform_vector(&self, v: &Vec3) -> Vec3 {
         let temp = self.transform(&Vec4 {
             x: v.x,
