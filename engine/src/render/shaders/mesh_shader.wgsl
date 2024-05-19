@@ -1,9 +1,15 @@
 
 @group(0) @binding(0) var<uniform> scene_uniforms: SceneUniforms;
+@group(1) @binding(0) var<uniform> geometry_uniforms: GeometryUniforms;
 
 
 struct SceneUniforms {
-    model_view: mat4x4<f32>,
+    view_proj: mat4x4<f32>,
+  }
+
+struct GeometryUniforms {
+    model: mat4x4<f32>,
+    color: vec4<f32>,
   }
 
 
@@ -23,7 +29,7 @@ fn vs_main(
 ) -> VertexOutput {
     var out: VertexOutput;
     out.normal = in.normal;
-    out.clip_position = scene_uniforms.model_view * in.position;
+    out.clip_position = scene_uniforms.view_proj * geometry_uniforms.model * in.position;
     return out;
 }
 

@@ -1,5 +1,7 @@
 use wgpu::util::DeviceExt;
 
+use crate::math::linear_algebra::vec3::Vec3;
+
 use super::geometry::Geometry;
 
 #[repr(C)]
@@ -44,10 +46,11 @@ impl Polyline {
     pub fn get_vertex_count(&self) -> u32 {
         self.vertex_count
     }
+    pub fn get_bind_group(&self) -> &wgpu::BindGroup {
+        todo!()
+    }
 }
 
 impl Geometry for Polyline {
-    fn rotate_about_z(&mut self, radians: f32) {
-        todo!()
-    }
+    fn rotate(&mut self, center: Vec3, acis: Vec3, radians: f32) {}
 }

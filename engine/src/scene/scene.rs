@@ -37,20 +37,24 @@ impl SceneInternal {
     pub fn get_meshes(&self) -> &HashMap<GeometryId, Mesh> {
         &self.meshes
     }
-    pub fn add_curve(&mut self, curve: Curve) {
+    pub fn add_curve(&mut self, curve: Curve) -> GeometryId {
         let id = new_geometry_id();
         self.curves.insert(id, curve);
+        id
     }
-    pub fn add_surface(&mut self, surface: Surface) {
+    pub fn add_surface(&mut self, surface: Surface) -> GeometryId {
         let id = new_geometry_id();
         self.surfaces.insert(id, surface);
+        id
     }
-    pub fn add_polyline(&mut self, polyline: Polyline) {
+    pub fn add_polyline(&mut self, polyline: Polyline) -> GeometryId {
         let id = new_geometry_id();
         self.polylines.insert(id, polyline);
+        id
     }
-    pub fn add_mesh(&mut self, mesh: Mesh) {
+    pub fn add_mesh(&mut self, mesh: Mesh) -> GeometryId {
         let id = new_geometry_id();
         self.meshes.insert(id, mesh);
+        id
     }
 }

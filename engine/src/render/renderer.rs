@@ -9,8 +9,8 @@ pub struct Renderer {
     adapter: wgpu::Adapter,
     mesh_render_pipeline: wgpu::RenderPipeline,
     line_strip_render_pipeline: wgpu::RenderPipeline,
-    // This lives in renderer because it is needed for pipeline creation
     viewport_bind_group_layout: wgpu::BindGroupLayout,
+    geometry_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl Renderer {
@@ -62,19 +62,33 @@ impl Renderer {
                     },
                     count: None,
                 }],
-                label: Some("scene bind group"),
+                label: Some("viewport bind group layout"),
+            });
+        let geometry_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+                label: Some("geometry bind group layout"),
             });
 
         let mesh_render_pipeline = create_render_pipeline(
             &device,
-            &[&viewport_bind_group_layout],
+            &[&viewport_bind_group_layout, &geometry_bind_group_layout],
             &mesh_shader,
             PipelinePrimitive::Mesh,
             1u32,
         );
         let line_strip_render_pipeline = create_render_pipeline(
             &device,
-            &[&viewport_bind_group_layout],
+            &[&viewport_bind_group_layout, &geometry_bind_group_layout],
             &line_strip_shader,
             PipelinePrimitive::LineStrip,
             1u32,
@@ -88,6 +102,7 @@ impl Renderer {
             mesh_render_pipeline,
             line_strip_render_pipeline,
             viewport_bind_group_layout,
+            geometry_bind_group_layout,
         }
     }
 
@@ -102,6 +117,9 @@ impl Renderer {
     }
     pub fn get_viewport_bind_group_layout(&self) -> &wgpu::BindGroupLayout {
         &self.viewport_bind_group_layout
+    }
+    pub fn get_geometry_bind_group_layout(&self) -> &wgpu::BindGroupLayout {
+        &self.geometry_bind_group_layout
     }
     pub fn get_queue(&self) -> &wgpu::Queue {
         &self.queue
@@ -145,30 +163,36 @@ impl Renderer {
             render_pass.set_bind_group(0, viewport.get_bind_group(), &[]);
 
             render_pass.set_pipeline(&self.mesh_render_pipeline);
-            for (id, mesh) in scene.get_meshes() {
+            for mesh in scene.get_meshes().values() {
+                render_pass.set_bind_group(1, mesh.get_bind_group(), &[]);
                 render_pass.set_vertex_buffer(0, mesh.get_vertex_buffer().slice(..));
                 render_pass
                     .set_index_buffer(mesh.get_index_buffer().slice(..), wgpu::IndexFormat::Uint32);
                 render_pass.draw_indexed(0..mesh.get_index_count(), 0, 0..1);
             }
-            for (id, surface) in scene.get_surfaces() {
-                render_pass.set_vertex_buffer(0, surface.get_vertex_buffer().slice(..));
-                render_pass.set_index_buffer(
-                    surface.get_index_buffer().slice(..),
-                    wgpu::IndexFormat::Uint32,
-                );
-                render_pass.draw_indexed(0..surface.get_index_count(), 0, 0..1);
-            }
+            /*
+                        for surface in scene.get_surfaces().values() {
+                            render_pass.set_bind_group(1, surface.get_bind_group(), &[]);
+                            render_pass.set_vertex_buffer(0, surface.get_vertex_buffer().slice(..));
+                            render_pass.set_index_buffer(
+                                surface.get_index_buffer().slice(..),
+                                wgpu::IndexFormat::Uint32,
+                            );
+                            render_pass.draw_indexed(0..surface.get_index_count(), 0, 0..1);
+                        }
 
-            render_pass.set_pipeline(&self.line_strip_render_pipeline);
-            for (id, polyline) in scene.get_polylines() {
-                render_pass.set_vertex_buffer(0, polyline.get_vertex_buffer().slice(..));
-                render_pass.draw(0..polyline.get_vertex_count(), 0..1);
-            }
-            for (id, curve) in scene.get_curves() {
-                render_pass.set_vertex_buffer(0, curve.get_vertex_buffer().slice(..));
-                render_pass.draw(0..curve.get_vertex_count(), 0..1);
-            }
+                        render_pass.set_pipeline(&self.line_strip_render_pipeline);
+                        for polyline in scene.get_polylines().values() {
+                            render_pass.set_bind_group(1, polyline.get_bind_group(), &[]);
+                            render_pass.set_vertex_buffer(0, polyline.get_vertex_buffer().slice(..));
+                            render_pass.draw(0..polyline.get_vertex_count(), 0..1);
+                        }
+                        for curve in scene.get_curves().values() {
+                            render_pass.set_bind_group(1, curve.get_bind_group(), &[]);
+                            render_pass.set_vertex_buffer(0, curve.get_vertex_buffer().slice(..));
+                            render_pass.draw(0..curve.get_vertex_count(), 0..1);
+                        }
+            */
         }
 
         let idx = self.queue.submit(std::iter::once(encoder.finish()));

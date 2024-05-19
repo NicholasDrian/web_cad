@@ -236,13 +236,76 @@ impl Mat4 {
         }
     }
 
-    pub fn translate(v: Vec3) -> Mat4 {
-        todo!();
+    pub fn rotate_center_axis(center: Vec3, axis: Vec3, radians: f32) -> Mat4 {
+        let to_origin = Mat4::translation(&Vec3::to_scaled(&center, -1.0));
+        let rotation = Mat4::rotate_axis(axis, radians);
+        let from_origin = Mat4::translation(&center);
+        Mat4::multiply(&Mat4::multiply(&from_origin, &rotation), &to_origin)
     }
 
-    /// Rotates theta radians around a center point with a given axis of rotation.
-    pub fn rotate_point_axis(point: Vec3, axis: Vec3, radians: f32) -> Mat4 {
-        todo!();
+    /// Rotates about the origin with a given axis of rotation.
+    pub fn rotate_axis(mut axis: Vec3, radians: f32) -> Mat4 {
+        axis.normalize();
+        let x = axis.x;
+        let y = axis.y;
+        let z = axis.z;
+        let xx = x * x;
+        let yy = y * y;
+        let zz = z * z;
+        let cos = f32::cos(radians);
+        let sin = f32::sin(radians);
+        let one_minus_cos = 1.0 - cos;
+        Mat4 {
+            a: xx + (1.0 - xx) * cos,
+            b: x * y * one_minus_cos + z * sin,
+            c: x * z * one_minus_cos - y * sin,
+            d: 0.0,
+            e: x * y * one_minus_cos - z * sin,
+            f: yy + (1.0 - yy) * cos,
+            g: y * z * one_minus_cos + x * sin,
+            h: 0.0,
+            i: x * z * one_minus_cos + y * sin,
+            j: y * z * one_minus_cos - x * sin,
+            k: zz + (1.0 - zz) * cos,
+            l: 0.0,
+            m: 0.0,
+            n: 0.0,
+            o: 0.0,
+            p: 1.0,
+        }
+
+        /*
+          let x = axis[0];
+          let y = axis[1];
+          let z = axis[2];
+          const n = Math.sqrt(x * x + y * y + z * z);
+          x /= n;
+          y /= n;
+          z /= n;
+          const xx = x * x;
+          const yy = y * y;
+          const zz = z * z;
+          const c = Math.cos(angleInRadians);
+          const s = Math.sin(angleInRadians);
+          const oneMinusCosine = 1 - c;
+
+          dst[ 0] = xx + (1 - xx) * c;
+          dst[ 1] = x * y * oneMinusCosine + z * s;
+          dst[ 2] = x * z * oneMinusCosine - y * s;
+          dst[ 3] = 0;
+          dst[ 4] = x * y * oneMinusCosine - z * s;
+          dst[ 5] = yy + (1 - yy) * c;
+          dst[ 6] = y * z * oneMinusCosine + x * s;
+          dst[ 7] = 0;
+          dst[ 8] = x * z * oneMinusCosine + y * s;
+          dst[ 9] = y * z * oneMinusCosine - x * s;
+          dst[10] = zz + (1 - zz) * c;
+          dst[11] = 0;
+          dst[12] = 0;
+          dst[13] = 0;
+          dst[14] = 0;
+          dst[15] = 1;
+        */
     }
 
     pub fn transform_vector(&self, v: &Vec3) -> Vec3 {

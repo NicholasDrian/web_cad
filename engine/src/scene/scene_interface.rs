@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     geometry::{
         curve::Curve,
+        geometry::GeometryId,
         mesh::{Mesh, MeshVertex},
         polyline::{Polyline, PolylineVertex},
         surface::Surface,
@@ -30,7 +31,7 @@ impl Scene {
     }
 
     #[wasm_bindgen]
-    pub fn add_mesh(&self, positions: &[f32], normals: &[f32], indices: &[u32]) {
+    pub fn add_mesh(&self, positions: &[f32], normals: &[f32], indices: &[u32]) -> GeometryId {
         let mut verts: Vec<MeshVertex> = Vec::new();
         for i in 0..positions.len() / 3 {
             verts.push(MeshVertex {
@@ -47,13 +48,12 @@ impl Scene {
         // TODO: why do i need two gets????
         // I currently hate the borrow checker
         let mesh = Mesh::new(
-            INSTANCES
+            &INSTANCES
                 .lock()
                 .unwrap()
                 .get_mut(&self.instance_handle)
                 .unwrap()
-                .get_renderer()
-                .get_device(),
+                .get_renderer(),
             &verts[..],
             indices,
         );
@@ -64,11 +64,11 @@ impl Scene {
             .get_mut(&self.instance_handle)
             .unwrap()
             .get_scene_mut(self.scene_handle)
-            .add_mesh(mesh);
+            .add_mesh(mesh)
     }
 
     #[wasm_bindgen]
-    pub fn add_polyline(&self, positions: &[f32]) {
+    pub fn add_polyline(&self, positions: &[f32]) -> GeometryId {
         let mut verts: Vec<PolylineVertex> = Vec::new();
         for i in 0..positions.len() / 3 {
             verts.push(PolylineVertex {
@@ -97,7 +97,7 @@ impl Scene {
             .get_mut(&self.instance_handle)
             .unwrap()
             .get_scene_mut(self.scene_handle)
-            .add_polyline(polyline);
+            .add_polyline(polyline)
     }
 
     /// Controls ar packed into a flat list of floats for performance and ease
@@ -117,7 +117,7 @@ impl Scene {
         weights: &[f32],
         // Leave empty for default values
         knots: &[f32],
-    ) {
+    ) -> GeometryId {
         let mut control_points: Vec<Vec3> = Vec::new();
         for i in 0..controls.len() / 3 {
             control_points.push(Vec3 {
@@ -147,7 +147,7 @@ impl Scene {
             .get_mut(&self.instance_handle)
             .unwrap()
             .get_scene_mut(self.scene_handle)
-            .add_curve(curve);
+            .add_curve(curve)
     }
 
     /// Controls should be row major, and U major
@@ -178,7 +178,7 @@ impl Scene {
         knots_u: &[f32],
         // Leave empty for default values
         knots_v: &[f32],
-    ) {
+    ) -> GeometryId {
         let mut control_points: Vec<Vec3> = Vec::new();
         for i in 0..controls.len() / 3 {
             control_points.push(Vec3 {
@@ -211,6 +211,6 @@ impl Scene {
             .get_mut(&self.instance_handle)
             .unwrap()
             .get_scene_mut(self.scene_handle)
-            .add_surface(surface);
+            .add_surface(surface)
     }
 }

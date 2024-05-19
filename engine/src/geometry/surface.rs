@@ -95,10 +95,11 @@ impl Surface {
     pub fn get_index_count(&self) -> u32 {
         self.index_count
     }
+    pub fn get_bind_group(&self) -> &wgpu::BindGroup {
+        todo!()
+    }
 }
 
 impl Geometry for Surface {
-    fn rotate_about_z(&mut self, radians: f32) {
-        todo!()
-    }
+    fn rotate(&mut self, center: Vec3, axis: Vec3, radians: f32) {}
 }

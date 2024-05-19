@@ -55,9 +55,12 @@ let polyline_viewport = instance.create_viewport(canvas2);
 let curve_viewport = instance.create_viewport(canvas3);
 let surface_viewport = instance.create_viewport(canvas4);
 
-instance.draw_scene_to_viewport(mesh_scene, mesh_viewport);
-instance.draw_scene_to_viewport(polyline_scene, polyline_viewport);
-instance.draw_scene_to_viewport(curve_scene, curve_viewport);
-instance.draw_scene_to_viewport(surface_scene, surface_viewport);
+while (true) {
+  instance.draw_scene_to_viewport(mesh_scene, mesh_viewport);
+  instance.draw_scene_to_viewport(polyline_scene, polyline_viewport);
+  instance.draw_scene_to_viewport(curve_scene, curve_viewport);
+  instance.draw_scene_to_viewport(surface_scene, surface_viewport);
+  mesh_scene.rotate()
+}
 
 

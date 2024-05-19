@@ -92,4 +92,12 @@ impl Vec3 {
         self.y *= s;
         self.z *= s;
     }
+
+    pub fn to_scaled(v: &Vec3, s: f32) -> Vec3 {
+        Vec3 {
+            x: v.x * s,
+            y: v.y * s,
+            z: v.z * s,
+        }
+    }
 }
