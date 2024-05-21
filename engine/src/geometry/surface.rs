@@ -3,7 +3,7 @@ use crate::{
     samplers::{params::SAMPLES_PER_SEGMENT, surface_sampler::SurfaceSampler},
 };
 
-use super::{geometry::Geometry, utils::default_knot_vector};
+use super::{bind_group::GeometryBindGroupObject, geometry::Geometry, utils::default_knot_vector};
 
 pub struct Surface {
     controls: Vec<Vec3>,
@@ -20,6 +20,7 @@ pub struct Surface {
     vertex_buffer: wgpu::Buffer,
     index_count: u32,
     index_buffer: wgpu::Buffer,
+    bind_group_object: GeometryBindGroupObject,
 }
 
 impl Surface {
@@ -71,6 +72,7 @@ impl Surface {
         let sample_count_u = SAMPLES_PER_SEGMENT * (control_count_u - 1) + 1;
         let sample_count_v = SAMPLES_PER_SEGMENT * (control_count_v - 1) + 1;
         let index_count = (sample_count_u - 1) * (sample_count_v - 1) * 6;
+        let bind_group_object = GeometryBindGroupObject::new(surface_sampler.get_renderer());
 
         Self {
             controls,
@@ -84,6 +86,7 @@ impl Surface {
             vertex_buffer,
             index_count,
             index_buffer,
+            bind_group_object,
         }
     }
     pub fn get_index_buffer(&self) -> &wgpu::Buffer {
@@ -96,10 +99,12 @@ impl Surface {
         self.index_count
     }
     pub fn get_bind_group(&self) -> &wgpu::BindGroup {
-        todo!()
+        self.bind_group_object.get_bind_group()
     }
 }
 
 impl Geometry for Surface {
-    fn rotate(&mut self, center: Vec3, axis: Vec3, radians: f32) {}
+    fn get_bind_group_object_mut(&mut self) -> &mut GeometryBindGroupObject {
+        &mut self.bind_group_object
+    }
 }

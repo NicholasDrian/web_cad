@@ -7,7 +7,7 @@ use crate::{
     render::renderer::Renderer,
 };
 
-use super::geometry::{Geometry, GeometryUniforms};
+use super::{bind_group::GeometryBindGroupObject, geometry::Geometry};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -35,13 +35,10 @@ pub static MESH_VERTEX_BUFFER_LAYOUT: wgpu::VertexBufferLayout<'static> =
     };
 
 pub struct Mesh {
-    renderer: Rc<Renderer>,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
-    uniform_buffer: wgpu::Buffer,
-    bind_group: wgpu::BindGroup,
+    bind_group_object: GeometryBindGroupObject,
     index_count: u32,
-    model: Mat4,
 }
 
 impl Mesh {
@@ -62,41 +59,12 @@ impl Mesh {
                     usage: wgpu::BufferUsages::INDEX,
                     contents: bytemuck::cast_slice(indices),
                 });
-        let model = Mat4::identity();
-        let uniform_buffer =
-            renderer
-                .get_device()
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("mesh uniform buffer"),
-                    contents: bytemuck::cast_slice(&[GeometryUniforms {
-                        model,
-                        color: Vec4 {
-                            x: 0.0,
-                            y: 0.5,
-                            z: 1.0,
-                            w: 1.0,
-                        },
-                    }]),
-                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-                });
-        let bind_group = renderer
-            .get_device()
-            .create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("mesh bind group"),
-                layout: renderer.get_geometry_bind_group_layout(),
-                entries: &[wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: uniform_buffer.as_entire_binding(),
-                }],
-            });
+        let bind_group = GeometryBindGroupObject::new(renderer);
         Mesh {
             vertex_buffer,
             index_buffer,
-            uniform_buffer,
-            bind_group,
             index_count: indices.len() as u32,
-            model,
-            renderer,
+            bind_group_object: bind_group,
         }
     }
 
@@ -112,18 +80,12 @@ impl Mesh {
         self.index_count
     }
     pub fn get_bind_group(&self) -> &wgpu::BindGroup {
-        &self.bind_group
+        self.bind_group_object.get_bind_group()
     }
 }
 
 impl Geometry for Mesh {
-    fn rotate(&mut self, center: Vec3, axis: Vec3, radians: f32) {
-        let rotation = Mat4::rotate_center_axis(center, axis, radians);
-        self.model = Mat4::multiply(&rotation, &self.model);
-        self.renderer.get_queue().write_buffer(
-            &self.uniform_buffer,
-            std::mem::offset_of!(GeometryUniforms, model) as u64,
-            bytemuck::cast_slice(&[self.model]),
-        );
+    fn get_bind_group_object_mut(&mut self) -> &mut GeometryBindGroupObject {
+        &mut self.bind_group_object
     }
 }

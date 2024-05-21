@@ -560,4 +560,7 @@ impl SurfaceSampler {
 
         (index_buffer, vertex_buffer)
     }
+    pub fn get_renderer(&self) -> Rc<Renderer> {
+        self.renderer.clone()
+    }
 }

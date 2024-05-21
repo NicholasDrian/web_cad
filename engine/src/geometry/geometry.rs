@@ -2,6 +2,8 @@ use std::sync::Mutex;
 
 use crate::math::linear_algebra::{mat4::Mat4, vec3::Vec3, vec4::Vec4};
 
+use super::bind_group::GeometryBindGroupObject;
+
 pub type GeometryId = u64;
 
 static mut GEOMETRY_ID_GENERATOR: Mutex<GeometryId> = Mutex::new(0u64);
@@ -16,12 +18,10 @@ pub fn new_geometry_id() -> GeometryId {
 
 // TODO: time for polymorphism
 pub trait Geometry {
-    fn rotate(&mut self, center: Vec3, acis: Vec3, radians: f32);
-}
+    fn get_bind_group_object_mut(&mut self) -> &mut GeometryBindGroupObject;
 
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct GeometryUniforms {
-    pub model: Mat4,
-    pub color: Vec4,
+    fn rotate(&mut self, center: Vec3, axis: Vec3, radians: f32) {
+        self.get_bind_group_object_mut()
+            .rotate(center, axis, radians);
+    }
 }

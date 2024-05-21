@@ -1,3 +1,4 @@
+pub mod bind_group;
 pub mod curve;
 pub mod geometry;
 pub mod mesh;

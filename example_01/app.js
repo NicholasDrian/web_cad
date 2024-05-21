@@ -69,9 +69,9 @@ while (true) {
   instance.draw_scene_to_viewport(surface_scene, surface_viewport);
 
   mesh_scene.rotate_geometry(mesh, [0, 0, 0], [0, 1, 0], 0.1);
-  //  polyline_scene.rotate_geometry(poly, [0, 0, 0], [0, 1, 0], 0.1);
-  //  curve.rotate_geometry(curve, [0, 0, 0], [0, 1, 0], 0.1);
-  //  surface_scene.rotate_geometry(curve, [0, 0, 0], [0, 1, 0], 0.1);
+  polyline_scene.rotate_geometry(poly, [0, 0, 0], [0, 1, 0], 0.1);
+  curve_scene.rotate_geometry(curve, [0, 0, 0], [0, 1, 0], 0.1);
+  surface_scene.rotate_geometry(surface, [0, 0, 0], [0, 1, 0], 0.1);
 
   await new Promise(r => setTimeout(r, 200));
 }

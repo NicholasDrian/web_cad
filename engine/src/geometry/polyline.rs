@@ -1,8 +1,10 @@
+use std::rc::Rc;
+
 use wgpu::util::DeviceExt;
 
-use crate::math::linear_algebra::vec3::Vec3;
+use crate::{math::linear_algebra::vec3::Vec3, render::renderer::Renderer};
 
-use super::geometry::Geometry;
+use super::{bind_group::GeometryBindGroupObject, geometry::Geometry};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -23,19 +25,25 @@ pub static POLYLINE_VERTEX_BUFFER_LAYOUT: wgpu::VertexBufferLayout<'static> =
 
 pub struct Polyline {
     vertex_buffer: wgpu::Buffer,
+    bind_group_object: GeometryBindGroupObject,
     vertex_count: u32,
 }
 
 impl Polyline {
-    pub fn new(device: &wgpu::Device, verts: &[PolylineVertex]) -> Polyline {
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(verts),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
+    pub fn new(renderer: Rc<Renderer>, verts: &[PolylineVertex]) -> Polyline {
+        let vertex_buffer =
+            renderer
+                .get_device()
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Vertex Buffer"),
+                    contents: bytemuck::cast_slice(verts),
+                    usage: wgpu::BufferUsages::VERTEX,
+                });
+        let bind_group_object = GeometryBindGroupObject::new(renderer);
         Polyline {
             vertex_buffer,
             vertex_count: verts.len() as u32,
+            bind_group_object,
         }
     }
 
@@ -47,10 +55,12 @@ impl Polyline {
         self.vertex_count
     }
     pub fn get_bind_group(&self) -> &wgpu::BindGroup {
-        todo!()
+        self.bind_group_object.get_bind_group()
     }
 }
 
 impl Geometry for Polyline {
-    fn rotate(&mut self, center: Vec3, acis: Vec3, radians: f32) {}
+    fn get_bind_group_object_mut(&mut self) -> &mut GeometryBindGroupObject {
+        &mut self.bind_group_object
+    }
 }

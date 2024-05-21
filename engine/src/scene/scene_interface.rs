@@ -86,8 +86,7 @@ impl Scene {
                 .unwrap()
                 .get_mut(&self.instance_handle)
                 .unwrap()
-                .get_renderer()
-                .get_device(),
+                .get_renderer(),
             &verts[..],
         );
 

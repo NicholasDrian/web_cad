@@ -1,5 +1,5 @@
 This repo contains a number of things:
-- A 3D CAD engine
+- A CAD library/engine for web apps
   - Written in Rust, compiled to WASM, using WebGPU, targeting modern browsers.
   - currently a WIP
 - Basic examples of how to use the engine.
@@ -14,6 +14,9 @@ This repo contains a number of things:
 
 This project is in its infancy, stay tuned for updates
 
+TODO: depth buffer
+TODO: factor out GPU device from renderer
+TODO: event loop js
 TODO: make samplers and such async better
 TODO: gumball as aditional feature
 TODO: raytracing as aditional feature

@@ -170,29 +170,27 @@ impl Renderer {
                     .set_index_buffer(mesh.get_index_buffer().slice(..), wgpu::IndexFormat::Uint32);
                 render_pass.draw_indexed(0..mesh.get_index_count(), 0, 0..1);
             }
-            /*
-                        for surface in scene.get_surfaces().values() {
-                            render_pass.set_bind_group(1, surface.get_bind_group(), &[]);
-                            render_pass.set_vertex_buffer(0, surface.get_vertex_buffer().slice(..));
-                            render_pass.set_index_buffer(
-                                surface.get_index_buffer().slice(..),
-                                wgpu::IndexFormat::Uint32,
-                            );
-                            render_pass.draw_indexed(0..surface.get_index_count(), 0, 0..1);
-                        }
+            for surface in scene.get_surfaces().values() {
+                render_pass.set_bind_group(1, surface.get_bind_group(), &[]);
+                render_pass.set_vertex_buffer(0, surface.get_vertex_buffer().slice(..));
+                render_pass.set_index_buffer(
+                    surface.get_index_buffer().slice(..),
+                    wgpu::IndexFormat::Uint32,
+                );
+                render_pass.draw_indexed(0..surface.get_index_count(), 0, 0..1);
+            }
 
-                        render_pass.set_pipeline(&self.line_strip_render_pipeline);
-                        for polyline in scene.get_polylines().values() {
-                            render_pass.set_bind_group(1, polyline.get_bind_group(), &[]);
-                            render_pass.set_vertex_buffer(0, polyline.get_vertex_buffer().slice(..));
-                            render_pass.draw(0..polyline.get_vertex_count(), 0..1);
-                        }
-                        for curve in scene.get_curves().values() {
-                            render_pass.set_bind_group(1, curve.get_bind_group(), &[]);
-                            render_pass.set_vertex_buffer(0, curve.get_vertex_buffer().slice(..));
-                            render_pass.draw(0..curve.get_vertex_count(), 0..1);
-                        }
-            */
+            render_pass.set_pipeline(&self.line_strip_render_pipeline);
+            for curve in scene.get_curves().values() {
+                render_pass.set_bind_group(1, curve.get_bind_group(), &[]);
+                render_pass.set_vertex_buffer(0, curve.get_vertex_buffer().slice(..));
+                render_pass.draw(0..curve.get_vertex_count(), 0..1);
+            }
+            for polyline in scene.get_polylines().values() {
+                render_pass.set_bind_group(1, polyline.get_bind_group(), &[]);
+                render_pass.set_vertex_buffer(0, polyline.get_vertex_buffer().slice(..));
+                render_pass.draw(0..polyline.get_vertex_count(), 0..1);
+            }
         }
 
         let idx = self.queue.submit(std::iter::once(encoder.finish()));

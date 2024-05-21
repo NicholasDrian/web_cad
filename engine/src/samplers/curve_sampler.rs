@@ -235,4 +235,8 @@ impl CurveSampler {
 
         output
     }
+
+    pub fn get_renderer(&self) -> Rc<Renderer> {
+        self.renderer.clone()
+    }
 }

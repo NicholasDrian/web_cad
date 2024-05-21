@@ -4,11 +4,12 @@ use crate::{
     samplers::{curve_sampler::CurveSampler, params::SAMPLES_PER_SEGMENT},
 };
 
-use super::{geometry::Geometry, utils::default_knot_vector};
+use super::{bind_group::GeometryBindGroupObject, geometry::Geometry, utils::default_knot_vector};
 
 pub struct Curve {
     degree: u32,
     controls: Vec<Vec3>,
+    bind_group_object: GeometryBindGroupObject,
     weights: Vec<f32>,
     knots: Vec<f32>,
     // Samples
@@ -46,6 +47,7 @@ impl Curve {
             .collect();
         let vertex_buffer = curve_sampler.sample_curve(degree, &weighted_controls, &knots);
         let vertex_count = SAMPLES_PER_SEGMENT * (controls.len() as u32 - 1) + 1;
+        let bind_group_object = GeometryBindGroupObject::new(curve_sampler.get_renderer());
         Curve {
             degree,
             controls,
@@ -53,6 +55,7 @@ impl Curve {
             knots,
             vertex_buffer,
             vertex_count,
+            bind_group_object,
         }
     }
 
@@ -65,10 +68,12 @@ impl Curve {
     }
 
     pub fn get_bind_group(&self) -> &wgpu::BindGroup {
-        todo!()
+        self.bind_group_object.get_bind_group()
     }
 }
 
 impl Geometry for Curve {
-    fn rotate(&mut self, center: Vec3, acis: Vec3, radians: f32) {}
+    fn get_bind_group_object_mut(&mut self) -> &mut GeometryBindGroupObject {
+        &mut self.bind_group_object
+    }
 }
