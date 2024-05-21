@@ -17,6 +17,7 @@ This project is in its infancy, stay tuned for updates
 TODO: depth buffer
 TODO: factor out GPU device from renderer
 TODO: event loop js
+TODO: add super sampling
 TODO: make samplers and such async better
 TODO: gumball as aditional feature
 TODO: raytracing as aditional feature

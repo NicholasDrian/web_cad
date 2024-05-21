@@ -23,13 +23,3 @@ pub fn init() {
     #[cfg(test)]
     wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 }
-
-#[wasm_bindgen]
-pub fn get_from_rust() -> u32 {
-    42
-}
-
-#[wasm_bindgen]
-pub fn print_u32(val: u32) {
-    log::info!("{}", val);
-}

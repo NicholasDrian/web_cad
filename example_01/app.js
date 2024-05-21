@@ -1,12 +1,5 @@
 import { Instance, get_from_rust, print_u32 } from '../engine/pkg'
 
-let num = get_from_rust();
-print_u32(num);
-print_u32(num);
-
-
-
-
 console.log("running example 1");
 
 let instance = await Instance.new_instance();
