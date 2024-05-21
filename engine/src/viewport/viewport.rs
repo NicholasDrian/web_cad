@@ -15,6 +15,7 @@ pub struct ViewportInternal {
     color_surface: wgpu::Surface<'static>,
     bind_group: wgpu::BindGroup,
     depth_texture: wgpu::Texture,
+    color_texture: wgpu::Texture,
 }
 
 #[repr(C)]
@@ -24,7 +25,11 @@ pub struct ViewportUniforms {
 }
 
 impl ViewportInternal {
-    pub fn new(canvas: HtmlCanvasElement, renderer: Rc<Renderer>) -> ViewportInternal {
+    pub fn new(
+        canvas: HtmlCanvasElement,
+        renderer: Rc<Renderer>,
+        sample_count: u32,
+    ) -> ViewportInternal {
         let surface_target = wgpu::SurfaceTarget::Canvas(canvas.clone());
         let surface = renderer
             .get_instance()
@@ -59,9 +64,26 @@ impl ViewportInternal {
                     depth_or_array_layers: 1,
                 },
                 mip_level_count: 1,
-                sample_count: 1,
+                sample_count,
                 dimension: wgpu::TextureDimension::D2,
                 format: wgpu::TextureFormat::Depth24Plus,
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                    | wgpu::TextureUsages::TEXTURE_BINDING,
+                view_formats: &[],
+            });
+        let color_texture = renderer
+            .get_device()
+            .create_texture(&wgpu::TextureDescriptor {
+                label: Some("color texture"),
+                size: wgpu::Extent3d {
+                    width: canvas.width(),
+                    height: canvas.height(),
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count,
+                dimension: wgpu::TextureDimension::D2,
+                format: config.format,
                 usage: wgpu::TextureUsages::RENDER_ATTACHMENT
                     | wgpu::TextureUsages::TEXTURE_BINDING,
                 view_formats: &[],
@@ -73,21 +95,26 @@ impl ViewportInternal {
             color_surface: surface,
             bind_group,
             depth_texture,
+            color_texture,
         }
     }
 
-    pub fn get_views(&self) -> (wgpu::TextureView, wgpu::TextureView) {
+    pub fn get_views(&self) -> (wgpu::TextureView, wgpu::TextureView, wgpu::TextureView) {
+        // NOTE: might need more depth textures to match swap chain frames in flight.
+        // NOTE: maybe I can make these views before hand
         let view_color = self
+            .color_texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        let view_depth = self
+            .depth_texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        let resolve_target = self
             .color_surface
             .get_current_texture()
             .unwrap()
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
-        // NOTE: might need more depth textures to match swap chain frames in flight.
-        let view_depth = self
-            .depth_texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-        (view_color, view_depth)
+        (view_color, view_depth, resolve_target)
     }
 
     pub fn get_surface(&self) -> &wgpu::Surface {

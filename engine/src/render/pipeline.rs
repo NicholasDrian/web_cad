@@ -12,7 +12,7 @@ pub fn create_render_pipeline(
     layouts: &[&wgpu::BindGroupLayout],
     shader_module: &wgpu::ShaderModule,
     primitive: PipelinePrimitive,
-    samples: u32, // TODO:
+    sample_count: u32,
 ) -> wgpu::RenderPipeline {
     let pipeline_layout: wgpu::PipelineLayout =
         device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -81,7 +81,7 @@ pub fn create_render_pipeline(
             compilation_options: wgpu::PipelineCompilationOptions::default(),
         }),
         multisample: wgpu::MultisampleState {
-            count: 1,
+            count: sample_count,
             mask: !0,
             alpha_to_coverage_enabled: false,
         },

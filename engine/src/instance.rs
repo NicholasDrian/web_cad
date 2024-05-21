@@ -52,7 +52,7 @@ impl InstanceInternal {
     }
 
     pub fn create_viewport(&mut self, canvas: HtmlCanvasElement) -> Handle {
-        let viewport = ViewportInternal::new(canvas, self.renderer.clone());
+        let viewport = ViewportInternal::new(canvas, self.renderer.clone(), 4);
         let handle = new_handle();
         self.viewports.insert(handle, viewport);
         handle

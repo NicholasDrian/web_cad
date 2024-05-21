@@ -84,14 +84,14 @@ impl Renderer {
             &[&viewport_bind_group_layout, &geometry_bind_group_layout],
             &mesh_shader,
             PipelinePrimitive::Mesh,
-            1u32,
+            4u32,
         );
         let line_strip_render_pipeline = create_render_pipeline(
             &device,
             &[&viewport_bind_group_layout, &geometry_bind_group_layout],
             &line_strip_shader,
             PipelinePrimitive::LineStrip,
-            1u32,
+            4u32,
         );
 
         Renderer {
@@ -136,14 +136,14 @@ impl Renderer {
                 label: Some("Render Encoder"),
             });
 
-        let (color_view, depth_view) = viewport.get_views();
+        let (color_view, depth_view, resolve_target) = viewport.get_views();
 
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &color_view,
-                    resolve_target: None,
+                    resolve_target: Some(&resolve_target),
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
                             r: 0.1,
