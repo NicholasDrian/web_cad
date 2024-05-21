@@ -1,4 +1,4 @@
-import { Instance, get_from_rust, print_u32 } from '../engine/pkg'
+import { Instance } from '../engine/pkg'
 
 console.log("running example 1");
 
@@ -66,7 +66,8 @@ while (true) {
   curve_scene.rotate_geometry(curve, [0, 0, 0], [0, 1, 0], 0.02);
   surface_scene.rotate_geometry(surface, [0, 0, 0], [0, 1, 0], 0.02);
 
-  await new Promise(r => setTimeout(r, 20));
+  // Yeild 
+  await new Promise(r => setTimeout(r, 0));
 }
 
 

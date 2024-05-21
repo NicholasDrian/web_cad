@@ -5,11 +5,11 @@ if [ -z "$1" ]; then
 
   [ERROR]: missing arg, please specify what to run.
   Some examples:
-      $./run example_01
-      $./run web_cad
-
+      $./run example_01 js
+      $./run example_02 ts
+      $./run web_cad ts
     "
 	exit 1
 fi
 
-npm run serve -- --env="name=$1"
+npm run serve -- --env="name=$1" --env="extension=$2"
