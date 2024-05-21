@@ -51,7 +51,7 @@ impl Instance {
     }
 
     #[wasm_bindgen]
-    pub fn draw_scene_to_all_viewports(&self, scene: Scene) {
+    pub fn draw_scene_to_all_viewports(&self, scene: &Scene) {
         INSTANCES
             .lock()
             .unwrap()
@@ -61,7 +61,7 @@ impl Instance {
     }
 
     #[wasm_bindgen]
-    pub fn draw_scene_to_viewport(&self, scene: Scene, viewport: Viewport) {
+    pub fn draw_scene_to_viewport(&self, scene: &Scene, viewport: &Viewport) {
         INSTANCES
             .lock()
             .unwrap()

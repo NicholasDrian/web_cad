@@ -35,14 +35,17 @@ pub static MESH_VERTEX_BUFFER_LAYOUT: wgpu::VertexBufferLayout<'static> =
     };
 
 pub struct Mesh {
+    renderer: Rc<Renderer>,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
+    uniform_buffer: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
     index_count: u32,
+    model: Mat4,
 }
 
 impl Mesh {
-    pub fn new(renderer: &Rc<Renderer>, verts: &[MeshVertex], indices: &[u32]) -> Mesh {
+    pub fn new(renderer: Rc<Renderer>, verts: &[MeshVertex], indices: &[u32]) -> Mesh {
         let vertex_buffer =
             renderer
                 .get_device()
@@ -59,13 +62,14 @@ impl Mesh {
                     usage: wgpu::BufferUsages::INDEX,
                     contents: bytemuck::cast_slice(indices),
                 });
+        let model = Mat4::identity();
         let uniform_buffer =
             renderer
                 .get_device()
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("mesh uniform buffer"),
                     contents: bytemuck::cast_slice(&[GeometryUniforms {
-                        model: Mat4::identity(),
+                        model,
                         color: Vec4 {
                             x: 0.0,
                             y: 0.5,
@@ -88,8 +92,11 @@ impl Mesh {
         Mesh {
             vertex_buffer,
             index_buffer,
+            uniform_buffer,
             bind_group,
             index_count: indices.len() as u32,
+            model,
+            renderer,
         }
     }
 
@@ -110,5 +117,13 @@ impl Mesh {
 }
 
 impl Geometry for Mesh {
-    fn rotate(&mut self, center: Vec3, acis: Vec3, radians: f32) {}
+    fn rotate(&mut self, center: Vec3, axis: Vec3, radians: f32) {
+        let rotation = Mat4::rotate_center_axis(center, axis, radians);
+        self.model = Mat4::multiply(&rotation, &self.model);
+        self.renderer.get_queue().write_buffer(
+            &self.uniform_buffer,
+            std::mem::offset_of!(GeometryUniforms, model) as u64,
+            bytemuck::cast_slice(&[self.model]),
+        );
+    }
 }

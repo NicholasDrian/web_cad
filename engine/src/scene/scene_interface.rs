@@ -44,16 +44,16 @@ impl Scene {
                 normal: [normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2], 0.0],
             })
         }
-
         // TODO: why do i need two gets????
         // I currently hate the borrow checker
         let mesh = Mesh::new(
-            &INSTANCES
+            INSTANCES
                 .lock()
                 .unwrap()
                 .get_mut(&self.instance_handle)
                 .unwrap()
-                .get_renderer(),
+                .get_renderer()
+                .clone(),
             &verts[..],
             indices,
         );
@@ -212,5 +212,16 @@ impl Scene {
             .unwrap()
             .get_scene_mut(self.scene_handle)
             .add_surface(surface)
+    }
+
+    #[wasm_bindgen]
+    pub fn rotate_geometry(&self, id: GeometryId, center: &[f32], axis: &[f32], radians: f32) {
+        INSTANCES
+            .lock()
+            .unwrap()
+            .get_mut(&self.instance_handle)
+            .unwrap()
+            .get_scene_mut(self.scene_handle)
+            .rotate_geometry(id, center, axis, radians);
     }
 }

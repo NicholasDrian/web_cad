@@ -1,4 +1,11 @@
-import { Instance } from '../engine/pkg'
+import { Instance, get_from_rust, print_u32 } from '../engine/pkg'
+
+let num = get_from_rust();
+print_u32(num);
+print_u32(num);
+
+
+
 
 console.log("running example 1");
 
@@ -33,10 +40,10 @@ const surface_controls = [
   -1.0, -1.0, 0.0, 0.0, -1.0, 0.0, 1.0, -1.0, 0.0,
 ]
 
-mesh_scene.add_mesh(vertices, normals, indices);
-polyline_scene.add_polyline(vertices);
-curve_scene.add_curve(2, vertices, [], []);
-surface_scene.add_surface(2, 2, surface_controls, 3, 3, [], [], []);
+let mesh = mesh_scene.add_mesh(vertices, normals, indices);
+let poly = polyline_scene.add_polyline(vertices);
+let curve = curve_scene.add_curve(2, vertices, [], []);
+let surface = surface_scene.add_surface(2, 2, surface_controls, 3, 3, [], [], []);
 
 let canvas1 = document.createElement("canvas");
 document.body.appendChild(canvas1);
@@ -60,7 +67,13 @@ while (true) {
   instance.draw_scene_to_viewport(polyline_scene, polyline_viewport);
   instance.draw_scene_to_viewport(curve_scene, curve_viewport);
   instance.draw_scene_to_viewport(surface_scene, surface_viewport);
-  mesh_scene.rotate()
+
+  mesh_scene.rotate_geometry(mesh, [0, 0, 0], [0, 1, 0], 0.1);
+  //  polyline_scene.rotate_geometry(poly, [0, 0, 0], [0, 1, 0], 0.1);
+  //  curve.rotate_geometry(curve, [0, 0, 0], [0, 1, 0], 0.1);
+  //  surface_scene.rotate_geometry(curve, [0, 0, 0], [0, 1, 0], 0.1);
+
+  await new Promise(r => setTimeout(r, 200));
 }
 
 

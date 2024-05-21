@@ -64,16 +64,16 @@ impl InstanceInternal {
         handle
     }
 
-    pub fn draw_scene_to_viewport(&self, scene: Scene, viewport: Viewport) {
+    pub fn draw_scene_to_viewport(&self, scene: &Scene, viewport: &Viewport) {
         let viewport = self.viewports.get(&viewport.get_handle()).unwrap();
         let scene = self.scenes.get(&scene.get_handle()).unwrap();
         self.renderer.render(scene, viewport);
     }
 
-    pub fn draw_scene_to_all_viewports(&self, scene: Scene) {
+    pub fn draw_scene_to_all_viewports(&self, scene: &Scene) {
         let scene = self.scenes.get(&scene.get_handle()).unwrap();
         for (_, viewport) in self.viewports.iter() {
-            self.renderer.render(scene, &viewport);
+            self.renderer.render(scene, viewport);
         }
     }
 
