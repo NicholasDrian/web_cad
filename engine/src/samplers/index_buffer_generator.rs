@@ -75,13 +75,13 @@ impl IndexBufferGenerator {
         count_u: u32,
         count_v: u32,
     ) -> wgpu::Buffer {
-        // TODO:
+        // TODO: Memo
         /*
-        let key = count_u as u64 | (count_v as u64).rotate_left(32);
-        if let index_buffer = self.memo.get(&key) {
-            log::warn!("YAY, succseefull memo, please delete this new");
-            return *index_buffer.unwrap();
-        }
+                let key = count_u as u64 | (count_v as u64).rotate_left(32);
+                if let index_buffer = self.memo.get(&key) {
+                    log::warn!("YAY, succseefull memo, please delete this new");
+                    return *(index_buffer.unwrap().clone());
+                }
         */
 
         let index_buffer: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
@@ -131,7 +131,7 @@ impl IndexBufferGenerator {
 
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
-        // TODO:
+        //TODO
         //self.memo.insert(key, index_buffer);
         index_buffer
     }

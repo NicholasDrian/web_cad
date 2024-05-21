@@ -271,12 +271,12 @@ impl SurfaceSampler {
     fn create_basis_funcs(
         &self,
         control_count_u: u32,
-        degree_u: u32,
-        knots_u: &[f32],
-        span_buffer_u: &wgpu::Buffer,
         control_count_v: u32,
+        degree_u: u32,
         degree_v: u32,
+        knots_u: &[f32],
         knots_v: &[f32],
+        span_buffer_u: &wgpu::Buffer,
         span_buffer_v: &wgpu::Buffer,
     ) -> (wgpu::Buffer, wgpu::Buffer) {
         let device = self.renderer.get_device();
@@ -455,12 +455,12 @@ impl SurfaceSampler {
 
         let (basis_funcs_u, basis_funcs_v) = self.create_basis_funcs(
             control_count_u,
-            degree_u,
-            knots_u,
-            &span_buffer_u,
             control_count_v,
+            degree_u,
             degree_v,
+            knots_u,
             knots_v,
+            &span_buffer_u,
             &span_buffer_v,
         );
 

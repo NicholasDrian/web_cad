@@ -49,7 +49,13 @@ pub fn create_render_pipeline(
             conservative: false,
         },
         layout: Some(&pipeline_layout),
-        depth_stencil: None,
+        depth_stencil: Some(wgpu::DepthStencilState {
+            depth_compare: wgpu::CompareFunction::Less,
+            stencil: wgpu::StencilState::default(),
+            format: wgpu::TextureFormat::Depth24Plus,
+            depth_write_enabled: true,
+            bias: wgpu::DepthBiasState::default(),
+        }),
         vertex: wgpu::VertexState {
             module: shader_module,
             entry_point: "vs_main",

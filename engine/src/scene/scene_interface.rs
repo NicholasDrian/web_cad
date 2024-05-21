@@ -12,6 +12,12 @@ use crate::{
     math::linear_algebra::vec3::Vec3,
 };
 
+macro_rules! get_instance_mut {
+    ($handle:expr) => {
+        INSTANCES.lock().unwrap().get_mut($handle).unwrap()
+    };
+}
+
 #[wasm_bindgen]
 pub struct Scene {
     instance_handle: Handle,
@@ -47,22 +53,14 @@ impl Scene {
         // TODO: why do i need two gets????
         // I currently hate the borrow checker
         let mesh = Mesh::new(
-            INSTANCES
-                .lock()
-                .unwrap()
-                .get_mut(&self.instance_handle)
-                .unwrap()
+            get_instance_mut!(&self.instance_handle)
                 .get_renderer()
                 .clone(),
             &verts[..],
             indices,
         );
 
-        INSTANCES
-            .lock()
-            .unwrap()
-            .get_mut(&self.instance_handle)
-            .unwrap()
+        get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
             .add_mesh(mesh)
     }
@@ -81,20 +79,11 @@ impl Scene {
             });
         }
         let polyline = Polyline::new(
-            INSTANCES
-                .lock()
-                .unwrap()
-                .get_mut(&self.instance_handle)
-                .unwrap()
-                .get_renderer(),
+            get_instance_mut!(&self.instance_handle).get_renderer(),
             &verts[..],
         );
 
-        INSTANCES
-            .lock()
-            .unwrap()
-            .get_mut(&self.instance_handle)
-            .unwrap()
+        get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
             .add_polyline(polyline)
     }
@@ -128,23 +117,14 @@ impl Scene {
 
         // TODO: this warning indicates performance issues
         let curve = Curve::new(
-            INSTANCES
-                .lock()
-                .unwrap()
-                .get_mut(&self.instance_handle)
-                .unwrap()
-                .get_curve_sampler(),
+            get_instance_mut!(&self.instance_handle).get_curve_sampler(),
             degree,
             control_points,
             weights,
             knots,
         );
 
-        INSTANCES
-            .lock()
-            .unwrap()
-            .get_mut(&self.instance_handle)
-            .unwrap()
+        get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
             .add_curve(curve)
     }
@@ -188,12 +168,7 @@ impl Scene {
         }
         // TODO: this warning indicates performance issues
         let surface = Surface::new(
-            INSTANCES
-                .lock()
-                .unwrap()
-                .get_mut(&self.instance_handle)
-                .unwrap()
-                .get_surface_sampler(),
+            get_instance_mut!(&self.instance_handle).get_surface_sampler(),
             control_count_u,
             control_count_v,
             degree_u,
@@ -204,22 +179,14 @@ impl Scene {
             knots_v,
         );
 
-        INSTANCES
-            .lock()
-            .unwrap()
-            .get_mut(&self.instance_handle)
-            .unwrap()
+        get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
             .add_surface(surface)
     }
 
     #[wasm_bindgen]
     pub fn rotate_geometry(&self, id: GeometryId, center: &[f32], axis: &[f32], radians: f32) {
-        INSTANCES
-            .lock()
-            .unwrap()
-            .get_mut(&self.instance_handle)
-            .unwrap()
+        get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
             .rotate_geometry(id, center, axis, radians);
     }

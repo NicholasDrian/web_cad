@@ -12,8 +12,9 @@ use web_sys::HtmlCanvasElement;
 pub struct ViewportInternal {
     camera: Camera,
     canvas: HtmlCanvasElement,
-    surface: wgpu::Surface<'static>,
+    color_surface: wgpu::Surface<'static>,
     bind_group: wgpu::BindGroup,
+    depth_texture: wgpu::Texture,
 }
 
 #[repr(C)]
@@ -30,8 +31,9 @@ impl ViewportInternal {
             .create_surface(surface_target)
             .unwrap();
         let config = surface
-            .get_default_config(&renderer.get_adapter(), canvas.width(), canvas.height())
+            .get_default_config(renderer.get_adapter(), canvas.width(), canvas.height())
             .unwrap();
+
         surface.configure(renderer.get_device(), &config);
 
         let camera = Camera::new(CameraDescriptor::default(), renderer.clone());
@@ -47,16 +49,49 @@ impl ViewportInternal {
                 }],
             });
 
+        let depth_texture = renderer
+            .get_device()
+            .create_texture(&wgpu::TextureDescriptor {
+                label: Some("depth texture"),
+                size: wgpu::Extent3d {
+                    width: canvas.width(),
+                    height: canvas.height(),
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Depth24Plus,
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                    | wgpu::TextureUsages::TEXTURE_BINDING,
+                view_formats: &[],
+            });
+
         ViewportInternal {
             camera,
             canvas,
-            surface,
+            color_surface: surface,
             bind_group,
+            depth_texture,
         }
     }
 
+    pub fn get_views(&self) -> (wgpu::TextureView, wgpu::TextureView) {
+        let view_color = self
+            .color_surface
+            .get_current_texture()
+            .unwrap()
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        // NOTE: might need more depth textures to match swap chain frames in flight.
+        let view_depth = self
+            .depth_texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        (view_color, view_depth)
+    }
+
     pub fn get_surface(&self) -> &wgpu::Surface {
-        &self.surface
+        &self.color_surface
     }
 
     pub fn get_bind_group(&self) -> &wgpu::BindGroup {
