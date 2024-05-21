@@ -1,4 +1,4 @@
-import { Instance } from '../engine/pkg'
+import { Instance } from '../../engine/pkg'
 
 console.log("running example 1");
 
