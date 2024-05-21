@@ -70,18 +70,20 @@ impl Vec3 {
         todo!();
     }
 
-    pub fn normalize(&mut self) {
+    pub fn normalize(&mut self) -> &mut Self {
         let size_square = self.x * self.x + self.y * self.y + self.z * self.z;
         if size_square == 0.0 {
             self.x = 1.0;
             self.y = 0.0;
             self.z = 0.0;
             log::warn!("sketch!");
+            return self;
         }
         let size = size_square.sqrt();
         self.x /= size;
         self.y /= size;
         self.z /= size;
+        self
     }
 
     pub fn to_normalized(&self) -> Vec3 {

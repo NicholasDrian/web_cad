@@ -28,16 +28,16 @@ pub struct InstanceInternal {
     renderer: Rc<Renderer>,
     scenes: HashMap<Handle, SceneInternal>,
     viewports: HashMap<Handle, ViewportInternal>,
-    curve_sampler: CurveSampler,
-    surface_sampler: SurfaceSampler,
+    curve_sampler: Rc<CurveSampler>,
+    surface_sampler: Rc<SurfaceSampler>,
 }
 unsafe impl Send for InstanceInternal {}
 
 impl InstanceInternal {
     pub async fn create() -> Handle {
         let renderer = Rc::new(Renderer::new().await);
-        let curve_sampler = CurveSampler::new(renderer.clone());
-        let surface_sampler = SurfaceSampler::new(renderer.clone());
+        let curve_sampler = Rc::new(CurveSampler::new(renderer.clone()));
+        let surface_sampler = Rc::new(SurfaceSampler::new(renderer.clone()));
         let instance = InstanceInternal {
             scenes: HashMap::new(),
             viewports: HashMap::new(),
@@ -88,7 +88,7 @@ impl InstanceInternal {
     pub fn get_curve_sampler(&self) -> &CurveSampler {
         &self.curve_sampler
     }
-    pub fn get_surface_sampler(&self) -> &SurfaceSampler {
-        &self.surface_sampler
+    pub fn get_surface_sampler(&self) -> Rc<SurfaceSampler> {
+        self.surface_sampler.clone()
     }
 }

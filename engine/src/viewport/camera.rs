@@ -21,7 +21,6 @@ pub enum CameraType {
 pub struct CameraDescriptor {
     pub position: Vec3,
     pub focal_point: Vec3,
-    pub up: Vec3, //TODO: remove this param
     pub fovy: f32,
     pub aspect: f32,
     pub near_dist: f32,
@@ -34,17 +33,12 @@ impl Default for CameraDescriptor {
         Self {
             position: Vec3 {
                 x: 0.0,
-                y: 1.0,
-                z: -5.0,
+                y: 0.0,
+                z: -10.0,
             },
             focal_point: Vec3 {
                 x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
-            up: Vec3 {
-                x: 0.0,
-                y: 1.0,
+                y: 0.0,
                 z: 0.0,
             },
             fovy: 1.0,
@@ -78,6 +72,24 @@ pub struct Camera {
 //TODO: toggle for auto motion... eventually
 impl Camera {
     pub fn new(params: CameraDescriptor, renderer: Rc<Renderer>) -> Self {
+        let forward = Vec3::subtract(&params.focal_point, &params.position);
+        let mut up = if forward.x == 0.0 && forward.y == 0.0 {
+            // Camera is vertical
+            Vec3 {
+                x: -1.0,
+                y: 0.0,
+                z: 0.0,
+            }
+        } else {
+            Vec3 {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            }
+        };
+        let right = Vec3::cross(&forward, &up);
+        up = *Vec3::cross(&right, &forward).normalize();
+
         let mut res = Camera {
             position: params.position,
             focal_point: params.focal_point,
@@ -85,7 +97,7 @@ impl Camera {
             aspect: params.aspect,
             near_dist: params.near_dist,
             far_dist: params.far_dist,
-            up: params.up,
+            up,
             camera_type: params.camera_type,
             view_proj: Mat4::identity(),
             view_proj_buffer: renderer

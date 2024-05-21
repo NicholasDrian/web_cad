@@ -17,7 +17,7 @@ This project is in its infancy, stay tuned for updates
 TODO: factor out GPU device from renderer
 TODO: event loop js
 TODO: make samplers and such async better
-
+TODO: start removing unwraps
 TODO: gumball as aditional feature
 TODO: raytracing as aditional feature
 TODO: frustum tracing as aditional feature

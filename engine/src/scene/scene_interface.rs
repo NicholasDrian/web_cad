@@ -130,6 +130,7 @@ impl Scene {
     }
 
     /// Controls should be row major, and U major
+    ///
     /// The layout is as follows:
     ///
     ///     U ----->
@@ -137,12 +138,11 @@ impl Scene {
     ///   | 3, 4, 5,
     ///   v 6, 7, 8,
     ///
-    /// In the above diagram, each number represents 3 floats, x, y, and z,
+    /// In the above diagram, each number represents a point, 3 floats
     ///
-    /// Weights have the same layout.
+    /// Leave weights and knots empty for default values
     ///
-    /// This function blocks until GPU is done creating surface.
-    ///
+
     #[wasm_bindgen]
     pub fn add_surface(
         &self,
@@ -151,11 +151,8 @@ impl Scene {
         controls: &[f32],
         control_count_u: u32,
         control_count_v: u32,
-        // Leave empty for default values
         weights: &[f32],
-        // Leave empty for default values
         knots_u: &[f32],
-        // Leave empty for default values
         knots_v: &[f32],
     ) -> GeometryId {
         let mut control_points: Vec<Vec3> = Vec::new();
@@ -166,7 +163,6 @@ impl Scene {
                 z: controls[i * 3 + 2],
             });
         }
-        // TODO: this warning indicates performance issues
         let surface = Surface::new(
             get_instance_mut!(&self.instance_handle).get_surface_sampler(),
             control_count_u,
@@ -185,9 +181,46 @@ impl Scene {
     }
 
     #[wasm_bindgen]
-    pub fn rotate_geometry(&self, id: GeometryId, center: &[f32], axis: &[f32], radians: f32) {
+    pub fn rotate_geometry(&self, id: u32, center: &[f32], axis: &[f32], radians: f32) {
         get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
             .rotate_geometry(id, center, axis, radians);
+    }
+
+    // NOTE: this will break once adaptive sampling is added
+    /// Control point count cannot change in either dimension.
+    #[wasm_bindgen]
+    pub fn update_surface_params(
+        &self,
+        id: GeometryId,
+        degree_u: u32,
+        degree_v: u32,
+        controls: &[f32],
+        weights: &[f32],
+        knots_u: &[f32],
+        knots_v: &[f32],
+    ) {
+        if let Some(surface) = get_instance_mut!(&self.instance_handle)
+            .get_scene_mut(self.scene_handle)
+            .get_surfaces_mut()
+            .get_mut(&id)
+        {
+            let mut control_points: Vec<Vec3> = Vec::new();
+            for i in 0..controls.len() / 3 {
+                control_points.push(Vec3 {
+                    x: controls[i * 3],
+                    y: controls[i * 3 + 1],
+                    z: controls[i * 3 + 2],
+                });
+            }
+            surface.update_params(
+                degree_u,
+                degree_v,
+                control_points,
+                weights,
+                knots_u,
+                knots_v,
+            )
+        }
     }
 }

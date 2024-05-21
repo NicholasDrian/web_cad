@@ -1,14 +1,11 @@
 use std::collections::HashMap;
 
-use crate::{
-    geometry::{
-        curve::Curve,
-        geometry::{new_geometry_id, Geometry, GeometryId},
-        mesh::Mesh,
-        polyline::Polyline,
-        surface::Surface,
-    },
-    math::linear_algebra::vec3::Vec3,
+use crate::geometry::{
+    curve::Curve,
+    geometry::{new_geometry_id, Geometry, GeometryId},
+    mesh::Mesh,
+    polyline::Polyline,
+    surface::Surface,
 };
 
 pub struct SceneInternal {
@@ -28,6 +25,18 @@ impl SceneInternal {
         }
     }
 
+    pub fn get_curves_mut(&mut self) -> &mut HashMap<GeometryId, Curve> {
+        &mut self.curves
+    }
+    pub fn get_surfaces_mut(&mut self) -> &mut HashMap<GeometryId, Surface> {
+        &mut self.surfaces
+    }
+    pub fn get_polylines_mut(&mut self) -> &mut HashMap<GeometryId, Polyline> {
+        &mut self.polylines
+    }
+    pub fn get_meshes_mut(&mut self) -> &mut HashMap<GeometryId, Mesh> {
+        &mut self.meshes
+    }
     pub fn get_curves(&self) -> &HashMap<GeometryId, Curve> {
         &self.curves
     }
@@ -60,22 +69,23 @@ impl SceneInternal {
         self.meshes.insert(id, mesh);
         id
     }
-    fn get_geometry(&mut self, geometry_id: GeometryId) -> std::boxed::Box<&mut dyn Geometry> {
+    pub fn get_geometry(&mut self, geometry_id: GeometryId) -> Option<&mut dyn Geometry> {
         if let Some(curve) = self.curves.get_mut(&geometry_id) {
-            std::boxed::Box::new(curve)
+            Some(curve)
         } else if let Some(mesh) = self.meshes.get_mut(&geometry_id) {
-            std::boxed::Box::new(mesh)
+            Some(mesh)
         } else if let Some(surface) = self.surfaces.get_mut(&geometry_id) {
-            std::boxed::Box::new(surface)
+            Some(surface)
         } else if let Some(polyline) = self.polylines.get_mut(&geometry_id) {
-            std::boxed::Box::new(polyline)
+            Some(polyline)
         } else {
-            unreachable!();
+            None
         }
     }
 
     pub fn rotate_geometry(&mut self, id: GeometryId, center: &[f32], axis: &[f32], radians: f32) {
-        let geo = self.get_geometry(id);
-        geo.rotate(center.into(), axis.into(), radians);
+        if let Some(geo) = self.get_geometry(id) {
+            geo.rotate(center.into(), axis.into(), radians);
+        }
     }
 }

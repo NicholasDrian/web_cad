@@ -2,10 +2,12 @@ use crate::{
     math::linear_algebra::{vec3::Vec3, vec4::Vec4},
     samplers::{params::SAMPLES_PER_SEGMENT, surface_sampler::SurfaceSampler},
 };
+use std::rc::Rc;
 
 use super::{bind_group::GeometryBindGroupObject, geometry::Geometry, utils::default_knot_vector};
 
 pub struct Surface {
+    surface_sampler: Rc<SurfaceSampler>,
     controls: Vec<Vec3>,
     control_count_u: u32,
     control_count_v: u32,
@@ -25,7 +27,7 @@ pub struct Surface {
 
 impl Surface {
     pub fn new(
-        surface_sampler: &SurfaceSampler,
+        surface_sampler: Rc<SurfaceSampler>,
         control_count_u: u32,
         control_count_v: u32,
         degree_u: u32,
@@ -50,6 +52,7 @@ impl Surface {
         } else {
             weights.to_vec()
         };
+
         let weighted_controls: Vec<Vec4> = controls
             .iter()
             .zip(weights.iter())
@@ -75,6 +78,7 @@ impl Surface {
         let bind_group_object = GeometryBindGroupObject::new(surface_sampler.get_renderer());
 
         Self {
+            surface_sampler,
             controls,
             control_count_u,
             control_count_v,
@@ -88,6 +92,53 @@ impl Surface {
             index_buffer,
             bind_group_object,
         }
+    }
+
+    pub fn update_params(
+        &mut self,
+        degree_u: u32,
+        degree_v: u32,
+        controls: Vec<Vec3>,
+        weights: &[f32],
+        knots_u: &[f32],
+        knots_v: &[f32],
+    ) {
+        self.degree_u = degree_u;
+        self.degree_v = degree_v;
+        if weights.len() != 0 {
+            self.weights = weights.to_vec();
+        }
+        if controls.len() != 0 {
+            self.controls = controls;
+        }
+        if knots_u.len() != 0 {
+            self.knots_u = knots_u.to_vec();
+        }
+        if knots_v.len() != 0 {
+            self.knots_v = knots_v.to_vec();
+        }
+
+        let weighted_controls: Vec<Vec4> = self
+            .controls
+            .iter()
+            .zip(self.weights.iter())
+            .map(|(control, weight)| Vec4 {
+                x: control.x * weight,
+                y: control.y * weight,
+                z: control.z * weight,
+                w: *weight,
+            })
+            .collect();
+        let (_, vertex_buffer) = self.surface_sampler.sample_surface(
+            self.degree_u,
+            self.degree_v,
+            &weighted_controls[..],
+            self.control_count_u,
+            self.control_count_v,
+            &self.knots_u[..],
+            &self.knots_v[..],
+        );
+        self.vertex_buffer = vertex_buffer;
     }
     pub fn get_index_buffer(&self) -> &wgpu::Buffer {
         &self.index_buffer
