@@ -73,7 +73,7 @@ pub struct Camera {
 impl Camera {
     pub fn new(params: CameraDescriptor, renderer: Rc<Renderer>) -> Self {
         let forward = Vec3::subtract(&params.focal_point, &params.position);
-        let mut up = if forward.x == 0.0 && forward.y == 0.0 {
+        let mut up = if forward.x == 0.0 && forward.z == 0.0 {
             // Camera is vertical
             Vec3 {
                 x: -1.0,
