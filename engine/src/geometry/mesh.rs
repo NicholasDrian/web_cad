@@ -7,7 +7,7 @@ use crate::{
     render::renderer::Renderer,
 };
 
-use super::{bind_group::GeometryBindGroupObject, geometry::Geometry};
+use super::{bind_group::GeometryBindGroupObject, Geometry};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]

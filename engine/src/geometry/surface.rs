@@ -4,7 +4,7 @@ use crate::{
 };
 use std::rc::Rc;
 
-use super::{bind_group::GeometryBindGroupObject, geometry::Geometry, utils::default_knot_vector};
+use super::{bind_group::GeometryBindGroupObject, utils::default_knot_vector, Geometry};
 
 pub struct Surface {
     surface_sampler: Rc<SurfaceSampler>,

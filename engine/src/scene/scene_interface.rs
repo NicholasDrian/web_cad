@@ -3,10 +3,10 @@ use wasm_bindgen::prelude::*;
 use crate::{
     geometry::{
         curve::Curve,
-        geometry::GeometryId,
         mesh::{Mesh, MeshVertex},
         polyline::{Polyline, PolylineVertex},
         surface::Surface,
+        GeometryId,
     },
     instance::{Handle, INSTANCES},
     math::linear_algebra::vec3::Vec3,

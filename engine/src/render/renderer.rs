@@ -1,6 +1,4 @@
-use crate::{
-    render::pipeline::*, scene::scene::SceneInternal, viewport::viewport::ViewportInternal,
-};
+use crate::{render::pipeline::*, scene::SceneInternal, viewport::ViewportInternal};
 
 pub struct Renderer {
     device: wgpu::Device,

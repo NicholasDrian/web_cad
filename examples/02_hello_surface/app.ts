@@ -18,13 +18,8 @@ let random_controls = function(width: number, height: number): Float32Array {
     }
   }
 
-
-
-
   return res;
 }
-
-
 
 const empty = new Float32Array(0);
 
@@ -42,10 +37,7 @@ while (true) {
   instance.draw_scene_to_viewport(scene, viewport);
 
   // yeild
-  await new Promise(r => setTimeout(r, 0));
+  await new Promise(r => setTimeout(r, 200));
 
 }
-
-
-
 

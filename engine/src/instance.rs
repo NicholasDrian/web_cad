@@ -5,9 +5,7 @@ use crate::samplers::curve_sampler::CurveSampler;
 use crate::samplers::surface_sampler::SurfaceSampler;
 use crate::scene::scene_interface::Scene;
 use crate::viewport::viewport_interface::Viewport;
-use crate::{
-    render::renderer::Renderer, scene::scene::SceneInternal, viewport::viewport::ViewportInternal,
-};
+use crate::{render::renderer::Renderer, scene::SceneInternal, viewport::ViewportInternal};
 use web_sys::HtmlCanvasElement;
 
 pub type Handle = u64;

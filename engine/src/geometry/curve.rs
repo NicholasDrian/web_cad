@@ -4,7 +4,7 @@ use crate::{
     samplers::{curve_sampler::CurveSampler, params::SAMPLES_PER_SEGMENT},
 };
 
-use super::{bind_group::GeometryBindGroupObject, geometry::Geometry, utils::default_knot_vector};
+use super::{bind_group::GeometryBindGroupObject, utils::default_knot_vector, Geometry};
 
 pub struct Curve {
     degree: u32,

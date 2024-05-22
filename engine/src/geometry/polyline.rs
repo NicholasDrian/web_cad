@@ -2,9 +2,10 @@ use std::rc::Rc;
 
 use wgpu::util::DeviceExt;
 
-use crate::{math::linear_algebra::vec3::Vec3, render::renderer::Renderer};
+use crate::render::renderer::Renderer;
 
-use super::{bind_group::GeometryBindGroupObject, geometry::Geometry};
+use super::bind_group::GeometryBindGroupObject;
+use crate::geometry::Geometry;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
