@@ -123,11 +123,7 @@ impl Renderer {
         &self.queue
     }
 
-    pub fn render(
-        &self,
-        scene: &SceneInternal,
-        viewport: &ViewportInternal,
-    ) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&self, scene: &SceneInternal, viewport: &ViewportInternal) {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -200,9 +196,7 @@ impl Renderer {
         self.device
             .poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
-        let output = viewport.get_surface().get_current_texture()?;
+        let output = viewport.get_surface().get_current_texture().unwrap();
         output.present();
-
-        Ok(())
     }
 }
