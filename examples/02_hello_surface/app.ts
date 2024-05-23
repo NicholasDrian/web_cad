@@ -1,4 +1,5 @@
 import { Instance, CameraType, get_samples_per_segment } from '../../engine/pkg'
+import { Queue } from './queue';
 
 let instance = await Instance.new_instance();
 
@@ -26,24 +27,39 @@ function numberWithCommas(x: number) {
 function update_stats() {
   let fps: HTMLElement = document.getElementById("fps");
   let surface_vertex_count = document.getElementById("surface vertex count");
-  let samples_per_second = document.getElementById("samples per second");
+  let samples_this_second_display = document.getElementById("samples this second");
   let control_point_count = document.getElementById("control point count");
+  let total_samples_display = document.getElementById("total samples");
 
   let sps = get_samples_per_segment();
 
+  let sample_count = (control_count_u - 1) * (control_count_v - 1) * sps * sps;
+  total_samples += sample_count;
   fps.innerHTML = "todo";
-  surface_vertex_count.innerHTML = "Surface vertex count: " + numberWithCommas((control_count_u - 1) * (control_count_v - 1) * sps * sps);
+  surface_vertex_count.innerHTML = "Surface vertex count: " + numberWithCommas(sample_count);
   control_point_count.innerHTML = "Control point count: " + numberWithCommas(control_count_u * control_count_v);
-  samples_per_second.innerHTML = "todo:";
+  total_samples_display.innerHTML = "Total samples: " + numberWithCommas(total_samples);
+
+
+  samples_this_second += sample_count;
+  samples_this_second_queue.push([sample_count, Date.now()]);
+  while (Date.now() - samples_this_second_queue.peek()[1] > 1000) {
+    samples_this_second -= samples_this_second_queue.pop()[0];
+  }
+
+  samples_this_second_display.innerHTML = "Samples this second: " + numberWithCommas(samples_this_second);
+
 }
 
 
 const empty = new Float32Array(0);
-
 let control_count_u = 50;
 let control_count_v = 50;
 let degree_u = 2;
 let degree_v = 2;
+let total_samples = 0;
+let samples_this_second = 0;
+let samples_this_second_queue = new Queue<[number, number]>();
 
 
 let surface = scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty);
@@ -62,6 +78,7 @@ control_count_v_slider.addEventListener("change", (_) => {
   surface = scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty);
 });
 
+// TODO: prevent invalid degree
 let degree_u_slider = <HTMLInputElement>document.getElementById("degree u");
 degree_u_slider.addEventListener("change", (_) => {
   degree_u = Number(degree_u_slider.value)
@@ -95,7 +112,7 @@ while (true) {
   instance.draw_scene_to_viewport(scene, viewport);
 
   // yeild
-  await new Promise(r => setTimeout(r, 200));
+  await new Promise(r => setTimeout(r, 20));
 
 }
 
