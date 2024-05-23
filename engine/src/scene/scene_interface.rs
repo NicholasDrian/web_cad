@@ -10,13 +10,8 @@ use crate::{
     },
     instance::{Handle, INSTANCES},
     math::linear_algebra::vec3::Vec3,
+    utils::get_instance_mut,
 };
-
-macro_rules! get_instance_mut {
-    ($handle:expr) => {
-        INSTANCES.lock().unwrap().get_mut($handle).unwrap()
-    };
-}
 
 #[wasm_bindgen]
 pub struct Scene {
@@ -181,10 +176,17 @@ impl Scene {
     }
 
     #[wasm_bindgen]
-    pub fn rotate_geometry(&self, id: u32, center: &[f32], axis: &[f32], radians: f32) {
+    pub fn rotate_geometry(&self, geometry_id: u32, center: &[f32], axis: &[f32], radians: f32) {
         get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
-            .rotate_geometry(id, center, axis, radians);
+            .rotate_geometry(geometry_id, center, axis, radians);
+    }
+
+    #[wasm_bindgen]
+    pub fn delete_geometry(&self, geometry_id: u32) {
+        get_instance_mut!(&self.instance_handle)
+            .get_scene_mut(self.scene_handle)
+            .delete_geometry(geometry_id);
     }
 
     // NOTE: this will break once adaptive sampling is added

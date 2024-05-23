@@ -1,7 +1,5 @@
 import { Instance } from '../../engine/pkg'
 
-console.log("running example 1");
-
 let instance = await Instance.new_instance();
 
 let mesh_scene = instance.create_scene();

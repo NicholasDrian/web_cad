@@ -75,6 +75,10 @@ impl InstanceInternal {
         }
     }
 
+    pub fn get_viewport_mut(&mut self, viewport_handle: Handle) -> &mut ViewportInternal {
+        self.viewports.get_mut(&viewport_handle).unwrap()
+    }
+
     pub fn get_scene_mut(&mut self, scene_handle: Handle) -> &mut SceneInternal {
         self.scenes.get_mut(&scene_handle).unwrap()
     }

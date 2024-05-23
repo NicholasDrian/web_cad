@@ -9,6 +9,7 @@ use camera::{Camera, CameraDescriptor};
 use web_sys::HtmlCanvasElement;
 
 pub struct ViewportInternal {
+    renderer: Rc<Renderer>,
     camera: Camera,
     canvas: HtmlCanvasElement,
     color_surface: wgpu::Surface<'static>,
@@ -89,6 +90,7 @@ impl ViewportInternal {
             });
 
         ViewportInternal {
+            renderer,
             camera,
             canvas,
             color_surface: surface,
@@ -96,6 +98,20 @@ impl ViewportInternal {
             depth_texture,
             color_texture,
         }
+    }
+    pub fn update_bind_group(&mut self) -> &mut Self {
+        self.bind_group =
+            self.renderer
+                .get_device()
+                .create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("scene bind group"),
+                    layout: self.renderer.get_viewport_bind_group_layout(),
+                    entries: &[wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: self.camera.get_view_proj_buffer().as_entire_binding(),
+                    }],
+                });
+        self
     }
 
     pub fn get_views(&self) -> (wgpu::TextureView, wgpu::TextureView, wgpu::TextureView) {
@@ -122,5 +138,9 @@ impl ViewportInternal {
 
     pub fn get_bind_group(&self) -> &wgpu::BindGroup {
         &self.bind_group
+    }
+
+    pub fn get_camera_mut(&mut self) -> &mut Camera {
+        &mut self.camera
     }
 }

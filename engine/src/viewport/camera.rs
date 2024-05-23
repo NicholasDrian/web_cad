@@ -1,14 +1,13 @@
-use std::{
-    rc::Rc,
-    sync::{Arc, Mutex},
-    time::Instant,
-};
+use std::{rc::Rc, time::Instant};
 
 use crate::{
     math::linear_algebra::{mat4::Mat4, vec3::Vec3},
     render::renderer::Renderer,
 };
 
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
 pub enum CameraType {
     /// This is a first person shooter style camera.
     /// Rotation is around the cameras position
@@ -113,6 +112,46 @@ impl Camera {
         };
         res.update_view_proj();
         res
+    }
+
+    pub fn update_params(&mut self, params: CameraDescriptor) {
+        let forward = Vec3::subtract(&params.focal_point, &params.position);
+        let mut up = if forward.x == 0.0 && forward.z == 0.0 {
+            // Camera is vertical
+            Vec3 {
+                x: -1.0,
+                y: 0.0,
+                z: 0.0,
+            }
+        } else {
+            Vec3 {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            }
+        };
+        let right = Vec3::cross(&forward, &up);
+        up = *Vec3::cross(&right, &forward).normalize();
+        self.position = params.position;
+        self.focal_point = params.focal_point;
+        self.fovy = params.fovy;
+        self.aspect = params.aspect;
+        self.near_dist = params.near_dist;
+        self.far_dist = params.far_dist;
+        self.up = up;
+        self.camera_type = params.camera_type;
+        self.view_proj = Mat4::identity();
+        self.view_proj_buffer = self
+            .renderer
+            .get_device()
+            .create_buffer(&wgpu::BufferDescriptor {
+                label: Some("camera view proj buffer"),
+                size: std::mem::size_of::<Mat4>() as u64,
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+                mapped_at_creation: false,
+            });
+        self.update_view_proj();
+        log::info!("here");
     }
 
     pub fn get_view_proj(&self) -> Mat4 {

@@ -5,6 +5,7 @@ pub mod math;
 pub mod render;
 pub mod samplers;
 pub mod scene;
+pub mod utils;
 pub mod viewport;
 
 #[cfg(test)]

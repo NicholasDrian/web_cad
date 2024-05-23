@@ -81,6 +81,12 @@ impl SceneInternal {
             None
         }
     }
+    pub fn delete_geometry(&mut self, geoemtry_id: GeometryId) {
+        self.curves.remove(&geoemtry_id);
+        self.meshes.remove(&geoemtry_id);
+        self.polylines.remove(&geoemtry_id);
+        self.surfaces.remove(&geoemtry_id);
+    }
 
     pub fn rotate_geometry(&mut self, id: GeometryId, center: &[f32], axis: &[f32], radians: f32) {
         if let Some(geo) = self.get_geometry(id) {

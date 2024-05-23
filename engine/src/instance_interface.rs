@@ -4,6 +4,7 @@ use web_sys::HtmlCanvasElement;
 use crate::{
     instance::{Handle, InstanceInternal, INSTANCES},
     scene::scene_interface::Scene,
+    utils::get_instance_mut,
     viewport::viewport_interface::Viewport,
 };
 
@@ -28,45 +29,22 @@ impl Instance {
     pub fn create_viewport(&self, canvas: HtmlCanvasElement) -> Viewport {
         Viewport::new(
             self.handle,
-            INSTANCES
-                .lock()
-                .unwrap()
-                .get_mut(&self.handle)
-                .unwrap()
-                .create_viewport(canvas),
+            get_instance_mut!(&self.handle).create_viewport(canvas),
         )
     }
 
     #[wasm_bindgen]
     pub fn create_scene(&self) -> Scene {
-        Scene::new(
-            self.handle,
-            INSTANCES
-                .lock()
-                .unwrap()
-                .get_mut(&self.handle)
-                .unwrap()
-                .create_scene(),
-        )
+        Scene::new(self.handle, get_instance_mut!(&self.handle).create_scene())
     }
 
     #[wasm_bindgen]
     pub fn draw_scene_to_all_viewports(&self, scene: &Scene) {
-        INSTANCES
-            .lock()
-            .unwrap()
-            .get(&self.handle)
-            .unwrap()
-            .draw_scene_to_all_viewports(scene);
+        get_instance_mut!(&self.handle).draw_scene_to_all_viewports(scene);
     }
 
     #[wasm_bindgen]
     pub fn draw_scene_to_viewport(&self, scene: &Scene, viewport: &Viewport) {
-        INSTANCES
-            .lock()
-            .unwrap()
-            .get(&self.handle)
-            .unwrap()
-            .draw_scene_to_viewport(scene, viewport);
+        get_instance_mut!(&self.handle).draw_scene_to_viewport(scene, viewport);
     }
 }
