@@ -3,25 +3,63 @@
 <head>
 </head>
 
+<style>
+  html,
+  body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden
+  }
+
+  #overlay {
+    position: absolute;
+  }
+</style>
+
 <body>
-  <div>
-    Hello world from example 02
+  <div id="overlay">
+    <div>
+      Hello world from example 02
+    </div>
+
+    control point count u:
+    <input type="range" min="3" max="100" value="50" class="slider" id="control count u"
+      oninput="this.nextElementSibling.value = this.value">
+    <output>50</output>
+    <br>
+
+
+    control point count v:
+    <input type="range" min="3" max="100" value="50" class="slider" id="control count v"
+      oninput="this.nextElementSibling.value = this.value">
+    <output>50</output>
+    <br>
+
+    degree u:
+    <input type="range" min="1" max="10" value="2" class="slider" id="degree u"
+      oninput="this.nextElementSibling.value = this.value">
+    <output>2</output>
+    <br>
+
+    degree v:
+    <input type="range" min="1" max="10" value="2" class="slider" id="degree v"
+      oninput="this.nextElementSibling.value = this.value">
+    <output>2</output>
+    <br>
+
+    <div id="fps">
+    </div>
+
+    <div id="samples per second">
+    </div>
+
+    <div id="surface vertex count">
+    </div>
+
+    <div id="control point count">
+    </div>
+
   </div>
-
-  control point count u:
-  <input type="range" min="2" max="50" value="20" class="slider" id="control count u">
-  <br>
-
-  control point count v:
-  <input type="range" min="2" max="50" value="20" class="slider" id="control count v">
-  <br>
-
-  degree:
-  <input type="range" min="2" max="1000" value="50" class="slider" id="degree">
-  <br>
-
-  samples per second: TODO
-  <br>
 
 </body>
 

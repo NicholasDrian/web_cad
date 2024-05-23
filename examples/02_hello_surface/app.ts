@@ -1,4 +1,4 @@
-import { Instance, CameraType } from '../../engine/pkg'
+import { Instance, CameraType, get_samples_per_segment } from '../../engine/pkg'
 
 let instance = await Instance.new_instance();
 
@@ -19,31 +19,66 @@ function random_controls(width: number, height: number): Float32Array {
   return res;
 }
 
+function numberWithCommas(x: number) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function update_stats() {
+  let fps: HTMLElement = document.getElementById("fps");
+  let surface_vertex_count = document.getElementById("surface vertex count");
+  let samples_per_second = document.getElementById("samples per second");
+  let control_point_count = document.getElementById("control point count");
+
+  let sps = get_samples_per_segment();
+
+  fps.innerHTML = "todo";
+  surface_vertex_count.innerHTML = "Surface vertex count: " + numberWithCommas((control_count_u - 1) * (control_count_v - 1) * sps * sps);
+  control_point_count.innerHTML = "Control point count: " + numberWithCommas(control_count_u * control_count_v);
+  samples_per_second.innerHTML = "todo:";
+}
+
 
 const empty = new Float32Array(0);
 
-let control_count_u = 100;
-let control_count_v = 100;
+let control_count_u = 50;
+let control_count_v = 50;
+let degree_u = 2;
+let degree_v = 2;
 
 
-let surface = scene.add_surface(2, 3, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty);
+let surface = scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty);
 
-let control_count_u_slider: HTMLInputElement = <HTMLInputElement>document.getElementById("control count u");
+let control_count_u_slider = <HTMLInputElement>document.getElementById("control count u");
 control_count_u_slider.addEventListener("change", (_) => {
   control_count_u = Number(control_count_u_slider.value)
   scene.delete_geometry(surface);
-  surface = scene.add_surface(2, 3, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty);
+  surface = scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty);
 });
 
-let control_count_v_slider: HTMLInputElement = <HTMLInputElement>document.getElementById("control count v");
+let control_count_v_slider = <HTMLInputElement>document.getElementById("control count v");
 control_count_v_slider.addEventListener("change", (_) => {
   control_count_v = Number(control_count_v_slider.value)
   scene.delete_geometry(surface);
-  surface = scene.add_surface(2, 3, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty);
+  surface = scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty);
+});
+
+let degree_u_slider = <HTMLInputElement>document.getElementById("degree u");
+degree_u_slider.addEventListener("change", (_) => {
+  degree_u = Number(degree_u_slider.value)
+  scene.delete_geometry(surface);
+  surface = scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty);
+});
+let degree_v_slider = <HTMLInputElement>document.getElementById("degree v");
+degree_v_slider.addEventListener("change", (_) => {
+  degree_v = Number(degree_v_slider.value)
+  scene.delete_geometry(surface);
+  surface = scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty);
 });
 
 
 let canvas = document.createElement("canvas");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 document.body.appendChild(canvas);
 
 let viewport = instance.create_viewport(canvas);
@@ -54,7 +89,9 @@ viewport.set_camera_params(new Float32Array([0, 20, -60]), new Float32Array([0, 
 
 while (true) {
 
-  scene.update_surface_params(surface, 3, 3, random_controls(control_count_u, control_count_v), empty, empty, empty);
+  update_stats();
+
+  scene.update_surface_params(surface, degree_u, degree_v, random_controls(control_count_u, control_count_v), empty, empty, empty);
   instance.draw_scene_to_viewport(scene, viewport);
 
   // yeild
