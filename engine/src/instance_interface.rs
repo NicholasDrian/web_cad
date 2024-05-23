@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 use web_sys::HtmlCanvasElement;
 
 use crate::{
-    instance::{Handle, InstanceInternal, INSTANCES},
+    instance::{Handle, InstanceInternal},
     scene::scene_interface::Scene,
     utils::get_instance_mut,
     viewport::viewport_interface::Viewport,
@@ -10,17 +10,17 @@ use crate::{
 
 /// Instance wrapper that is available in JS
 #[wasm_bindgen]
-pub struct Instance {
+pub struct WebCadInstance {
     /// Handle to interanal wasm instance
     handle: Handle,
 }
 
 #[wasm_bindgen]
-impl Instance {
+impl WebCadInstance {
     // Not using contructor because async constructor doesnt play well with wasm_bindgen.
     #[wasm_bindgen]
-    pub async fn new_instance() -> Instance {
-        Instance {
+    pub async fn new_instance() -> WebCadInstance {
+        WebCadInstance {
             handle: InstanceInternal::create().await,
         }
     }

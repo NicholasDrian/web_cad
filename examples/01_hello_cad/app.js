@@ -1,11 +1,7 @@
-import { Instance } from '../../engine/pkg'
+import { WebCadInstance } from '../../engine/pkg'
 
-let instance = await Instance.new_instance();
+let instance = await WebCadInstance.new_instance();
 
-let mesh_scene = instance.create_scene();
-let polyline_scene = instance.create_scene();
-let curve_scene = instance.create_scene();
-let surface_scene = instance.create_scene();
 
 const normals = [
   0, 0, -1,
@@ -31,27 +27,32 @@ const surface_controls = [
   -1.0, -1.0, 0.0, 0.0, -1.0, 0.0, 1.0, -1.0, 0.0,
 ]
 
-let mesh = mesh_scene.add_mesh(vertices, normals, indices);
-let poly = polyline_scene.add_polyline(vertices);
-let curve = curve_scene.add_curve(2, vertices, [], []);
-let surface = surface_scene.add_surface(2, 2, surface_controls, 3, 3, [], [], []);
 
+
+let mesh_scene = instance.create_scene();
+let mesh = mesh_scene.add_mesh(vertices, normals, indices);
 let canvas1 = document.createElement("canvas");
 document.body.appendChild(canvas1);
+let mesh_viewport = instance.create_viewport(canvas1);
 
+let polyline_scene = instance.create_scene();
+let poly = polyline_scene.add_polyline(vertices);
 let canvas2 = document.createElement("canvas");
 document.body.appendChild(canvas2);
+let polyline_viewport = instance.create_viewport(canvas2);
 
+let curve_scene = instance.create_scene();
+let curve = curve_scene.add_curve(2, vertices, [], []);
 let canvas3 = document.createElement("canvas");
 document.body.appendChild(canvas3);
+let curve_viewport = instance.create_viewport(canvas3);
 
+let surface_scene = instance.create_scene();
+let surface = surface_scene.add_surface(2, 2, surface_controls, 3, 3, [], [], []);
 let canvas4 = document.createElement("canvas");
 document.body.appendChild(canvas4);
-
-let mesh_viewport = instance.create_viewport(canvas1);
-let polyline_viewport = instance.create_viewport(canvas2);
-let curve_viewport = instance.create_viewport(canvas3);
 let surface_viewport = instance.create_viewport(canvas4);
+
 
 while (true) {
   instance.draw_scene_to_viewport(mesh_scene, mesh_viewport);

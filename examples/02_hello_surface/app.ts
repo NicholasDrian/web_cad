@@ -1,7 +1,7 @@
-import { Instance, CameraType, get_samples_per_segment } from '../../engine/pkg'
+import { WebCadInstance, CameraType, get_samples_per_segment } from '../../engine/pkg'
 import { Queue } from './queue';
 
-let instance = await Instance.new_instance();
+let instance = await WebCadInstance.new_instance();
 
 let scene = instance.create_scene();
 
@@ -50,7 +50,6 @@ function update_stats() {
   samples_this_second_display.innerHTML = "Samples this second: " + numberWithCommas(samples_this_second);
 
 }
-
 
 const empty = new Float32Array(0);
 let control_count_u = 50;
