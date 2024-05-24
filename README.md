@@ -1,7 +1,8 @@
 This repo contains a number of things:
 - A CAD library/engine for web apps
   - Written in Rust, compiled to WASM, using WebGPU, targeting modern browsers.
-  - Designed to keep all data on the GPU
+  - Designed to create and keep all data on the GPU.
+    -Eliminates data streaming.
   - 50,000,000 samples per second of degree {u: 10, v: 10} surface with 100 x 100 control points
   - currently a WIP
     - benchmarks, examples, and docs coming soon!

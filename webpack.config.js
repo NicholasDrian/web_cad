@@ -4,10 +4,9 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
-// change this to run different examples
 module.exports = env => {
   return {
-    entry: [`./${env.name}/app.${env.extension}`],
+    entry: [`./examples/${env.name}/app.${env.extension}`],
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'app.js',
@@ -34,7 +33,7 @@ module.exports = env => {
 
     plugins: [
       new HtmlWebpackPlugin({
-        template: `./${env.name}/index.html`
+        template: `./examples/${env.name}/index.html`
       }),
       new WasmPackPlugin({
         crateDirectory: path.resolve(__dirname, "./engine/")

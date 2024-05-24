@@ -9,8 +9,7 @@ use crate::{
         GeometryId,
     },
     instance::Handle,
-    math::linear_algebra::vec3::Vec3,
-    math::linear_algebra::vec4::Vec4,
+    math::linear_algebra::{vec3::Vec3, vec4::Vec4},
     utils::get_instance_mut,
 };
 
@@ -30,6 +29,9 @@ impl Scene {
 
     pub fn get_handle(&self) -> Handle {
         self.scene_handle
+    }
+    pub fn get_instance_handle(&self) -> Handle {
+        self.instance_handle
     }
 
     #[wasm_bindgen]
@@ -129,7 +131,6 @@ impl Scene {
             .get_scene_mut(self.scene_handle)
             .add_curve(curve)
     }
-
     /// Controls should be row major, and U major
     ///
     /// The layout is as follows:

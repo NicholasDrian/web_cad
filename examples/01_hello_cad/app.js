@@ -53,7 +53,6 @@ let canvas4 = document.createElement("canvas");
 document.body.appendChild(canvas4);
 let surface_viewport = instance.create_viewport(canvas4);
 
-
 while (true) {
   instance.draw_scene_to_viewport(mesh_scene, mesh_viewport);
   instance.draw_scene_to_viewport(polyline_scene, polyline_viewport);

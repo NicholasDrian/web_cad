@@ -1,11 +1,33 @@
 use crate::{
-    geometry::curve::Curve,
+    geometry::{curve::Curve, GeometryId},
     gpu_samplers::curve_sampler::CurveSampler,
     math::{
         geometry::ray::Ray,
         linear_algebra::{vec3::Vec3, vec4::Vec4},
     },
+    scene::scene_interface::Scene,
+    utils::get_instance_mut,
 };
+
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+impl Scene {
+    #[wasm_bindgen]
+    pub fn create_arc_start_middle_end(start: &[f32], middle: &[f32], end: &[f32]) -> GeometryId {
+        todo!()
+    }
+
+    #[wasm_bindgen]
+    pub fn create_arc_center_start_end(
+        center: &[f32],
+        start: &[f32],
+        end: &[f32],
+        over_180_degrees: bool,
+    ) -> GeometryId {
+        todo!()
+    }
+}
 
 pub fn create_arc(
     sampler: &CurveSampler,
