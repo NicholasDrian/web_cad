@@ -1,6 +1,6 @@
 use crate::math::geometry::ray::Ray;
 
-use super::intersection::Intersection;
+use crate::gpu_ray_tracing::intersection::Intersection;
 
 pub struct MeshBBH {
     buffer: wgpu::Buffer,

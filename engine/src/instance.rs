@@ -1,8 +1,8 @@
 use std::sync::Mutex;
 use std::{collections::HashMap, rc::Rc};
 
-use crate::samplers::curve_sampler::CurveSampler;
-use crate::samplers::surface_sampler::SurfaceSampler;
+use crate::gpu_samplers::curve_sampler::CurveSampler;
+use crate::gpu_samplers::surface_sampler::SurfaceSampler;
 use crate::scene::scene_interface::Scene;
 use crate::viewport::viewport_interface::Viewport;
 use crate::{render::renderer::Renderer, scene::SceneInternal, viewport::ViewportInternal};

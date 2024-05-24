@@ -1,10 +1,12 @@
 pub mod geometry;
-pub mod gpu_raytracing;
+pub mod gpu_acceleration_structures;
+pub mod gpu_frustum_tracing;
+pub mod gpu_ray_tracing;
+pub mod gpu_samplers;
 pub mod instance;
 pub mod instance_interface;
 pub mod math;
 pub mod render;
-pub mod samplers;
 pub mod scene;
 pub mod utils;
 pub mod viewport;

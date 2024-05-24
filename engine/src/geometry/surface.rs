@@ -1,6 +1,6 @@
 use crate::{
+    gpu_samplers::{params::SAMPLES_PER_SEGMENT, surface_sampler::SurfaceSampler},
     math::linear_algebra::{vec3::Vec3, vec4::Vec4},
-    samplers::{params::SAMPLES_PER_SEGMENT, surface_sampler::SurfaceSampler},
 };
 use std::rc::Rc;
 

@@ -13,8 +13,8 @@ use std::rc::Rc;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 
 use crate::{
-    math::linear_algebra::vec4::Vec4, render::renderer::Renderer,
-    samplers::params::SAMPLES_PER_SEGMENT,
+    gpu_samplers::params::SAMPLES_PER_SEGMENT, math::linear_algebra::vec4::Vec4,
+    render::renderer::Renderer,
 };
 
 use super::{index_buffer_generator::IndexBufferGenerator, utils::create_span_buffer};
