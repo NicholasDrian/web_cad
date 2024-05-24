@@ -14,7 +14,7 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 impl Scene {
     #[wasm_bindgen]
-    pub fn create_arc_start_middle_end(
+    pub fn add_arc_start_middle_end(
         &self,
         start: &[f32],
         middle: &[f32],
@@ -43,7 +43,7 @@ impl Scene {
         let x_axis = Vec3::to_normalized(&Vec3::subtract(&end, &center));
         let y_axis = Vec3::cross(&normal, &x_axis);
 
-        let theta = Vec3::angle_between(
+        let mut theta = Vec3::angle_between(
             &Vec3::subtract(&start, &center),
             &Vec3::subtract(&end, &center),
         );
@@ -67,7 +67,7 @@ impl Scene {
             theta,
         );
 
-        get_instance_mut!(self.get_instance_handle())
+        get_instance_mut!(&self.get_instance_handle())
             .get_scene_mut(self.get_handle())
             .add_curve(curve)
     }
