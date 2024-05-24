@@ -1,5 +1,7 @@
 use crate::math::linear_algebra::vec3::Vec3;
 
+use super::plane::Plane;
+
 #[derive(Copy, Clone, Debug)]
 pub struct Ray {
     origin: Vec3,
@@ -13,6 +15,9 @@ impl Ray {
             direction: direction.to_normalized(),
         }
     }
+    pub fn at(&self, t: f32) -> Vec3 {
+        Vec3::add(&self.origin, &Vec3::to_scaled(&self.direction, t))
+    }
     pub fn get_origin(&self) -> &Vec3 {
         &self.origin
     }
@@ -20,7 +25,7 @@ impl Ray {
         &self.direction
     }
 
-    pub fn intersect_plane(plane_origin: &Vec3, plane_normal: &Vec3) -> Option<f32> {
+    pub fn intersect_plane(&self, plane: &Plane, allow_negative: bool) -> Option<f32> {
         todo!();
     }
 

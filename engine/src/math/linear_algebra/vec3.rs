@@ -65,6 +65,14 @@ impl Vec3 {
             w: n,
         }
     }
+    pub fn angle_between(a: &Vec3, b: &Vec3) -> f32 {
+        todo!()
+    }
+
+    pub fn distance(a: &Vec3, b: &Vec3) -> f32 {
+        let delta = Vec3::subtract(a, b);
+        Vec3::dot(&delta, &delta)
+    }
 
     pub fn rotate(v: &Vec3, center: &Vec3, axis: &Vec3, theta: f32) -> Vec3 {
         todo!();

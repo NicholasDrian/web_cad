@@ -2,7 +2,7 @@ use crate::{
     geometry::{curve::Curve, GeometryId},
     gpu_samplers::curve_sampler::CurveSampler,
     math::{
-        geometry::ray::Ray,
+        geometry::{plane::Plane, ray::Ray},
         linear_algebra::{vec3::Vec3, vec4::Vec4},
     },
     scene::scene_interface::Scene,
@@ -14,8 +14,62 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 impl Scene {
     #[wasm_bindgen]
-    pub fn create_arc_start_middle_end(start: &[f32], middle: &[f32], end: &[f32]) -> GeometryId {
-        todo!()
+    pub fn create_arc_start_middle_end(
+        &self,
+        start: &[f32],
+        middle: &[f32],
+        end: &[f32],
+    ) -> GeometryId {
+        let start: Vec3 = start.into();
+        let middle: Vec3 = middle.into();
+        let end: Vec3 = end.into();
+
+        let ab = Vec3::subtract(&start, &middle);
+        let ac = Vec3::subtract(&end, &middle);
+        let normal = Vec3::to_normalized(&Vec3::cross(&ab, &ac));
+
+        let ro = Vec3::to_scaled(&Vec3::add(&middle, &start), 0.5);
+        let rd = Vec3::to_normalized(&Vec3::cross(&ab, &normal));
+        let r = Ray::new(ro, rd);
+
+        let po = Vec3::to_scaled(&Vec3::add(&middle, &end), 0.5);
+        let pn = Vec3::to_normalized(&ac);
+        let p = Plane::new(po, pn);
+
+        let t = r.intersect_plane(&p, true).unwrap();
+        let center = r.at(t);
+        let radius = Vec3::distance(&middle, &center);
+
+        let x_axis = Vec3::to_normalized(&Vec3::subtract(&end, &center));
+        let y_axis = Vec3::cross(&normal, &x_axis);
+
+        let theta = Vec3::angle_between(
+            &Vec3::subtract(&start, &center),
+            &Vec3::subtract(&end, &center),
+        );
+
+        if Vec3::angle_between(&ab, &ac) < std::f32::consts::PI / 2.0 {
+            theta = 2.0 * std::f32::consts::PI - theta;
+        }
+
+        if f32::is_nan(theta) || theta == 0.0 {
+            log::info!("create arc failed");
+            return 0;
+        }
+
+        let curve = create_arc(
+            get_instance_mut!(&self.get_instance_handle()).get_curve_sampler(),
+            center,
+            x_axis,
+            y_axis,
+            radius,
+            0.0,
+            theta,
+        );
+
+        get_instance_mut!(self.get_instance_handle())
+            .get_scene_mut(self.get_handle())
+            .add_curve(curve)
     }
 
     #[wasm_bindgen]
