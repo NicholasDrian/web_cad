@@ -1,4 +1,5 @@
 import { WebCadInstance, CameraType, get_samples_per_segment } from '../../engine/pkg'
+
 import { Queue } from './queue';
 
 let instance = await WebCadInstance.new_instance();
@@ -59,7 +60,6 @@ let degree_v = 2;
 let total_samples = 0;
 let samples_this_second = 0;
 let samples_this_second_queue = new Queue<[number, number]>();
-
 
 let surface = scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty);
 

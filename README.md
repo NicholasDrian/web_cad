@@ -1,14 +1,19 @@
 This repo contains a number of things:
 - A CAD library/engine for web apps
   - Written in Rust, compiled to WASM, using WebGPU, targeting modern browsers.
+  - Designed to keep all data on the GPU
+  - 50,000,000 samples per second of degree {u: 10, v: 10} surface with 100 x 100 control points
   - currently a WIP
+    - benchmarks, examples, and docs coming soon!
 - Basic examples of how to use the engine.
   - to run an example, use ./run [example to run]
   - for example, to run example_01, type ./run example_01
   - example_01
-    - soon to come
+    - hello_cad
   - example_02
-    - soon to come
+    - hello surface
+  - example_03
+    - hello camera: todo
 - CAD software that uses the engine.
   - Soon to come
 
