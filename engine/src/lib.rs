@@ -1,4 +1,5 @@
 pub mod geometry;
+pub mod gpu_raytracing;
 pub mod instance;
 pub mod instance_interface;
 pub mod math;
