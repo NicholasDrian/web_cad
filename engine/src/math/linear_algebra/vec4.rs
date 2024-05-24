@@ -10,6 +10,16 @@ pub struct Vec4 {
 }
 
 impl Vec4 {
+    pub fn new(x: f32, y: f32, z: f32, w: f32) -> Vec4 {
+        Vec4 { x, y, z, w }
+    }
+    pub fn new_point(x: f32, y: f32, z: f32) -> Vec4 {
+        Vec4 { x, y, z, w: 1.0 }
+    }
+    pub fn new_vec(x: f32, y: f32, z: f32) -> Vec4 {
+        Vec4 { x, y, z, w: 0.0 }
+    }
+
     pub fn dot(a: &Vec4, b: &Vec4) -> Vec4 {
         Vec4 {
             x: a.x * b.x,

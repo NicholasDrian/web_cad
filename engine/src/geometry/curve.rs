@@ -8,9 +8,8 @@ use super::{bind_group::GeometryBindGroupObject, utils::default_knot_vector, Geo
 
 pub struct Curve {
     degree: u32,
-    controls: Vec<Vec3>,
+    weighted_controls: Vec<Vec4>,
     bind_group_object: GeometryBindGroupObject,
-    weights: Vec<f32>,
     knots: Vec<f32>,
     // Samples
     vertex_buffer: wgpu::Buffer,
@@ -21,37 +20,21 @@ impl Curve {
     pub fn new(
         curve_sampler: &CurveSampler,
         degree: u32,
-        controls: Vec<Vec3>,
-        weights: &[f32],
+        weighted_controls: Vec<Vec4>,
         knots: &[f32],
     ) -> Curve {
         let knots = if knots.len() == 0 {
-            default_knot_vector(controls.len(), degree)
+            default_knot_vector(weighted_controls.len(), degree)
         } else {
             knots.to_vec()
         };
-        let weights = if weights.len() == 0 {
-            vec![1.0; controls.len()]
-        } else {
-            weights.to_vec()
-        };
-        let weighted_controls: Vec<Vec4> = controls
-            .iter()
-            .zip(weights.iter())
-            .map(|(control, weight)| Vec4 {
-                x: control.x * weight,
-                y: control.y * weight,
-                z: control.z * weight,
-                w: *weight,
-            })
-            .collect();
+
         let vertex_buffer = curve_sampler.sample_curve(degree, &weighted_controls, &knots);
-        let vertex_count = SAMPLES_PER_SEGMENT * (controls.len() as u32 - 1) + 1;
+        let vertex_count = SAMPLES_PER_SEGMENT * (weighted_controls.len() as u32 - 1) + 1;
         let bind_group_object = GeometryBindGroupObject::new(curve_sampler.get_renderer());
         Curve {
             degree,
-            controls,
-            weights,
+            weighted_controls,
             knots,
             vertex_buffer,
             vertex_count,

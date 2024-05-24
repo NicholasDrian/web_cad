@@ -8,8 +8,9 @@ use crate::{
         surface::Surface,
         GeometryId,
     },
-    instance::{Handle, INSTANCES},
+    instance::Handle,
     math::linear_algebra::vec3::Vec3,
+    math::linear_algebra::vec4::Vec4,
     utils::get_instance_mut,
 };
 
@@ -101,12 +102,18 @@ impl Scene {
         // Leave empty for default values
         knots: &[f32],
     ) -> GeometryId {
-        let mut control_points: Vec<Vec3> = Vec::new();
+        let mut weighted_control_points: Vec<Vec4> = Vec::new();
+        let weights = if weights.len() == 0 {
+            &vec![1.0; controls.len()][..]
+        } else {
+            weights
+        };
         for i in 0..controls.len() / 3 {
-            control_points.push(Vec3 {
-                x: controls[i * 3],
-                y: controls[i * 3 + 1],
-                z: controls[i * 3 + 2],
+            weighted_control_points.push(Vec4 {
+                x: controls[i * 3] * weights[i],
+                y: controls[i * 3 + 1] * weights[i],
+                z: controls[i * 3 + 2] * weights[i],
+                w: weights[i],
             });
         }
 
@@ -114,8 +121,7 @@ impl Scene {
         let curve = Curve::new(
             get_instance_mut!(&self.instance_handle).get_curve_sampler(),
             degree,
-            control_points,
-            weights,
+            weighted_control_points,
             knots,
         );
 

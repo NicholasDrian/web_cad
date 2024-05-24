@@ -1,8 +1,10 @@
 pub mod bind_group;
 pub mod curve;
+pub mod curve_generators;
 pub mod mesh;
 pub mod polyline;
 pub mod surface;
+pub mod surface_generators;
 pub mod utils;
 
 use std::sync::Mutex;
