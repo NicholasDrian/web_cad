@@ -41,7 +41,8 @@ impl ViewportInternal {
 
         surface.configure(renderer.get_device(), &config);
 
-        let camera = Camera::new(CameraDescriptor::default(), renderer.clone());
+        let mut camera = Camera::new(CameraDescriptor::default(), renderer.clone());
+        camera.set_aspect(canvas.width() as f32 / canvas.height() as f32);
 
         let bind_group = renderer
             .get_device()

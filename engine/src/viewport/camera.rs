@@ -114,6 +114,11 @@ impl Camera {
         res
     }
 
+    pub fn set_aspect(&mut self, aspect: f32) {
+        self.aspect = aspect;
+        self.update_view_proj();
+    }
+
     pub fn update_params(&mut self, params: CameraDescriptor) {
         let forward = Vec3::subtract(&params.focal_point, &params.position);
         let mut up = if forward.x == 0.0 && forward.z == 0.0 {
