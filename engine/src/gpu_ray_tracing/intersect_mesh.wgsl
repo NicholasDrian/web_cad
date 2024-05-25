@@ -1,6 +1,13 @@
 @group(0) @binding(0) var<storage, read> bbh: array<Node>;
 @group(0) @binding(1) var<storage, read> vertex_buffer: array<Vertex>;
 @group(0) @binding(2) var<storage, read> index_buffer: array<u32>;
+@group(0) @binding(3) var<storate, read> rays: array<Ray>;
+
+struct Ray {
+  // Maybe check alignment rules
+  position: Vec3,
+  direction: Vec3
+}
 
 struct Vertex {
   position: Vec4,
