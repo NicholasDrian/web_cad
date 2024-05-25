@@ -66,7 +66,7 @@ impl Vec3 {
         }
     }
     pub fn angle_between(a: &Vec3, b: &Vec3) -> f32 {
-        todo!()
+        f32::cos(Vec3::dot(&a.to_normalized(), &b.to_normalized()))
     }
 
     pub fn distance(a: &Vec3, b: &Vec3) -> f32 {

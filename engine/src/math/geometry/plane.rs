@@ -10,10 +10,10 @@ impl Plane {
     pub fn new(origin: Vec3, normal: Vec3) -> Self {
         Self { origin, normal }
     }
-    pub fn get_origin(&self) -> Vec3 {
-        self.origin
+    pub fn get_origin(&self) -> &Vec3 {
+        &self.origin
     }
-    pub fn get_normal(&self) -> Vec3 {
-        self.normal
+    pub fn get_normal(&self) -> &Vec3 {
+        &self.normal
     }
 }

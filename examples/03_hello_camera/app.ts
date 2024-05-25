@@ -7,8 +7,8 @@ let instance = await WebCadInstance.new_instance();
 let scene = instance.create_scene();
 let arc = scene.add_arc_start_middle_end(
   new Float32Array([0.0, 0.0, 0.0]),
-  new Float32Array([0.0, 10.0, 0.0]),
-  new Float32Array([10.0, 0.0, 0.0]),
+  new Float32Array([0.0, 1.0, 0.0]),
+  new Float32Array([1.0, 0.0, 0.0]),
 );
 
 let canvas3 = document.createElement("canvas");

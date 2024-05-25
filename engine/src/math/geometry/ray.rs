@@ -25,14 +25,30 @@ impl Ray {
         &self.direction
     }
 
+    /// Could be optimized by making multiple functions to reduce branch count
     pub fn intersect_plane(&self, plane: &Plane, allow_negative: bool) -> Option<f32> {
-        todo!();
+        let numerator = Vec3::dot(
+            &Vec3::subtract(plane.get_origin(), &self.origin),
+            plane.get_normal(),
+        );
+        let denominator = Vec3::dot(&self.direction, plane.get_normal());
+        if denominator == 0.0 {
+            return None;
+        }
+        let t = numerator / denominator;
+        if allow_negative {
+            return Some(t);
+        }
+        if t < 0.0 {
+            return None;
+        }
+        Some(t)
     }
 
     pub fn closest_point_to_line(&self, start: &Vec3, end: &Vec3) -> Vec3 {
         let p = Vec3::add(&self.origin, &self.direction);
 
-        let v13 = Vec3::subtract(&start, &self.origin);
+        let v13 = Vec3::subtract(start, &self.origin);
         let v43 = Vec3::subtract(&p, &self.origin);
         let v21 = Vec3::subtract(end, start);
 
