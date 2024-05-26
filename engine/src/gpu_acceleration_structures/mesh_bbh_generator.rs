@@ -66,8 +66,12 @@ impl MeshBBHGenerator {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("split finder"),
                 entries: &[
-                // TODO:
-
+                    // split finder params
+                    crate::utils::compute_uniform_bind_group_layout_entry(0),
+                    // splits
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
+                    // new_splits
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, false),
                 ],
             });
 

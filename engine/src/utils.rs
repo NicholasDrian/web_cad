@@ -53,7 +53,7 @@ pub(crate) fn create_compute_pipeline(
     });
     let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some(label),
-        bind_group_layouts: &[&bind_group_layout],
+        bind_group_layouts: &[bind_group_layout],
         push_constant_ranges: &[],
     });
 
