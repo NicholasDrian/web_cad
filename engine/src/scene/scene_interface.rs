@@ -76,6 +76,7 @@ impl Scene {
                 ],
             });
         }
+
         let polyline = Polyline::new(
             get_instance_mut!(&self.instance_handle).get_renderer(),
             &verts[..],
