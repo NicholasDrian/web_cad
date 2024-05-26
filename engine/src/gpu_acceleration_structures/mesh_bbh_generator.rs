@@ -25,6 +25,7 @@ struct BoundingBox {
     min: Vec3,
     max: Vec3,
     center: Vec3,
+    area: f32,
 }
 
 pub struct MeshBBHGenerator {
@@ -47,44 +48,25 @@ pub struct MeshBBHGenerator {
 
 impl MeshBBHGenerator {
     pub fn new(renderer: Rc<Renderer>) -> Self {
+        let device = renderer.get_device();
+        let create_mesh_bb_buffer_shader_module =
+            device.create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("mesh bb buffer generator"),
+                source: wgpu::ShaderSource::Wgsl(include_str!("create_mesh_bb_buffer.wgsl").into()),
+            });
+
         let bb_buffer_generator_bind_group_layout =
-            renderer
-                .get_device()
-                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                    label: Some("mesh bb buffer generator"),
-                    entries: &[
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 0,
-                            visibility: wgpu::ShaderStages::COMPUTE,
-                            ty: wgpu::BindingType::Buffer {
-                                ty: wgpu::BufferBindingType::Storage { read_only: true },
-                                has_dynamic_offset: false,
-                                min_binding_size: None,
-                            },
-                            count: None,
-                        },
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 1,
-                            visibility: wgpu::ShaderStages::COMPUTE,
-                            ty: wgpu::BindingType::Buffer {
-                                ty: wgpu::BufferBindingType::Storage { read_only: true },
-                                has_dynamic_offset: false,
-                                min_binding_size: None,
-                            },
-                            count: None,
-                        },
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 2,
-                            visibility: wgpu::ShaderStages::COMPUTE,
-                            ty: wgpu::BindingType::Buffer {
-                                ty: wgpu::BufferBindingType::Storage { read_only: false },
-                                has_dynamic_offset: false,
-                                min_binding_size: None,
-                            },
-                            count: None,
-                        },
-                    ],
-                });
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("mesh bb buffer generator"),
+                entries: &[
+                    // Vertex
+                    crate::utils::compute_buffer_bind_group_layout_entry(0, true),
+                    // Index
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
+                    // bb_buffer
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, false),
+                ],
+            });
 
         todo!()
     }

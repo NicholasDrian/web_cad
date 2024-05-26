@@ -25,7 +25,7 @@ pub fn compute_buffer_bind_group_layout_entry(
         count: None,
     }
 }
-pub fn compute_uniform_bind_group_layout_entry(binding: u32) -> wgpu::BindGroupLayoutEntry {
+pub const fn compute_uniform_bind_group_layout_entry(binding: u32) -> wgpu::BindGroupLayoutEntry {
     wgpu::BindGroupLayoutEntry {
         binding,
         visibility: wgpu::ShaderStages::COMPUTE,

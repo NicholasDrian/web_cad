@@ -6,6 +6,7 @@ struct BoundingBox {
   min: vec3<f32>;
   max: vec3<f32>;
   center: vec3<f32>;
+  area: f32;
 }
 
 
