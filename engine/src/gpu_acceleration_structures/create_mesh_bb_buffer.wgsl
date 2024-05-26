@@ -11,7 +11,7 @@ struct BoundingBox {
 
 
 @compute @workgroup_size(1,1,1) 
-fn split(
+fn generate_bb_buffer(
   @builtin(global_invocation_id) id: vec3<u32>,
   ) {
     let p1 = vertex_buffer[index_buffer[3 * id.x]];
