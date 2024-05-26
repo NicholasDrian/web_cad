@@ -10,7 +10,7 @@ macro_rules! get_instance_mut {
 
 pub(crate) use get_instance_mut;
 
-pub fn compute_buffer_bind_group_layout_entry(
+pub(crate) const fn compute_buffer_bind_group_layout_entry(
     binding: u32,
     read_only: bool,
 ) -> wgpu::BindGroupLayoutEntry {
@@ -25,7 +25,9 @@ pub fn compute_buffer_bind_group_layout_entry(
         count: None,
     }
 }
-pub const fn compute_uniform_bind_group_layout_entry(binding: u32) -> wgpu::BindGroupLayoutEntry {
+pub(crate) const fn compute_uniform_bind_group_layout_entry(
+    binding: u32,
+) -> wgpu::BindGroupLayoutEntry {
     wgpu::BindGroupLayoutEntry {
         binding,
         visibility: wgpu::ShaderStages::COMPUTE,

@@ -1,5 +1,6 @@
 pub mod geometry;
 pub mod gpu_acceleration_structures;
+pub mod gpu_algorithms;
 pub mod gpu_frustum_tracing;
 pub mod gpu_ray_tracing;
 pub mod gpu_samplers;
