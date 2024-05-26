@@ -2,8 +2,9 @@ use super::vec4::Vec4;
 
 use wasm_bindgen::prelude::*;
 
+#[repr(C)]
 #[wasm_bindgen]
-#[derive(Debug, Copy, Clone, Default, PartialEq)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,

@@ -1,2 +1,2 @@
-pub mod line_bbh;
-pub mod mesh_bbh;
+pub mod line_bbh_generator;
+pub mod mesh_bbh_generator;

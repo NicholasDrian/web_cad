@@ -21,12 +21,11 @@ struct Leaf {
 }
 
 @compute @workgroup_size(1,1,1) 
-fn main(
+fn split(
   @builtin(global_invocation_id) id: vec3<u32>,
   @builtin(num_workgroups) num_workgroups: vec3<u32>
   ) {
 
 }
-
 
 
