@@ -4,7 +4,7 @@ use wgpu::util::DeviceExt;
 
 use crate::{
     gpu_samplers::params::SAMPLES_PER_SEGMENT, math::linear_algebra::vec4::Vec4,
-    render::renderer::Renderer,
+    render::renderer::Renderer, utils::create_compute_pipeline,
 };
 
 use super::utils::create_span_buffer;
@@ -27,14 +27,8 @@ impl CurveSampler {
     pub fn new(renderer: Rc<Renderer>) -> CurveSampler {
         let device = renderer.get_device();
 
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("curve sampler compute shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("curve_sampler.wgsl").into()),
-        });
-
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("curve sampler bind group layout"),
-
             entries: &[
                 // Params
                 crate::utils::compute_uniform_bind_group_layout_entry(0),
@@ -51,19 +45,13 @@ impl CurveSampler {
             ],
         });
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("curve sampler pipeline layout"),
-            bind_group_layouts: &[&bind_group_layout],
-            push_constant_ranges: &[],
-        });
-
-        let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: Some("curve sampler pipeline"),
-            layout: Some(&pipeline_layout),
-            module: &shader,
-            entry_point: "main",
-            compilation_options: wgpu::PipelineCompilationOptions::default(),
-        });
+        let pipeline = create_compute_pipeline(
+            device,
+            "curve sampler pipeline",
+            include_str!("curve_sampler.wgsl"),
+            &bind_group_layout,
+            "main",
+        );
 
         CurveSampler {
             renderer,

@@ -14,7 +14,7 @@ use wgpu::util::{BufferInitDescriptor, DeviceExt};
 
 use crate::{
     gpu_samplers::params::SAMPLES_PER_SEGMENT, math::linear_algebra::vec4::Vec4,
-    render::renderer::Renderer,
+    render::renderer::Renderer, utils::create_compute_pipeline,
 };
 
 use super::{index_buffer_generator::IndexBufferGenerator, utils::create_span_buffer};
@@ -49,18 +49,6 @@ pub struct SurfaceSampler {
 impl SurfaceSampler {
     pub fn new(renderer: Rc<Renderer>) -> SurfaceSampler {
         let device = renderer.get_device();
-        let shader_module_stage_1 = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("surface sampler stage 1 compute shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("surface_sampler_stage_1.wgsl").into()),
-        });
-        let shader_module_stage_2 = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("surface sampler stage 2 compute shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("surface_sampler_stage_2.wgsl").into()),
-        });
-        let shader_module_stage_3 = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("surface sampler stage 3 compute shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("surface_sampler_stage_3.wgsl").into()),
-        });
         let bind_group_layout_stage_1 =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("surface sampler stage 2 bind group layout"),
@@ -106,47 +94,27 @@ impl SurfaceSampler {
                 ],
             });
 
-        let pipeline_layout_stage_1 =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("surface sampler pipeline layout stage 1"),
-                bind_group_layouts: &[&bind_group_layout_stage_1],
-                push_constant_ranges: &[],
-            });
-        let pipeline_layout_stage_2 =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("surface sampler pipeline layout stage 2"),
-                bind_group_layouts: &[&bind_group_layout_stage_2],
-                push_constant_ranges: &[],
-            });
-        let pipeline_layout_stage_3 =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("surface sampler pipeline layout stage 3"),
-                bind_group_layouts: &[&bind_group_layout_stage_3],
-                push_constant_ranges: &[],
-            });
-
-        let pipeline_stage_1 = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: Some("surface sampler pipeline stage 1"),
-            layout: Some(&pipeline_layout_stage_1),
-            module: &shader_module_stage_1,
-            entry_point: "main",
-            compilation_options: wgpu::PipelineCompilationOptions::default(),
-        });
-
-        let pipeline_stage_2 = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: Some("surface sampler pipeline stage 2"),
-            layout: Some(&pipeline_layout_stage_2),
-            module: &shader_module_stage_2,
-            entry_point: "main",
-            compilation_options: wgpu::PipelineCompilationOptions::default(),
-        });
-        let pipeline_stage_3 = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: Some("surface sampler pipeline stage 3"),
-            layout: Some(&pipeline_layout_stage_3),
-            module: &shader_module_stage_3,
-            entry_point: "main",
-            compilation_options: wgpu::PipelineCompilationOptions::default(),
-        });
+        let pipeline_stage_1 = create_compute_pipeline(
+            device,
+            "surface sampler stage 1",
+            include_str!("surface_sampler_stage_1.wgsl"),
+            &bind_group_layout_stage_1,
+            "main",
+        );
+        let pipeline_stage_2 = create_compute_pipeline(
+            device,
+            "surface sampler stage 2",
+            include_str!("surface_sampler_stage_2.wgsl"),
+            &bind_group_layout_stage_2,
+            "main",
+        );
+        let pipeline_stage_3 = create_compute_pipeline(
+            device,
+            "surface sampler stage 3",
+            include_str!("surface_sampler_stage_3.wgsl"),
+            &bind_group_layout_stage_3,
+            "main",
+        );
 
         SurfaceSampler {
             renderer: renderer.clone(),
