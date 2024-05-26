@@ -17,6 +17,7 @@ use std::rc::Rc;
 use crate::geometry::mesh::Mesh;
 use crate::math::linear_algebra::vec3::Vec3;
 use crate::render::renderer::Renderer;
+use crate::utils::create_compute_pipeline;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -49,23 +50,6 @@ impl MeshBBHGenerator {
     pub fn new(renderer: Rc<Renderer>) -> Self {
         let device = renderer.get_device();
 
-        let bb_buffer_generator_shader_module =
-            device.create_shader_module(wgpu::ShaderModuleDescriptor {
-                label: Some("bb buffer gen"),
-                source: wgpu::ShaderSource::Wgsl(include_str!("create_mesh_bb_buffer.wgsl").into()),
-            });
-        let split_finder_shader_module =
-            device.create_shader_module(wgpu::ShaderModuleDescriptor {
-                label: Some("bb buffer gen"),
-                source: wgpu::ShaderSource::Wgsl(include_str!("create_mesh_bb_buffer.wgsl").into()),
-            });
-
-        let create_mesh_bb_buffer_shader_module =
-            device.create_shader_module(wgpu::ShaderModuleDescriptor {
-                label: Some("mesh bb buffer generator"),
-                source: wgpu::ShaderSource::Wgsl(include_str!("create_mesh_bb_buffer.wgsl").into()),
-            });
-
         let bb_buffer_generator_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("mesh bb buffer generator"),
@@ -87,35 +71,21 @@ impl MeshBBHGenerator {
                 ],
             });
 
-        let bb_buffer_generator_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("bb buffer gen"),
-                bind_group_layouts: &[&bb_buffer_generator_bind_group_layout],
-                push_constant_ranges: &[],
-            });
-        let split_finder_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("split finder"),
-                bind_group_layouts: &[&split_finder_bind_group_layout],
-                push_constant_ranges: &[],
-            });
+        let bb_buffer_generator_pipeline = create_compute_pipeline(
+            device,
+            "bb buffer gen",
+            include_str!("create_mesh_bb_buffer.wgsl"),
+            &bb_buffer_generator_bind_group_layout,
+            "generate_bb_buffer",
+        );
+        let split_finder_pipeline = create_compute_pipeline(
+            device,
+            "split finder",
+            include_str!("create_mesh_bbh_split_finder.wgsl"),
+            &split_finder_bind_group_layout,
+            "find_splits",
+        );
 
-        let bb_buffer_generator_pipeline =
-            device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-                label: Some("bb buffer gen"),
-                layout: Some(&bb_buffer_generator_pipeline_layout),
-                module: &bb_buffer_generator_shader_module,
-                entry_point: "generate_bb_buffer",
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            });
-        let split_finder_pipeline =
-            device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-                label: Some("split finder"),
-                layout: Some(&split_finder_pipeline_layout),
-                module: &split_finder_shader_module,
-                entry_point: "find_splits",
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            });
         Self {
             renderer,
             bb_buffer_generator_bind_group_layout,

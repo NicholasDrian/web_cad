@@ -16,8 +16,6 @@ struct Node {
   left_child: u32,
 }
 
-/// can i bytecast node to leaf? 
-
 struct Leaf {
  triangles: array<u32, 8>,
  null_ptr: u32
