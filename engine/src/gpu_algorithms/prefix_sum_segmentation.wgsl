@@ -6,4 +6,6 @@
 @compute @workgroup_size(1,1,1)
 fn segment_prefix_sum(
   @builtin(global_invocation_id) id: vec3<u32>,
-) {}
+) {
+
+}
