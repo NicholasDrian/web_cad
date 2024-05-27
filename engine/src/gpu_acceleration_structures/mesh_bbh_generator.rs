@@ -14,7 +14,10 @@
 //!
 use std::rc::Rc;
 
+use wgpu::util::DeviceExt;
+
 use crate::geometry::mesh::Mesh;
+use crate::gpu_algorithms::prefix_sum;
 use crate::math::linear_algebra::vec3::Vec3;
 use crate::render::renderer::Renderer;
 use crate::utils::create_compute_pipeline;
@@ -103,16 +106,48 @@ impl MeshBBHGenerator {
     }
 
     pub fn create_bbh(&self, mesh: &Mesh) -> wgpu::Buffer {
-        let bb_buffer = self.create_bb_buffer(
+        let triangle_info_buffer = self.create_triangle_info_buffer(
             mesh.get_vertex_buffer(),
             mesh.get_index_buffer(),
             mesh.get_index_count(),
         );
 
-        todo!()
+        // one index per triangle.
+        let index_buffer = self.create_bbh_index_buffer(mesh);
+
+        // create levels and init with first split queue.
+        type LevelLength = u32;
+        let mut levels: Vec<(wgpu::Buffer, LevelLength)> = vec![(
+            self.renderer
+                .get_device()
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("initial split"),
+                    contents: bytemuck::cast_slice(&[0u32, mesh.get_index_count() / 3]),
+                    usage: wgpu::BufferUsages::STORAGE,
+                }),
+            1u32,
+        )];
+
+        loop {
+            let possible_splits = self.find_splits(triangle_info_buffer, levels.back());
+
+            // make sure final sum is left and right. differnt than prefix_sum.back()
+            let (prefix_sum, final_sum) = self.prefix_sum_generator(possible_splits);
+
+            if final_sum == 0 {
+                break;
+            }
+
+            // reorder index_buffer
+
+            levels.push(self.creat_next_level(possible_splits, prefix_sum));
+        }
+
+        // bottom up bb construction
+        return self.create_bbs(levels);
     }
 
-    fn create_bb_buffer(
+    fn create_triangle_info_buffer(
         &self,
         vertex_buffer: &wgpu::Buffer,
         index_buffer: &wgpu::Buffer,

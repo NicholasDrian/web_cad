@@ -1,6 +1,15 @@
-@group(0) @binding(0) var<buffer, read> vertex_buffer: array<vec4<f32>>;
+// TODO: currently relies on w being 1.
+// Make this not true
+// I think vertex_buffer[i].w should be eliminated
+
+@group(0) @binding(0) var<buffer, read> vertex_buffer: array<Vertex>;
 @group(0) @binding(1) var<buffer, read> index_buffer: array<u32>;
 @group(0) @binding(2) var<buffer, read_write> bb_buffer: array<BoudingBox>;
+
+struct Vertex {
+  position: vec4<f32>,
+  normal: vec4<f32>,
+}
 
 struct BoundingBox {
   min_corner: vec3<f32>;
@@ -9,6 +18,10 @@ struct BoundingBox {
   area: f32;
 }
 
+
+fn triangle_area(a: vec4<f32>, b: vec4<f32>, c: vec4<f32>) {
+  return length(cross(a.xyz - b.xyz, a.xyz - c.xyz));
+}
 
 @compute @workgroup_size(1,1,1) 
 fn generate_bb_buffer(
@@ -29,11 +42,14 @@ fn generate_bb_buffer(
         max(max(p1.z, p2.z), p3.z),
       ), 
     let center = (min_corner + max_corner) / 2.0;
+
+    let area = triangle_area(a, b, c);
     
     bb_buffer[id.x] = BoundingBox(
       min_corner,
       max_corner,
-      center
+      center,
+      area,
     ); 
 
 }
