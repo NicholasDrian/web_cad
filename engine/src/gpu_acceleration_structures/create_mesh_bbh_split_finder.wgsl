@@ -1,10 +1,16 @@
 // test a few splits to find the bes one
 // currently using the surface area heuristic (SAH)
 
-@group(0) @binding(0) var<unifrom> params: Params;
+@group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> bb_buffer: array<BoudingBox>;
 @group(0) @binding(2) var<storage, read> splits_in: array<Split>;
 @group(0) @binding(3) var<storage, read_write> splits_out: array<SplitCandidate>;
+
+
+struct Params {
+  // TODO:
+  temp: u32,
+  }
 
 struct BoudingBox {
   min_corner: vec3<f32>,
@@ -14,15 +20,15 @@ struct BoudingBox {
 }
 
 // convert 2D seed to 1D
-uint seed(uvec2 p) {
-    return 19u * p.x + 47u * p.y + 101u;
+fn seed(x: u32, y: u32) -> u32 {
+    return 19u * x + 47u * y + 101u;
 }
 
 // https://www.pcg-random.org/
-uint pcg(uint v)
+fn pcg(v: u32) -> u32
 {
-  uint state = v * 747796405u + 2891336453u;
-	uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+  let state: u32 = v * 747796405u + 2891336453u;
+	let word: u32 = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
 	return (word >> 22u) ^ word;
 }
 

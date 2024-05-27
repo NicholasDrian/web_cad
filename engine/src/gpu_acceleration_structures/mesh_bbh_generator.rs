@@ -17,6 +17,7 @@ use std::rc::Rc;
 use wgpu::util::DeviceExt;
 
 use crate::geometry::mesh::Mesh;
+use crate::gpu_algorithms::AlgorithmResources;
 use crate::math::linear_algebra::vec3::Vec3;
 use crate::render::renderer::Renderer;
 use crate::utils::create_compute_pipeline;
@@ -36,6 +37,7 @@ struct BoundingBox {
 
 pub struct MeshBBHGenerator {
     renderer: Rc<Renderer>,
+    algorithm_resources: Rc<AlgorithmResources>,
 
     bb_buffer_generator_bind_group_layout: wgpu::BindGroupLayout,
     split_finder_bind_group_layout: wgpu::BindGroupLayout,
@@ -52,7 +54,7 @@ pub struct MeshBBHGenerator {
 }
 
 impl MeshBBHGenerator {
-    pub fn new(renderer: Rc<Renderer>) -> Self {
+    pub fn new(renderer: Rc<Renderer>, algorithm_resources: Rc<AlgorithmResources>) -> Self {
         let device = renderer.get_device();
 
         let bb_buffer_generator_bind_group_layout =
@@ -83,7 +85,7 @@ impl MeshBBHGenerator {
         let bb_buffer_generator_pipeline = create_compute_pipeline(
             device,
             "bb buffer gen",
-            include_str!("create_mesh_bb_buffer.wgsl"),
+            include_str!("create_triangle_info_buffer.wgsl"),
             &bb_buffer_generator_bind_group_layout,
             "generate_bb_buffer",
         );
@@ -97,6 +99,7 @@ impl MeshBBHGenerator {
 
         Self {
             renderer,
+            algorithm_resources,
             bb_buffer_generator_bind_group_layout,
             bb_buffer_generator_pipeline,
             split_finder_bind_group_layout,
@@ -105,45 +108,48 @@ impl MeshBBHGenerator {
     }
 
     pub fn create_bbh(&self, mesh: &Mesh) -> wgpu::Buffer {
-        let triangle_info_buffer = self.create_triangle_info_buffer(
-            mesh.get_vertex_buffer(),
-            mesh.get_index_buffer(),
-            mesh.get_index_count(),
-        );
+        /*
+                let triangle_info_buffer = self.create_triangle_info_buffer(
+                    mesh.get_vertex_buffer(),
+                    mesh.get_index_buffer(),
+                    mesh.get_index_count(),
+                );
 
-        // one index per triangle.
-        let bbh_index_buffer = self.create_bbh_index_buffer(mesh);
+                // one index per triangle.
+                let bbh_index_buffer = self.create_bbh_index_buffer(mesh);
 
-        // create levels and init with first split queue.
-        type LevelLength = u32;
-        let mut levels: Vec<(wgpu::Buffer, LevelLength)> = vec![(
-            self.renderer
-                .get_device()
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("initial split"),
-                    contents: bytemuck::cast_slice(&[0u32, mesh.get_index_count() / 3]),
-                    usage: wgpu::BufferUsages::STORAGE,
-                }),
-            1u32,
-        )];
+                // create levels and init with first split queue.
+                type LevelLength = u32;
+                let mut levels: Vec<(wgpu::Buffer, LevelLength)> = vec![(
+                    self.renderer
+                        .get_device()
+                        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                            label: Some("initial split"),
+                            contents: bytemuck::cast_slice(&[0u32, mesh.get_index_count() / 3]),
+                            usage: wgpu::BufferUsages::STORAGE,
+                        }),
+                    1u32,
+                )];
 
-        loop {
-            let possible_splits = self.find_splits(triangle_info_buffer, levels.back());
+                loop {
+                    let possible_splits = self.find_splits(triangle_info_buffer, levels.back());
 
-            // make sure final sum is left and right. differnt than prefix_sum.back()
-            let (prefix_sum, final_sum) = self.prefix_sum_generator(possible_splits);
+                    // make sure final sum is left and right. differnt than prefix_sum.back()
+                    let (prefix_sum, final_sum) = self.prefix_sum_generator(possible_splits);
 
-            if final_sum == 0 {
-                break;
-            }
+                    if final_sum == 0 {
+                        break;
+                    }
 
-            // reorder index_buffer
+                    // reorder index_buffer
 
-            levels.push(self.creat_next_level(possible_splits, prefix_sum));
-        }
+                    levels.push(self.creat_next_level(possible_splits, prefix_sum));
+                }
 
-        // bottom up bb construction
-        return self.create_bbs(levels);
+                // bottom up bb construction
+                return self.create_bbs(levels);
+        */
+        todo!();
     }
 
     fn create_triangle_info_buffer(

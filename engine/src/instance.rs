@@ -1,6 +1,8 @@
 use std::sync::Mutex;
 use std::{collections::HashMap, rc::Rc};
 
+use crate::gpu_acceleration_structures::mesh_bbh_generator::MeshBBHGenerator;
+use crate::gpu_algorithms::AlgorithmResources;
 use crate::gpu_samplers::curve_sampler::CurveSampler;
 use crate::gpu_samplers::surface_sampler::SurfaceSampler;
 use crate::scene::scene_interface::Scene;
@@ -24,6 +26,7 @@ lazy_static! {
 
 pub struct InstanceInternal {
     renderer: Rc<Renderer>,
+    algorithm_resources: Rc<AlgorithmResources>,
     scenes: HashMap<Handle, SceneInternal>,
     viewports: HashMap<Handle, ViewportInternal>,
     curve_sampler: Rc<CurveSampler>,
@@ -34,14 +37,18 @@ unsafe impl Send for InstanceInternal {}
 impl InstanceInternal {
     pub async fn create() -> Handle {
         let renderer = Rc::new(Renderer::new().await);
+        let algorithm_resources = Rc::new(AlgorithmResources::new(renderer.clone()));
         let curve_sampler = Rc::new(CurveSampler::new(renderer.clone()));
         let surface_sampler = Rc::new(SurfaceSampler::new(renderer.clone()));
+        let mesh_bbh_generator =
+            MeshBBHGenerator::new(renderer.clone(), algorithm_resources.clone());
         let instance = InstanceInternal {
             scenes: HashMap::new(),
             viewports: HashMap::new(),
             curve_sampler,
             surface_sampler,
             renderer,
+            algorithm_resources,
         };
 
         let handle = new_handle();
