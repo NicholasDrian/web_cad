@@ -19,6 +19,9 @@ use crate::math::linear_algebra::vec3::Vec3;
 use crate::render::renderer::Renderer;
 use crate::utils::create_compute_pipeline;
 
+const SPLIT_CANDIDATE_COUNT: u32 = 8;
+const MAX_LEAF_SIZE: u32 = 8;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 struct BoundingBox {

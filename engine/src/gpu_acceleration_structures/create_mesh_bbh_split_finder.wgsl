@@ -13,6 +13,20 @@ struct BoudingBox {
   area: f32
 }
 
+// convert 2D seed to 1D
+uint seed(uvec2 p) {
+    return 19u * p.x + 47u * p.y + 101u;
+}
+
+// https://www.pcg-random.org/
+uint pcg(uint v)
+{
+  uint state = v * 747796405u + 2891336453u;
+	uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+	return (word >> 22u) ^ word;
+}
+
+
 // uses half open range [start, end)
 struct Split {
   start: u32,
@@ -28,14 +42,12 @@ struct SplitCandidate {
   diff: i32,
 }
 
-
 struct Node {
   min_corner: vec3<f32>,
   max_corner: vec3<f32>,
   // if negative, is leaf
   left_child: i32,
 }
-
 
 // test x y and z splits in each work group
 @compute @workgroup_size(3,1,1) 
