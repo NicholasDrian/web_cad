@@ -18,7 +18,6 @@ struct BoundingBox {
   area: f32;
 }
 
-
 fn triangle_area(a: vec4<f32>, b: vec4<f32>, c: vec4<f32>) {
   return length(cross(a.xyz - b.xyz, a.xyz - c.xyz));
 }

@@ -17,7 +17,6 @@ use std::rc::Rc;
 use wgpu::util::DeviceExt;
 
 use crate::geometry::mesh::Mesh;
-use crate::gpu_algorithms::prefix_sum;
 use crate::math::linear_algebra::vec3::Vec3;
 use crate::render::renderer::Renderer;
 use crate::utils::create_compute_pipeline;
@@ -113,7 +112,7 @@ impl MeshBBHGenerator {
         );
 
         // one index per triangle.
-        let index_buffer = self.create_bbh_index_buffer(mesh);
+        let bbh_index_buffer = self.create_bbh_index_buffer(mesh);
 
         // create levels and init with first split queue.
         type LevelLength = u32;
