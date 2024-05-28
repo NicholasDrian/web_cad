@@ -2,10 +2,7 @@ use std::rc::Rc;
 
 use wgpu::util::DeviceExt;
 
-use crate::{
-    math::linear_algebra::{mat4::Mat4, vec3::Vec3, vec4::Vec4},
-    render::renderer::Renderer,
-};
+use crate::render::renderer::Renderer;
 
 use super::{bind_group::GeometryBindGroupObject, Geometry};
 

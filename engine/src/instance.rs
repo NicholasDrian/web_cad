@@ -31,6 +31,7 @@ pub struct InstanceInternal {
     viewports: HashMap<Handle, ViewportInternal>,
     curve_sampler: Rc<CurveSampler>,
     surface_sampler: Rc<SurfaceSampler>,
+    mesh_bbh_generator: MeshBBHGenerator,
 }
 unsafe impl Send for InstanceInternal {}
 
@@ -49,6 +50,7 @@ impl InstanceInternal {
             surface_sampler,
             renderer,
             algorithm_resources,
+            mesh_bbh_generator,
         };
 
         let handle = new_handle();
@@ -85,19 +87,19 @@ impl InstanceInternal {
     pub fn get_viewport_mut(&mut self, viewport_handle: Handle) -> &mut ViewportInternal {
         self.viewports.get_mut(&viewport_handle).unwrap()
     }
-
     pub fn get_scene_mut(&mut self, scene_handle: Handle) -> &mut SceneInternal {
         self.scenes.get_mut(&scene_handle).unwrap()
     }
-
     pub fn get_renderer(&self) -> Rc<Renderer> {
         self.renderer.clone()
     }
-
     pub fn get_curve_sampler(&self) -> &CurveSampler {
         &self.curve_sampler
     }
     pub fn get_surface_sampler(&self) -> Rc<SurfaceSampler> {
         self.surface_sampler.clone()
+    }
+    pub fn get_mesh_bbh_generator(&self) -> &MeshBBHGenerator {
+        &self.mesh_bbh_generator
     }
 }

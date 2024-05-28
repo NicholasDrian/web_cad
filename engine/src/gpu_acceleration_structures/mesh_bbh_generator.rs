@@ -17,47 +17,29 @@ use std::rc::Rc;
 use wgpu::util::DeviceExt;
 
 use crate::geometry::mesh::Mesh;
-use crate::gpu_algorithms::AlgorithmResources;
-use crate::math::linear_algebra::vec3::Vec3;
+use crate::gpu_algorithms::{iota::iota, AlgorithmResources};
 use crate::render::renderer::Renderer;
 use crate::utils::create_compute_pipeline;
 
 const SPLIT_CANDIDATE_COUNT: u32 = 8;
 const MAX_LEAF_SIZE: u32 = 8;
 
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct BoundingBox {
-    // Todo: verify alignment
-    min: Vec3,
-    max: Vec3,
-    center: Vec3,
-    area: f32,
-}
-
 pub struct MeshBBHGenerator {
     renderer: Rc<Renderer>,
     algorithm_resources: Rc<AlgorithmResources>,
 
-    bb_buffer_generator_bind_group_layout: wgpu::BindGroupLayout,
-    split_finder_bind_group_layout: wgpu::BindGroupLayout,
-    //split_bind_group_layout: wgpu::BindGroupLayout,
-    //compact_bind_group_layout: wgpu::BindGroupLayout,
-    //calculate_bbs_bind_group_layout: wgpu::BindGroupLayout,
-    bb_buffer_generator_pipeline: wgpu::ComputePipeline,
-    // determine where to split
-    split_finder_pipeline: wgpu::ComputePipeline,
-    // perform split
-    //split_pipeline: wgpu::ComputePipeline,
-    //complat_pipeline: wgpu::ComputePipeline,
-    //calculate_bbs_pipeline: wgpu::ComputePipeline,
+    triangle_info_buffer_generator_bind_group_layout: wgpu::BindGroupLayout,
+    triangle_info_buffer_generator_pipeline: wgpu::ComputePipeline,
+
+    split_bind_group_layout: wgpu::BindGroupLayout,
+    split_pipeline: wgpu::ComputePipeline,
 }
 
 impl MeshBBHGenerator {
     pub fn new(renderer: Rc<Renderer>, algorithm_resources: Rc<AlgorithmResources>) -> Self {
         let device = renderer.get_device();
 
-        let bb_buffer_generator_bind_group_layout =
+        let triangle_info_buffer_generator_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("mesh bb buffer generator"),
                 entries: &[
@@ -69,7 +51,7 @@ impl MeshBBHGenerator {
                     crate::utils::compute_buffer_bind_group_layout_entry(2, false),
                 ],
             });
-        let split_finder_bind_group_layout =
+        let split_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("split finder"),
                 entries: &[
@@ -82,74 +64,74 @@ impl MeshBBHGenerator {
                 ],
             });
 
-        let bb_buffer_generator_pipeline = create_compute_pipeline(
+        let triangle_info_buffer_generator_pipeline = create_compute_pipeline(
             device,
             "bb buffer gen",
             include_str!("create_triangle_info_buffer.wgsl"),
-            &bb_buffer_generator_bind_group_layout,
+            &triangle_info_buffer_generator_bind_group_layout,
             "generate_bb_buffer",
         );
-        let split_finder_pipeline = create_compute_pipeline(
+        let split_pipeline = create_compute_pipeline(
             device,
             "split finder",
-            include_str!("create_mesh_bbh_split_finder.wgsl"),
-            &split_finder_bind_group_layout,
+            include_str!("create_mesh_bbh_split.wgsl"),
+            &split_bind_group_layout,
             "find_splits",
         );
 
         Self {
             renderer,
             algorithm_resources,
-            bb_buffer_generator_bind_group_layout,
-            bb_buffer_generator_pipeline,
-            split_finder_bind_group_layout,
-            split_finder_pipeline,
+            triangle_info_buffer_generator_bind_group_layout,
+            triangle_info_buffer_generator_pipeline,
+            split_bind_group_layout,
+            split_pipeline,
         }
     }
 
     pub fn create_bbh(&self, mesh: &Mesh) -> wgpu::Buffer {
-        /*
-                let triangle_info_buffer = self.create_triangle_info_buffer(
-                    mesh.get_vertex_buffer(),
-                    mesh.get_index_buffer(),
-                    mesh.get_index_count(),
-                );
+        let triangle_info_buffer = self.create_triangle_info_buffer(
+            mesh.get_vertex_buffer(),
+            mesh.get_index_buffer(),
+            mesh.get_index_count(),
+        );
 
-                // one index per triangle.
-                let bbh_index_buffer = self.create_bbh_index_buffer(mesh);
+        // one index per triangle.
+        let bbh_index_buffer = iota(&self.algorithm_resources, mesh.get_index_count() / 3, 16);
 
-                // create levels and init with first split queue.
-                type LevelLength = u32;
-                let mut levels: Vec<(wgpu::Buffer, LevelLength)> = vec![(
-                    self.renderer
-                        .get_device()
-                        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                            label: Some("initial split"),
-                            contents: bytemuck::cast_slice(&[0u32, mesh.get_index_count() / 3]),
-                            usage: wgpu::BufferUsages::STORAGE,
-                        }),
-                    1u32,
-                )];
+        // create levels and init with first split queue.
+        type LevelLength = u32;
+        let mut levels: Vec<(wgpu::Buffer, LevelLength)> = vec![(
+            self.renderer
+                .get_device()
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("initial split"),
+                    contents: bytemuck::cast_slice(&[0u32, mesh.get_index_count() / 3]),
+                    usage: wgpu::BufferUsages::STORAGE,
+                }),
+            1u32,
+        )];
 
-                loop {
-                    let possible_splits = self.find_splits(triangle_info_buffer, levels.back());
+        loop {
+            //  let splits = self.split(&triangle_info_buffer, levels.last().unwrap());
 
-                    // make sure final sum is left and right. differnt than prefix_sum.back()
-                    let (prefix_sum, final_sum) = self.prefix_sum_generator(possible_splits);
+            /*
+                        // make sure final sum is left and right. differnt than prefix_sum.back()
+                        let (prefix_sum, final_sum) = self.prefix_sum_generator(possible_splits);
 
-                    if final_sum == 0 {
-                        break;
-                    }
+                        if final_sum == 0 {
+                            break;
+                        }
 
-                    // reorder index_buffer
+                        // reorder index_buffer
 
-                    levels.push(self.creat_next_level(possible_splits, prefix_sum));
-                }
+                        levels.push(self.creat_next_level(possible_splits, prefix_sum));
+            */
+        }
 
-                // bottom up bb construction
-                return self.create_bbs(levels);
-        */
-        todo!();
+        todo!()
+        // bottom up bb construction
+        //return self.create_bbs(levels);
     }
 
     fn create_triangle_info_buffer(
@@ -173,7 +155,7 @@ impl MeshBBHGenerator {
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("create bb buffer"),
-            layout: &self.bb_buffer_generator_bind_group_layout,
+            layout: &self.triangle_info_buffer_generator_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
@@ -196,7 +178,7 @@ impl MeshBBHGenerator {
                 timestamp_writes: None,
             });
 
-            compute_pass.set_pipeline(&self.bb_buffer_generator_pipeline);
+            compute_pass.set_pipeline(&self.triangle_info_buffer_generator_pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
             compute_pass.dispatch_workgroups(index_count / 3, 1, 1);
         }
@@ -207,13 +189,7 @@ impl MeshBBHGenerator {
         bb_buffer
     }
 
-    fn find_splits(&self, mesh: &Mesh, segments: &wgpu::Buffer) -> wgpu::Buffer {
+    fn split(&self, triangle_info_buffer: &wgpu::Buffer, segments: &wgpu::Buffer) -> wgpu::Buffer {
         todo!();
     }
-
-    fn perform_splits(&self, mesh: &Mesh, segments: &wgpu::Buffer) -> wgpu::Buffer {
-        todo!();
-    }
-
-    fn compact(&self, bbh: &wgpu::Buffer) {}
 }

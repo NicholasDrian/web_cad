@@ -32,11 +32,12 @@ function update_stats() {
   let control_point_count = document.getElementById("control point count");
   let total_samples_display = document.getElementById("total samples");
 
+  // I feel like this function should be in a namespace
   let sps = get_samples_per_segment();
 
   let sample_count = (control_count_u - 1) * (control_count_v - 1) * sps * sps;
   total_samples += sample_count;
-  fps.innerHTML = "todo";
+  fps.innerHTML = samples_this_second_queue.get_size().toString();
   surface_vertex_count.innerHTML = "Surface vertex count: " + numberWithCommas(sample_count);
   control_point_count.innerHTML = "Control point count: " + numberWithCommas(control_count_u * control_count_v);
   total_samples_display.innerHTML = "Total samples: " + numberWithCommas(total_samples);
