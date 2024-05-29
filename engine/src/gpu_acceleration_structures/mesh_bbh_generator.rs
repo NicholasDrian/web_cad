@@ -57,10 +57,12 @@ impl MeshBBHGenerator {
                 entries: &[
                     // split finder params
                     crate::utils::compute_uniform_bind_group_layout_entry(0),
-                    // splits
+                    // triangle info buffer
                     crate::utils::compute_buffer_bind_group_layout_entry(1, true),
-                    // new_splits
-                    crate::utils::compute_buffer_bind_group_layout_entry(2, false),
+                    // segments
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    // split candidates
+                    crate::utils::compute_buffer_bind_group_layout_entry(3, false),
                 ],
             });
 
@@ -96,8 +98,9 @@ impl MeshBBHGenerator {
             mesh.get_index_count(),
         );
 
+        let triangle_count = mesh.get_index_count() / 3;
         // one index per triangle.
-        let bbh_index_buffer = iota(&self.algorithm_resources, mesh.get_index_count() / 3, 16);
+        let bbh_index_buffer = iota(&self.algorithm_resources, triangle_count, 16);
 
         // create levels and init with first split queue.
         type LevelLength = u32;
@@ -113,8 +116,14 @@ impl MeshBBHGenerator {
         )];
 
         loop {
-            //  let splits = self.split(&triangle_info_buffer, levels.last().unwrap());
-
+            let (previous_level, previous_level_length) = levels.last().unwrap();
+            let splits = self.split(
+                4,
+                &triangle_info_buffer,
+                triangle_count,
+                previous_level,
+                *previous_level_length,
+            );
             /*
                         // make sure final sum is left and right. differnt than prefix_sum.back()
                         let (prefix_sum, final_sum) = self.prefix_sum_generator(possible_splits);
@@ -189,7 +198,85 @@ impl MeshBBHGenerator {
         bb_buffer
     }
 
-    fn split(&self, triangle_info_buffer: &wgpu::Buffer, segments: &wgpu::Buffer) -> wgpu::Buffer {
-        todo!();
+    // Take a bunch of segments, and find possible split points and direction.
+    // TODO: seed the randomness using time param
+    fn split(
+        &self,
+        candidates_per_segment: u32,
+        triangle_info_buffer: &wgpu::Buffer,
+        triangle_count: u32,
+        segments: &wgpu::Buffer,
+        segment_count: u32,
+    ) -> wgpu::Buffer {
+        let device = self.renderer.get_device();
+        let queue = self.renderer.get_queue();
+
+        #[repr(C)]
+        #[derive(Copy, Clone, bytemuck::NoUninit)]
+        struct Uniforms {
+            // candidate points for center of division
+            candidates_per_segment: u32,
+            triangle_count: u32,
+        }
+
+        let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("surface sampler stage 2 uniform buffer"),
+            contents: bytemuck::cast_slice(&[Uniforms {
+                candidates_per_segment,
+                triangle_count,
+            }]),
+            usage: wgpu::BufferUsages::UNIFORM,
+        });
+
+        let split_candidates: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("mesh bbh split candidates"),
+            // segment count * candidates_per_segment * xyz * size_of(f32)
+            size: (segment_count * candidates_per_segment * 3 * 4) as u64,
+            usage: wgpu::BufferUsages::STORAGE,
+            mapped_at_creation: false,
+        });
+
+        let bind_group: wgpu::BindGroup = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("mesh bbh split"),
+            layout: &self.split_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: params.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: triangle_info_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: segments.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: split_candidates.as_entire_binding(),
+                },
+            ],
+        });
+
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("mesh bbh split"),
+        });
+
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("mesh bbh split"),
+                timestamp_writes: None,
+            });
+
+            compute_pass.set_pipeline(&self.split_pipeline);
+            compute_pass.set_bind_group(0, &bind_group, &[]);
+            compute_pass.dispatch_workgroups(segment_count, candidates_per_segment, 1);
+        }
+
+        let idx = queue.submit([encoder.finish()]);
+        device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+        split_candidates
     }
 }
