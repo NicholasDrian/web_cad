@@ -199,6 +199,7 @@ impl MeshBBHGenerator {
     }
 
     // Take a bunch of segments, and find possible split points and direction.
+    // Evaluate randomly selected splits and report their quality.
     // TODO: seed the randomness using time param
     fn split(
         &self,
@@ -213,7 +214,7 @@ impl MeshBBHGenerator {
 
         #[repr(C)]
         #[derive(Copy, Clone, bytemuck::NoUninit)]
-        struct Uniforms {
+        struct Params {
             // candidate points for center of division
             candidates_per_segment: u32,
             triangle_count: u32,
@@ -221,7 +222,7 @@ impl MeshBBHGenerator {
 
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("surface sampler stage 2 uniform buffer"),
-            contents: bytemuck::cast_slice(&[Uniforms {
+            contents: bytemuck::cast_slice(&[Params {
                 candidates_per_segment,
                 triangle_count,
             }]),
@@ -230,8 +231,8 @@ impl MeshBBHGenerator {
 
         let split_candidates: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("mesh bbh split candidates"),
-            // segment count * candidates_per_segment * xyz * size_of(f32)
-            size: (segment_count * candidates_per_segment * 3 * 4) as u64,
+            // segment count * candidates_per_segment * (x,y,z,quality, quality, quality) * size_of(f32)
+            size: (segment_count * candidates_per_segment * 6 * 4) as u64,
             usage: wgpu::BufferUsages::STORAGE,
             mapped_at_creation: false,
         });
