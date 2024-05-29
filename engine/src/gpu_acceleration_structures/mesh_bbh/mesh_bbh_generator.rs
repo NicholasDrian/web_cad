@@ -22,6 +22,7 @@ use crate::render::renderer::Renderer;
 use crate::utils::create_compute_pipeline;
 
 const SPLIT_CANDIDATE_COUNT: u32 = 8;
+const _: () = assert!(SPLIT_CANDIDATE_COUNT <= 32);
 const MAX_LEAF_SIZE: u32 = 8;
 
 pub struct MeshBBHGenerator {
@@ -57,12 +58,12 @@ impl MeshBBHGenerator {
                 entries: &[
                     // split finder params
                     crate::utils::compute_uniform_bind_group_layout_entry(0),
-                    // triangle info buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
                     // segments
-                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
                     // bbh index buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(3, true),
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    // triangle info buffer
+                    crate::utils::compute_buffer_bind_group_layout_entry(3, false),
                     // split candidates
                     crate::utils::compute_buffer_bind_group_layout_entry(4, false),
                 ],
@@ -288,4 +289,7 @@ impl MeshBBHGenerator {
 
         split_candidates
     }
+
+    fn reorder() {}
+    fn build_bbh() {}
 }
