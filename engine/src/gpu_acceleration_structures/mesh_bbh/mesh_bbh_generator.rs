@@ -62,9 +62,9 @@ impl MeshBBHGenerator {
                     // segments
                     crate::utils::compute_buffer_bind_group_layout_entry(2, true),
                     // bbh index buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    crate::utils::compute_buffer_bind_group_layout_entry(3, true),
                     // split candidates
-                    crate::utils::compute_buffer_bind_group_layout_entry(3, false),
+                    crate::utils::compute_buffer_bind_group_layout_entry(4, false),
                 ],
             });
 
