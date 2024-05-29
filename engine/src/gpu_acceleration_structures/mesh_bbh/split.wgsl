@@ -4,7 +4,8 @@
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> triangle_info_buffer: array<BoudingBox>;
 @group(0) @binding(2) var<storage, read> segments: array<Segment>;
-@group(0) @binding(3) var<storage, read_write> splits: array<Split>;
+@group(0) @binding(3) var<storage, read> bbh_index_buffer: array<u32>;
+@group(0) @binding(4) var<storage, read_write> splits: array<Split>;
 
 
 struct Params {
@@ -67,7 +68,7 @@ fn find_splits(
     let segment_size = segment.end - segment.start;
     let candadate_idx = random_u32 % segment_size + segment.start;
 
-    let candidate_center = triangle_info_buffer[candidate_idx].center;
+    let candidate_center = triangle_info_buffer[bbh_index_buffer[candidate_idx]].center;
     // |total area a - total area b|
     var sah_evaluation = vec3<f32>(0.0, 0.0, 0.0);
 

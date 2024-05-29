@@ -61,6 +61,8 @@ impl MeshBBHGenerator {
                     crate::utils::compute_buffer_bind_group_layout_entry(1, true),
                     // segments
                     crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    // bbh index buffer
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
                     // split candidates
                     crate::utils::compute_buffer_bind_group_layout_entry(3, false),
                 ],
@@ -123,6 +125,7 @@ impl MeshBBHGenerator {
                 triangle_count,
                 previous_level,
                 *previous_level_length,
+                &bbh_index_buffer,
             );
             /*
                         // make sure final sum is left and right. differnt than prefix_sum.back()
@@ -208,6 +211,7 @@ impl MeshBBHGenerator {
         triangle_count: u32,
         segments: &wgpu::Buffer,
         segment_count: u32,
+        bbh_index_buffer: &wgpu::Buffer,
     ) -> wgpu::Buffer {
         let device = self.renderer.get_device();
         let queue = self.renderer.get_queue();
@@ -255,6 +259,10 @@ impl MeshBBHGenerator {
                 },
                 wgpu::BindGroupEntry {
                     binding: 3,
+                    resource: bbh_index_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 4,
                     resource: split_candidates.as_entire_binding(),
                 },
             ],
