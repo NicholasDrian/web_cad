@@ -29,6 +29,7 @@ struct Split {
     quality: vec3<f32>,
   }
 
+const FLOAT_MAX = 3.40282346638528859812e+38f;
 
 @compute @workgroup_size(1,1,1) 
 fn update_lr(
@@ -37,10 +38,29 @@ fn update_lr(
     let segment = segments[id.x]; 
 
     var best_point = vec3<f32>(0.0, 0.0, 0.0);
-    var best_dir = 0;
+    var best_dir = 0u;
+    var best_sah = FLOAT_MAX;
     for (var i = 0u; i < params.candidates_per_segment; i++) {
-
+      let split = splits[id.x * params.candidates_per_segment + i];
+      if (split.quality.x < best_sah) {
+          best_point = split.point;
+          best_sah = split.quality.x;
+          best_dir = 0u;
+      } 
+      if (split.quality.y < best_sah) {
+          best_point = split.point;
+          best_sah = split.quality.y;
+          best_dir = 1u;
+      } 
+      if (split.quality.z < best_sah) {
+          best_point = split.point;
+          best_sah = split.quality.z;
+          best_dir = 2u;
+      } 
     }
+
+    // TODO mark lr
+
 
 }
 
