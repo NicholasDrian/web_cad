@@ -68,7 +68,7 @@ fn find_splits(
     let candadate_idx = random_u32 % segment_size + segment.start;
 
     let candidate_center = triangle_info_buffer[candidate_idx].center;
-    // |total_left area a - total_area b|
+    // |total area a - total area b|
     var sah_evaluation = vec3<f32>(0.0, 0.0, 0.0);
 
     for (var i = segment.start; i < segment.end; i++) {
