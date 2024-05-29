@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 use std::{collections::HashMap, rc::Rc};
 
-use crate::gpu_acceleration_structures::mesh_bbh_generator::MeshBBHGenerator;
+use crate::gpu_acceleration_structures::mesh_bbh::mesh_bbh_generator::MeshBBHGenerator;
 use crate::gpu_algorithms::AlgorithmResources;
 use crate::gpu_samplers::curve_sampler::CurveSampler;
 use crate::gpu_samplers::surface_sampler::SurfaceSampler;

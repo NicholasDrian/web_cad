@@ -69,14 +69,14 @@ impl MeshBBHGenerator {
         let triangle_info_buffer_generator_pipeline = create_compute_pipeline(
             device,
             "bb buffer gen",
-            include_str!("create_triangle_info_buffer.wgsl"),
+            include_str!("gen_triangle_info_buffer.wgsl"),
             &triangle_info_buffer_generator_bind_group_layout,
             "generate_bb_buffer",
         );
         let split_pipeline = create_compute_pipeline(
             device,
             "split finder",
-            include_str!("create_mesh_bbh_split.wgsl"),
+            include_str!("split.wgsl"),
             &split_bind_group_layout,
             "find_splits",
         );
