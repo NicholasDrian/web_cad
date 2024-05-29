@@ -69,19 +69,20 @@ impl MeshBBHGenerator {
                     crate::utils::compute_buffer_bind_group_layout_entry(3, false),
                 ],
             });
-        //This is same as other bgl... TODO: consolidate
         let update_lr_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("update lr"),
                 entries: &[
+                    // params
+                    crate::utils::compute_uniform_bind_group_layout_entry(0),
                     // segments
-                    crate::utils::compute_buffer_bind_group_layout_entry(0, true),
-                    // bbh index buffer
                     crate::utils::compute_buffer_bind_group_layout_entry(1, true),
-                    // split candidates
+                    // bbh index buffer
                     crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    // split candidates
+                    crate::utils::compute_buffer_bind_group_layout_entry(3, true),
                     // triangle info buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(3, false),
+                    crate::utils::compute_buffer_bind_group_layout_entry(4, false),
                 ],
             });
 
@@ -341,7 +342,7 @@ impl MeshBBHGenerator {
                     resource: split_candidates.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
-                    binding: 0,
+                    binding: 4,
                     resource: triangle_info_buffer.as_entire_binding(),
                 },
             ],

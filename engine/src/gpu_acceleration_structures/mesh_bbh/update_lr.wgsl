@@ -1,8 +1,8 @@
-@group(0) @bindgin(0) var<uniform> params: Params;
-@group(0) @binding(0) var<storage, read> segments: array<Segment>;
-@group(0) @binding(1) var<storage, read> bbh_index_buffer: array<u32>;
-@group(0) @binding(2) var<storage, read> splits: array<Split>;
-@group(0) @binding(3) var<storage, read_write> triangle_info_buffer: array<TriangleInfo>;
+@group(0) @binding(0) var<uniform> params: Params;
+@group(0) @binding(1) var<storage, read> segments: array<Segment>;
+@group(0) @binding(2) var<storage, read> bbh_index_buffer: array<u32>;
+@group(0) @binding(3) var<storage, read> splits: array<Split>;
+@group(0) @binding(4) var<storage, read_write> triangle_info_buffer: array<TriangleInfo>;
 
 struct Params {
   candidates_per_segment: u32    
@@ -38,7 +38,7 @@ fn update_lr(
 
     var best_point = vec3<f32>(0.0, 0.0, 0.0);
     var best_dir = 0;
-    for (var i = 0; i < params.candidates_per_segment; i++) {
+    for (var i = 0u; i < params.candidates_per_segment; i++) {
 
     }
 
