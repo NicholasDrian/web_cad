@@ -35,7 +35,6 @@ const FLOAT_MAX = 3.40282346638528859812e+38f;
 fn update_lr(
   @builtin(global_invocation_id) id: vec3<u32>,
   ) {
-    let segment = segments[id.x]; 
 
     var best_point = vec3<f32>(0.0, 0.0, 0.0);
     var best_dir = 0u;
@@ -59,7 +58,11 @@ fn update_lr(
       } 
     }
 
-    // TODO mark lr
+    // TODO mark lr for each triangle in segment
+    let segment = segments[id.x]; 
+    for (var i = segment.start; i < segment.end; i++) {
+
+    }
 
 
 }

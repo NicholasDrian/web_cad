@@ -1,17 +1,3 @@
-//! WARN: Creating a bb for a mesh alters its index buffer.
-//!
-//! Mesh BBH creation uses the following steps
-//!
-//! 1.) generate bounding box for each triangle
-//!
-//! 2.) create a buffer of necessary splits
-//!
-//! 3.) use bfs to find next split buffer.
-//!
-//! 4.) repeat till everything is split.
-//!
-//! 5.) compact
-//!
 use std::rc::Rc;
 
 use wgpu::util::DeviceExt;
@@ -23,7 +9,6 @@ use crate::utils::create_compute_pipeline;
 
 const SPLIT_CANDIDATE_COUNT: u32 = 8;
 const _: () = assert!(SPLIT_CANDIDATE_COUNT <= 32);
-const MAX_LEAF_SIZE: u32 = 8;
 
 pub struct MeshBBHGenerator {
     renderer: Rc<Renderer>,
@@ -146,14 +131,12 @@ impl MeshBBHGenerator {
         loop {
             let (previous_level, previous_level_length) = levels.last().unwrap();
             let splits = self.split(
-                SPLIT_CANDIDATE_COUNT,
                 &triangle_info_buffer,
                 previous_level,
                 *previous_level_length,
                 &bbh_index_buffer,
             );
             self.update_lr(
-                SPLIT_CANDIDATE_COUNT,
                 &triangle_info_buffer,
                 previous_level,
                 *previous_level_length,
@@ -242,7 +225,6 @@ impl MeshBBHGenerator {
     // TODO: seed the randomness using time param
     fn split(
         &self,
-        candidates_per_segment: u32,
         triangle_info_buffer: &wgpu::Buffer,
         segments: &wgpu::Buffer,
         segment_count: u32,
@@ -254,7 +236,7 @@ impl MeshBBHGenerator {
         let split_candidates: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("mesh bbh split candidates"),
             // segment count * candidates_per_segment * (x,y,z,quality, quality, quality) * size_of(f32)
-            size: (segment_count * candidates_per_segment * 6 * 4) as u64,
+            size: (segment_count * SPLIT_CANDIDATE_COUNT * 6 * 4) as u64,
             usage: wgpu::BufferUsages::STORAGE,
             mapped_at_creation: false,
         });
@@ -294,7 +276,7 @@ impl MeshBBHGenerator {
 
             compute_pass.set_pipeline(&self.split_pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
-            compute_pass.dispatch_workgroups(segment_count, candidates_per_segment, 1);
+            compute_pass.dispatch_workgroups(segment_count, SPLIT_CANDIDATE_COUNT, 1);
         }
 
         let idx = queue.submit([encoder.finish()]);
@@ -305,19 +287,19 @@ impl MeshBBHGenerator {
 
     fn update_lr(
         &self,
-        candidates_per_segment: u32,
         triangle_info_buffer: &wgpu::Buffer,
         segments: &wgpu::Buffer,
         segment_count: u32,
         split_candidates: &wgpu::Buffer,
         bbh_index_buffer: &wgpu::Buffer,
     ) {
+        // TODO: could probably reorder indices in this stage too
         let device = self.renderer.get_device();
         let queue = self.renderer.get_queue();
 
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("update lr params"),
-            contents: bytemuck::cast_slice(&[candidates_per_segment]),
+            contents: bytemuck::cast_slice(&[SPLIT_CANDIDATE_COUNT]),
             usage: wgpu::BufferUsages::UNIFORM,
         });
 
