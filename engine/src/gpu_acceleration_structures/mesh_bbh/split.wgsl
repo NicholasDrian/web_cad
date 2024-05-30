@@ -35,6 +35,9 @@ struct Segment {
 struct Split {
     point: vec3<f32>,
     // split quality in each axis
+    // using SAH right now, but this could be improved
+    // surface area per triangle is fairly uniform in most NURBS surfaces
+    // Should take into account distance of child bb centers
     quality: vec3<f32>,
   }
 
