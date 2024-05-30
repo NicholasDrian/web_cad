@@ -61,7 +61,11 @@ fn find_splits(
       let area = triangle_info_buffer[bbh_index_buffer[i]].area;
 
       // fancy sign() used to eliminate condition
-      let s = sign(center - candidate_center);
+      // double sign used to create -1 or 1
+      // rather than -1, 0 or 1
+      // s is 1 for left and -1 for right
+      let s = sign(sign(candidate_center - center) + vec3<f32>(0.5, 0.5, 0.5));
+
       sah_evaluation += s * area; 
     }
 

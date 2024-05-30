@@ -62,10 +62,10 @@ impl MeshBBHGenerator {
                     crate::utils::compute_uniform_bind_group_layout_entry(0),
                     // segments
                     crate::utils::compute_buffer_bind_group_layout_entry(1, true),
-                    // bbh index buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
                     // split candidates
-                    crate::utils::compute_buffer_bind_group_layout_entry(3, true),
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    // bbh index buffer
+                    crate::utils::compute_buffer_bind_group_layout_entry(3, false),
                     // triangle info buffer
                     crate::utils::compute_buffer_bind_group_layout_entry(4, false),
                 ],
@@ -88,7 +88,7 @@ impl MeshBBHGenerator {
         let update_lr_pipeline = create_compute_pipeline(
             device,
             "update lr",
-            include_str!("update_lr.wgsl"),
+            include_str!("reorder_indices.wgsl"),
             &update_lr_bind_group_layout,
             "update_lr",
         );
