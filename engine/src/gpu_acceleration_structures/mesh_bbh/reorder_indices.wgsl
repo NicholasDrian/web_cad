@@ -64,27 +64,12 @@ const FLOAT_MAX = 3.40282346638528859812e+38f;
         best_dir = 2u;
       } 
     }
-    /*
-     * pseudo code
-       int low = 0;
-       int mid = 0;    
-       while (mid < v.size()) {
-       if (v[mid] == 0) {
-       swap(v[low], v[mid]);
-       low++;
-       mid++;
-       } else if (v[mid] == 1) {
-       mid++;
-       }
-     */
-
 
     // reorder the indices in place
     let segment = segments[id.x]; 
     var low = segment.start;
     var high = segment.start;
     var left_count = 0;
-
 
     while (high < segment.end) {
 
