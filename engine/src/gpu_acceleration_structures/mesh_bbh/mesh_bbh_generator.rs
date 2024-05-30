@@ -349,5 +349,8 @@ impl MeshBBHGenerator {
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
     }
 
-    fn build_bbh() {}
+    // reorder_indices and add nodes.
+    fn build_bbh() {
+        todo!()
+    }
 }

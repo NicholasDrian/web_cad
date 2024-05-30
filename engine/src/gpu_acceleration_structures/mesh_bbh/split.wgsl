@@ -20,12 +20,11 @@ fn seed(x: u32, y: u32) -> u32 {
     return 19u * x + 47u * y + 101u;
 }
 
-// https://www.pcg-random.org/
 fn pcg(v: u32) -> u32
 {
-  let state: u32 = v * 747796405u + 2891336453u;
-	let word: u32 = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
-	return (word >> 22u) ^ word;
+  let s: u32 = v * 747796405u + 2891336453u;
+	let w: u32 = ((s >> ((s >> 28u) + 4u)) ^ s) * 277803737u;
+	return (w >> 22u) ^ w;
 }
 
 
@@ -58,8 +57,8 @@ fn find_splits(
     var sah_evaluation = vec3<f32>(0.0, 0.0, 0.0);
 
     for (var i = segment.start; i < segment.end; i++) {
-      let center = triangle_info_buffer[i].center;
-      let area = triangle_info_buffer[i].area;
+      let center = triangle_info_buffer[bbh_index_buffer[i]].center;
+      let area = triangle_info_buffer[bbh_index_buffer[i]].area;
 
       // fancy sign() used to eliminate condition
       let s = sign(center - candidate_center);

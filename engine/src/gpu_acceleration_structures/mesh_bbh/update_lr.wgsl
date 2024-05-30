@@ -29,6 +29,7 @@ struct Split {
     quality: vec3<f32>,
   }
 
+// I dont think the lang has this builtin? maybe im wrong
 const FLOAT_MAX = 3.40282346638528859812e+38f;
 
 @compute @workgroup_size(1,1,1) 
@@ -58,9 +59,11 @@ fn update_lr(
       } 
     }
 
-    // TODO mark lr for each triangle in segment
     let segment = segments[id.x]; 
     for (var i = segment.start; i < segment.end; i++) {
+      
+    // TODO mark lr for each triangle in segment
+    
 
     }
 
