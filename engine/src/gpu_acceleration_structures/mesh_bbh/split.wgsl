@@ -11,8 +11,6 @@ struct TriangleInfo {
   max_corner: vec3<f32>,
   center: vec3<f32>,
   area: f32,
-  // 1 = true, 0 = false
-  split_left: u32,
 }
 
 // convert 2D seed to 1D

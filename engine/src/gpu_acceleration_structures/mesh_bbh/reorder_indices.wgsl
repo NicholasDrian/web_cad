@@ -2,7 +2,8 @@
 @group(0) @binding(1) var<storage, read> segments: array<Segment>;
 @group(0) @binding(2) var<storage, read> splits: array<Split>;
 @group(0) @binding(3) var<storage, read_write> bbh_index_buffer: array<u32>;
-@group(0) @binding(4) var<storage, read_write> triangle_info_buffer: array<TriangleInfo>;
+@group(0) @binding(4) var<storage, read> triangle_info_buffer: array<TriangleInfo>;
+@group(0) @binding(5) var<storage, read_write> new_segments: array<Segment>;
 
 struct Params {
 candidates_per_segment: u32    
@@ -111,6 +112,8 @@ const FLOAT_MAX = 3.40282346638528859812e+38f;
 
     }
 
+    new_segments[id.x * 2] = Segment(segment.start, left_count);
+    new_segments[id.x * 2 + 1] = Segment(left_count, segment.end);
 
   }
 

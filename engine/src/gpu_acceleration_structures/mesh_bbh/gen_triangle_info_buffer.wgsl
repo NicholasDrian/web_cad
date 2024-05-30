@@ -16,7 +16,6 @@ struct TriangleInfo {
   max_corner: vec3<f32>,
   center: vec3<f32>,
   area: f32,
-  split_left: u32,
 }
 
 fn triangle_area(a: vec4<f32>, b: vec4<f32>, c: vec4<f32>)-> f32 {
