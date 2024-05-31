@@ -9,7 +9,7 @@ use crate::{
     utils::create_compute_pipeline,
 };
 
-use super::mesh_bbh::MeshBBH;
+use super::MeshBBH;
 
 const NODE_SIZE: u32 = 48;
 const MAX_TRIS_PER_LEAF: u32 = 8;
