@@ -68,7 +68,7 @@ impl MeshBBHGenerator {
                     crate::utils::compute_buffer_bind_group_layout_entry(3, false),
                     // triangle info buffer
                     crate::utils::compute_buffer_bind_group_layout_entry(4, true),
-                    // new segments
+                    // triangle info buffr
                     crate::utils::compute_buffer_bind_group_layout_entry(4, false),
                 ],
             });
