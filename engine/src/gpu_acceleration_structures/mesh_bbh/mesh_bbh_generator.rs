@@ -23,6 +23,9 @@ pub struct MeshBBHGenerator {
 
     create_prefix_sum_input_bind_group_layout: wgpu::BindGroupLayout,
     create_prefix_sum_input_pipeline: wgpu::ComputePipeline,
+
+    build_bbs_bind_group_layout: wgpu::BindGroupLayout,
+    build_bbs_pipeline: wgpu::ComputePipeline,
 }
 
 impl MeshBBHGenerator {
@@ -47,9 +50,23 @@ impl MeshBBHGenerator {
                     // Params
                     crate::utils::compute_uniform_bind_group_layout_entry(0),
                     // Tree
-                    crate::utils::compute_buffer_bind_group_layout_entry(0, true),
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
                     // Output
-                    crate::utils::compute_buffer_bind_group_layout_entry(0, false),
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, false),
+                ],
+            });
+        let build_bbs_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("build bbs"),
+                entries: &[
+                    // Params
+                    crate::utils::compute_uniform_bind_group_layout_entry(0),
+                    // Index Buffer
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    // triangle bbs
+                    crate::utils::compute_buffer_bind_group_layout_entry(3, true),
+                    // Tree
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, false),
                 ],
             });
         let create_triangle_bbs_pipeline = create_compute_pipeline(
@@ -64,7 +81,14 @@ impl MeshBBHGenerator {
             "create prefix sum input",
             include_str!("create_prefix_sum_input.wgsl"),
             &create_prefix_sum_input_bind_group_layout,
-            "generate_bb_buffer",
+            "main",
+        );
+        let build_bbs_pipeline = create_compute_pipeline(
+            device,
+            "build bbs",
+            include_str!("create_prefix_sum_input.wgsl"),
+            &build_bbs_bind_group_layout,
+            "build_bbs",
         );
         Self {
             renderer,
@@ -73,6 +97,8 @@ impl MeshBBHGenerator {
             create_triangle_bbs_pipeline,
             create_prefix_sum_input_bind_group_layout,
             create_prefix_sum_input_pipeline,
+            build_bbs_bind_group_layout,
+            build_bbs_pipeline,
         }
     }
     pub fn generate_mesh_bbh(&self, mesh: &Mesh) -> MeshBBH {
@@ -209,7 +235,7 @@ impl MeshBBHGenerator {
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("create prefix sum input"),
-            layout: &self.create_triangle_bbs_bind_group_layout,
+            layout: &self.create_prefix_sum_input_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
@@ -232,7 +258,7 @@ impl MeshBBHGenerator {
                 timestamp_writes: None,
             });
 
-            compute_pass.set_pipeline(&self.create_triangle_bbs_pipeline);
+            compute_pass.set_pipeline(&self.create_prefix_sum_input_pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
             compute_pass.dispatch_workgroups(range.1 - range.0, 1, 1);
         }
@@ -255,7 +281,53 @@ impl MeshBBHGenerator {
         triangle_bbs: &wgpu::Buffer,
         range: (u32, u32),
     ) {
-        todo!()
+        let device = self.renderer.get_device();
+        let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("build bbs"),
+            contents: bytemuck::cast_slice(&[range.0]),
+            usage: wgpu::BufferUsages::UNIFORM,
+        });
+
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("build bbs"),
+        });
+
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("build bbs"),
+            layout: &self.build_bbs_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: params.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: indices.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: triangle_bbs.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: tree.as_entire_binding(),
+                },
+            ],
+        });
+
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("build bbs"),
+                timestamp_writes: None,
+            });
+
+            compute_pass.set_pipeline(&self.build_bbs_pipeline);
+            compute_pass.set_bind_group(0, &bind_group, &[]);
+            compute_pass.dispatch_workgroups(range.1 - range.0, 1, 1);
+        }
+
+        let idx = self.renderer.get_queue().submit([encoder.finish()]);
+        device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
     }
 
     // Wicked fast
