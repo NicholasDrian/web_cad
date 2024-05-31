@@ -13,7 +13,7 @@ struct Params {
 struct SplitEval {
   point: vec3<f32>,
   // split quality in each axis
-  quality: vec3<u32>,
+  quality: vec3<f32>,
 }
 
 // convert 2D seed to 1D
@@ -44,9 +44,33 @@ fn pcg(v: u32) -> u32
 }
 
 @compute @workgroup_size(1,1,1)
-fn main() {
+fn main(
+  @builtin(global_invocation_id) id: vec3<u32>,
+  @builtin(num_workgroups) size: vec3<u32>,
+) {
 
-  
+  let node = tree[id.x + params.offset];
+  let random_u32 = pcg(seed(id.x, id.y));
+
+  let candidate_idx = index_buffer[random_u32 % (node.r - node.l) + node.l];
+  let candidate_center = triangle_bbs[candidate_idx].center;
+  var quality = vec3<f32>(0.0, 0.0, 0.0);
+
+  for (var i = node.l; i < node.r; i++) {
+    let center = triangle_bbs[index_buffer[i]].center;
+
+    // fancy sign() used to eliminate condition
+    // double sign used to create -1 or 1
+    // rather than -1, 0 or 1
+    // s is 1 for left and -1 for right
+    let s = sign(sign(candidate_center - center) + vec3<f32>(0.5, 0.5, 0.5));
+    quality += s; 
+  }
+
+  split_evaluations[id.x * size.y + id.y] = SplitEval (
+      candidate_center,
+      abs(quality)
+  );
 
 
 }
