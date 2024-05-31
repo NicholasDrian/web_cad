@@ -118,10 +118,9 @@ impl MeshBBHGenerator {
                 break;
             }
 
-            self.set_child_pointers(&tree_buffer, &prefix_sum, input);
-
             let split_evaluations =
                 self.split_evaluations(&tree_buffer, &index_buffer, &triangle_bbs, input);
+
             self.build_next_level(
                 &tree_buffer,
                 &index_buffer,
@@ -330,16 +329,6 @@ impl MeshBBHGenerator {
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
     }
 
-    // Wicked fast
-    fn set_child_pointers(
-        &self,
-        tree: &wgpu::Buffer,
-        prefix_sum: &wgpu::Buffer,
-        input: (u32, u32),
-    ) {
-        todo!()
-    }
-
     // TODO: make more paralel
     fn split_evaluations(
         &self,
@@ -352,6 +341,7 @@ impl MeshBBHGenerator {
     }
 
     // reorder indices and write out next level
+    // set child pointers
     fn build_next_level(
         &self,
         tree_buffer: &wgpu::Buffer,
