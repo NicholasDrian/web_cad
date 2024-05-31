@@ -13,6 +13,8 @@ use super::mesh_bbh::MeshBBH;
 
 const NODE_SIZE: u32 = 48;
 const MAX_TRIS_PER_LEAF: u32 = 8;
+const SPLIT_CANDIDATES: u32 = 8;
+const SPLIT_EVALUATION_SIZE: u32 = 32;
 
 pub struct MeshBBHGenerator {
     renderer: Rc<Renderer>,
@@ -26,6 +28,9 @@ pub struct MeshBBHGenerator {
 
     build_bbs_bind_group_layout: wgpu::BindGroupLayout,
     build_bbs_pipeline: wgpu::ComputePipeline,
+
+    split_evaluations_bind_group_layout: wgpu::BindGroupLayout,
+    split_evaluations_pipeline: wgpu::ComputePipeline,
 }
 
 impl MeshBBHGenerator {
@@ -69,6 +74,22 @@ impl MeshBBHGenerator {
                     crate::utils::compute_buffer_bind_group_layout_entry(3, false),
                 ],
             });
+        let split_evaluations_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("split evaluations"),
+                entries: &[
+                    // Params
+                    crate::utils::compute_uniform_bind_group_layout_entry(0),
+                    // Index Buffer
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
+                    // triangle bbs
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    // Tree
+                    crate::utils::compute_buffer_bind_group_layout_entry(3, true),
+                    // Result
+                    crate::utils::compute_buffer_bind_group_layout_entry(4, true),
+                ],
+            });
         let create_triangle_bbs_pipeline = create_compute_pipeline(
             device,
             "create triangle bbs",
@@ -90,6 +111,13 @@ impl MeshBBHGenerator {
             &build_bbs_bind_group_layout,
             "build_bbs",
         );
+        let split_evaluations_pipeline = create_compute_pipeline(
+            device,
+            "split evaluations",
+            include_str!("split_evaluations.wgsl"),
+            &split_evaluations_bind_group_layout,
+            "main",
+        );
         Self {
             renderer,
             algorithm_resources,
@@ -99,6 +127,8 @@ impl MeshBBHGenerator {
             create_prefix_sum_input_pipeline,
             build_bbs_bind_group_layout,
             build_bbs_pipeline,
+            split_evaluations_bind_group_layout,
+            split_evaluations_pipeline,
         }
     }
     pub fn generate_mesh_bbh(&self, mesh: &Mesh) -> MeshBBH {
@@ -308,7 +338,7 @@ impl MeshBBHGenerator {
                     resource: triangle_bbs.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
-                    binding: 2,
+                    binding: 3,
                     resource: tree.as_entire_binding(),
                 },
             ],
@@ -335,9 +365,67 @@ impl MeshBBHGenerator {
         tree_buffer: &wgpu::Buffer,
         index_buffer: &wgpu::Buffer,
         triangle_bbs: &wgpu::Buffer,
-        input: (u32, u32),
+        range: (u32, u32),
     ) -> wgpu::Buffer {
-        todo!()
+        let device = self.renderer.get_device();
+        let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("split evaluations"),
+            contents: bytemuck::cast_slice(&[range.0, MAX_TRIS_PER_LEAF, SPLIT_CANDIDATES]),
+            usage: wgpu::BufferUsages::UNIFORM,
+        });
+        let res = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("split evaluations"),
+            size: ((range.1 - range.0) * SPLIT_EVALUATION_SIZE * SPLIT_CANDIDATES) as u64,
+            usage: wgpu::BufferUsages::STORAGE,
+            mapped_at_creation: false,
+        });
+
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("split evaluations"),
+        });
+
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("split evaluations"),
+            layout: &self.split_evaluations_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: params.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: index_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: triangle_bbs.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: tree_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 4,
+                    resource: res.as_entire_binding(),
+                },
+            ],
+        });
+
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("split evaluations"),
+                timestamp_writes: None,
+            });
+
+            compute_pass.set_pipeline(&self.split_evaluations_pipeline);
+            compute_pass.set_bind_group(0, &bind_group, &[]);
+            compute_pass.dispatch_workgroups(range.1 - range.0, 1, 1);
+        }
+
+        let idx = self.renderer.get_queue().submit([encoder.finish()]);
+        device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+        res
     }
 
     // reorder indices and write out next level
