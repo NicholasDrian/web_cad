@@ -62,11 +62,11 @@ impl MeshBBHGenerator {
                     // Params
                     crate::utils::compute_uniform_bind_group_layout_entry(0),
                     // Index Buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
                     // triangle bbs
-                    crate::utils::compute_buffer_bind_group_layout_entry(3, true),
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
                     // Tree
-                    crate::utils::compute_buffer_bind_group_layout_entry(1, false),
+                    crate::utils::compute_buffer_bind_group_layout_entry(3, false),
                 ],
             });
         let create_triangle_bbs_pipeline = create_compute_pipeline(
@@ -86,7 +86,7 @@ impl MeshBBHGenerator {
         let build_bbs_pipeline = create_compute_pipeline(
             device,
             "build bbs",
-            include_str!("create_prefix_sum_input.wgsl"),
+            include_str!("build_bbs.wgsl"),
             &build_bbs_bind_group_layout,
             "build_bbs",
         );

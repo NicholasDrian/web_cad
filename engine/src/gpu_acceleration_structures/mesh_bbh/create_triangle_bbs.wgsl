@@ -40,6 +40,7 @@ fn generate_bb_buffer(
     bb_buffer[id.x] = BoundingBox(
       min_corner,
       max_corner,
+      center
     ); 
 
 }

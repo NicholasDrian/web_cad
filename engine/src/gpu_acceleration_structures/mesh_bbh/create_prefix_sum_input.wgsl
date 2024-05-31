@@ -5,13 +5,13 @@
 
 struct Params {
   offset: u32,
-  max_tris_per_leaf,
+  max_tris_per_leaf: u32,
 }
 
 struct Node {
-  min_cornder: vec3<f32>,
+  min_corner: vec3<f32>,
   l: u32,
-  max_cornder: vec3<f32>,
+  max_corner: vec3<f32>,
   r: u32,
   center: vec3<f32>,
   left_child: u32,
@@ -21,8 +21,8 @@ struct Node {
 fn main(
   @builtin(global_invocation_id) id: vec3<u32>,
 ) {
-    let node = tree[id.x + offset];
-    if (node.r - node.l > max_tris_per_leaf) {
+    let node = tree[id.x + params.offset];
+    if (node.r - node.l > params.max_tris_per_leaf) {
         output[id.x] = 1;
     } else {
         output[id.x] = 0;

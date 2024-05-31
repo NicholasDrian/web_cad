@@ -15,9 +15,9 @@ struct BoundingBox {
 }
 
 struct Node {
-  min_cornder: vec3<f32>,
+  min_corner: vec3<f32>,
   l: u32,
-  max_cornder: vec3<f32>,
+  max_corner: vec3<f32>,
   r: u32,
   center: vec3<f32>,
   left_child: u32,
@@ -28,18 +28,18 @@ fn build_bbs(
   @builtin(global_invocation_id) id: vec3<u32>,
 ) {
 
-  let node = tree[offset + id.x];
+  let node = tree[params.offset + id.x];
 
-  let min_corner = triangle_bbs[index_buffer[node.l]].min_corner;
-  let max_corner = triangle_bbs[index_buffer[node.l]].max_corner;
+  var min_corner = triangle_bbs[index_buffer[node.l]].min_corner;
+  var max_corner = triangle_bbs[index_buffer[node.l]].max_corner;
 
-  for (let var i = node.l + 1; i < node.r; i++) {
-    min_cornder = min(min_corner, triangle_bbs[index_buffer[i]].min_corner);
-    max_cornder = max(max_corner, triangle_bbs[index_buffer[i]].max_corner);
+  for (var i = node.l + 1; i < node.r; i++) {
+    min_corner = min(min_corner, triangle_bbs[index_buffer[i]].min_corner);
+    max_corner = max(max_corner, triangle_bbs[index_buffer[i]].max_corner);
   }
 
-  tree[offset + id.x].min_corner = min_corner;
-  tree[offset + id.x].max_corner = max_corner;
+  tree[params.offset + id.x].min_corner = min_corner;
+  tree[params.offset + id.x].max_corner = max_corner;
     
 }
 
