@@ -87,7 +87,7 @@ impl MeshBBHGenerator {
                     // Tree
                     crate::utils::compute_buffer_bind_group_layout_entry(3, true),
                     // Result
-                    crate::utils::compute_buffer_bind_group_layout_entry(4, true),
+                    crate::utils::compute_buffer_bind_group_layout_entry(4, false),
                 ],
             });
         let create_triangle_bbs_pipeline = create_compute_pipeline(
@@ -419,7 +419,7 @@ impl MeshBBHGenerator {
 
             compute_pass.set_pipeline(&self.split_evaluations_pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
-            compute_pass.dispatch_workgroups(range.1 - range.0, 1, 1);
+            compute_pass.dispatch_workgroups(range.1 - range.0, SPLIT_CANDIDATES, 1);
         }
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);

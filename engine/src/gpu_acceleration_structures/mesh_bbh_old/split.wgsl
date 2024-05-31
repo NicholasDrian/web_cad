@@ -45,6 +45,12 @@ fn find_splits(
   @builtin(num_workgroups) size: vec3<u32>,
   ) {
   
+  /*
+   *
+   *
+   *
+   *
+   *
     let segment = segments[id.x];
     let random_u32 = pcg(seed(id.x, id.y));
 
@@ -69,6 +75,10 @@ fn find_splits(
        candidate_center,
        abs(quality)
     );
+    *
+    * 
+    * 
+    */
 
 }
 
