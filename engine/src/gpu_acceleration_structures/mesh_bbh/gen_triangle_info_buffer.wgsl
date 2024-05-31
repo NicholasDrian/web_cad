@@ -15,11 +15,6 @@ struct TriangleInfo {
   min_corner: vec3<f32>,
   max_corner: vec3<f32>,
   center: vec3<f32>,
-  area: f32,
-}
-
-fn triangle_area(a: vec4<f32>, b: vec4<f32>, c: vec4<f32>)-> f32 {
-  return length(cross(a.xyz - b.xyz, a.xyz - c.xyz));
 }
 
 @compute @workgroup_size(1,1,1) 
@@ -42,14 +37,10 @@ fn generate_bb_buffer(
       );
     let center = (min_corner + max_corner) / 2.0;
 
-    let area = triangle_area(p1, p2, p3);
-    
     bb_buffer[id.x] = TriangleInfo(
       min_corner,
       max_corner,
       center,
-      area,
-      0,
     ); 
 
 }

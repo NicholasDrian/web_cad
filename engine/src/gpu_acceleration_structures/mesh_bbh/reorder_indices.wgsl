@@ -6,20 +6,29 @@
 @group(0) @binding(5) var<storage, read_write> new_segments: array<Segment>;
 
 struct Params {
-candidates_per_segment: u32    
+  candidates_per_segment: u32    
 }
 
 struct TriangleInfo {
 min_corner: vec3<f32>,
               max_corner: vec3<f32>,
               center: vec3<f32>,
-              area: f32,
 }
 
 // uses half open range [start, end)
 struct Segment {
 start: u32,
          end: u32,
+}
+
+// if triangle_count > 0, is leaf
+// if triangle_count == 0 left_child is actual left_child,
+// if triangle_count == -1 invalid node
+struct Node {
+  min_corner: vec3<f32>,
+  triangle_count: i32,
+  max_corner: vec3<f32>,
+  left_child: u32,
 }
 
 struct Split {

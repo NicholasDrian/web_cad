@@ -10,7 +10,6 @@ struct TriangleInfo {
   min_corner: vec3<f32>,
   max_corner: vec3<f32>,
   center: vec3<f32>,
-  area: f32,
 }
 
 // convert 2D seed to 1D
@@ -35,10 +34,8 @@ struct Segment {
 struct Split {
     point: vec3<f32>,
     // split quality in each axis
-    // using SAH right now, but this could be improved
-    // surface area per triangle is fairly uniform in most NURBS surfaces
-    // Should take into account distance of child bb centers
-    quality: vec3<f32>,
+    // todo: Should take into account distance of child bb centers
+    quality: vec3<u32>,
   }
 
 
@@ -55,24 +52,22 @@ fn find_splits(
     let candidate_idx = bbh_index_buffer[random_u32 % segment_size + segment.start];
 
     let candidate_center = triangle_info_buffer[candidate_idx].center;
-    var sah_evaluation = vec3<f32>(0.0, 0.0, 0.0);
+    var quality = vec3<f32>(0.0, 0.0, 0.0);
 
     for (var i = segment.start; i < segment.end; i++) {
       let center = triangle_info_buffer[bbh_index_buffer[i]].center;
-      let area = triangle_info_buffer[bbh_index_buffer[i]].area;
 
       // fancy sign() used to eliminate condition
       // double sign used to create -1 or 1
       // rather than -1, 0 or 1
       // s is 1 for left and -1 for right
       let s = sign(sign(candidate_center - center) + vec3<f32>(0.5, 0.5, 0.5));
-
-      sah_evaluation += s * area; 
+      quality += vec3<u32>(s); 
     }
 
     splits[id.x * size.y + id.y] = Split (
        candidate_center,
-       abs(sah_evaluation)
+       abs(quality)
     );
 
 }
