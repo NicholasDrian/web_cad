@@ -50,9 +50,16 @@ fn main(
 ) {
 
   let node = tree[id.x + params.offset];
+  let span = node.r - node.l;
+
+  if (span <= max_tris_per_leaf) {
+    // is leaf, no need to split 
+    return;
+  }
+
   let random_u32 = pcg(seed(id.x, id.y));
 
-  let candidate_idx = index_buffer[random_u32 % (node.r - node.l) + node.l];
+  let candidate_idx = index_buffer[random_u32 % span + node.l];
   let candidate_center = triangle_bbs[candidate_idx].center;
   var quality = vec3<f32>(0.0, 0.0, 0.0);
 

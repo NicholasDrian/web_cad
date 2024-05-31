@@ -34,7 +34,24 @@ struct Node {
 
 @compute @workgroup_size(1,1,1)
 fn build_next_level(
-
+  @builtin(global_invocation_id) id: vec3<u32>,
 ) {
 
+  let node = tree[id.x + params.offset];
+  let span = node.r - node.l;
+
+  if (span <= max_tris_per_leaf) {
+    // is leaf, no need to build next level
+    return;
   }
+
+  // reorder indices 
+  
+
+  // write out next level
+  
+
+  // set child pointers
+  
+
+}

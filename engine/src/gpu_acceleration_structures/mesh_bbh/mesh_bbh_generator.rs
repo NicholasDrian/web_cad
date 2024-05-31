@@ -471,20 +471,6 @@ impl MeshBBHGenerator {
         prefix_sum: &wgpu::Buffer,
         input: (u32, u32),
     ) {
-        /*
-                    // Params
-                    crate::utils::compute_uniform_bind_group_layout_entry(0),
-                    // triangle bbs
-                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
-                    // Split evals
-                    crate::utils::compute_buffer_bind_group_layout_entry(4, true),
-                    // Prefix sum
-                    crate::utils::compute_buffer_bind_group_layout_entry(4, true),
-                    // Index Buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(1, false),
-                    // Tree
-                    crate::utils::compute_buffer_bind_group_layout_entry(3, false),
-        */
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("build next level"),
