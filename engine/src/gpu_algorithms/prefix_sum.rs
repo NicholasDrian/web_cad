@@ -49,20 +49,29 @@ pub fn create_prefix_sum_resources(
     (bind_group_layout, pipeline)
 }
 
-pub fn get_prefix_sum(
+pub fn prefix_sum(
     resources: &AlgorithmResources,
     values: &wgpu::Buffer,
     value_count: u32,
-) -> wgpu::Buffer {
+) -> (wgpu::Buffer, u32) {
     let device = resources.get_renderer().get_device();
     let (bind_group_layout, pipeline) = resources.get_resources(super::Algorithm::PrefixSum);
 
     let descriptor = &wgpu::BufferDescriptor {
         label: Some("prefix sum next buffer"),
         size: (value_count + 1) as u64 * std::mem::size_of::<f32>() as u64,
-        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+        usage: wgpu::BufferUsages::STORAGE
+            | wgpu::BufferUsages::COPY_DST
+            | wgpu::BufferUsages::COPY_SRC,
         mapped_at_creation: false,
     };
+    // I think this is the best way to read sum from prefixu sum buffer
+    let intermediate = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("prefix sum intermediate"),
+        size: 4,
+        usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    });
 
     // These buffers should be effectively zero initialized
     // This is very important
@@ -136,12 +145,22 @@ pub fn get_prefix_sum(
         compute_pass.dispatch_workgroups(value_count - offset, 1, 1);
     }
 
-    let idx = resources.renderer.get_queue().submit([encoder.finish()]);
-    device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
-
-    if iterations & 1 == 0 {
+    let res = if iterations & 1 == 0 {
         buffer_a
     } else {
         buffer_b
-    }
+    };
+
+    encoder.copy_buffer_to_buffer(&res, (value_count - 1) as u64 * 4, &intermediate, 0, 4);
+
+    let idx = resources.renderer.get_queue().submit([encoder.finish()]);
+    device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+    // might be doing this wrong
+    let sum_bytes: &[u8] = &intermediate.slice(..).get_mapped_range();
+
+    // TODO: see if this should be big endian sometimes?
+    let sum = u32::from_le_bytes(sum_bytes[0..4].try_into().unwrap());
+
+    (res, sum)
 }
