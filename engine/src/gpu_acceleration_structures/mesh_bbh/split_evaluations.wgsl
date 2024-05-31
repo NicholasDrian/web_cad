@@ -52,7 +52,7 @@ fn main(
   let node = tree[id.x + params.offset];
   let span = node.r - node.l;
 
-  if (span <= max_tris_per_leaf) {
+  if (span <= params.max_tris_per_leaf) {
     // is leaf, no need to split 
     return;
   }

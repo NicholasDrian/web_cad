@@ -143,7 +143,7 @@ impl MeshBBHGenerator {
             device,
             "build next level",
             include_str!("build_next_level.wgsl"),
-            &split_evaluations_bind_group_layout,
+            &build_next_level_bind_group_layout,
             "build_next_level",
         );
 
