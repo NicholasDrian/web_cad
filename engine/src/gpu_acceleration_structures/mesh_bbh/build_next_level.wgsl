@@ -109,11 +109,27 @@ fn build_next_level(
     }
 
   
-  // write out next level
-  // todo
-  
-
   // set child pointers
-  // todo
+  let left_child_idx = node.r + prefix_sum[id.x]; 
+  tree[id.x + offset].left_child = left_child_idx;
+
+
+  // write out next level
+  tree[left_child_idx] = Node(
+    vec3<f32>(0.0, 0.0, 0.0),
+    node.left,
+    vec3<f32>(0.0, 0.0, 0.0),
+    node.left + left_count,
+    vec3<f32>(0.0, 0.0, 0.0),
+    -1,
+  );
+  tree[left_child_idx + 1] = Node(
+    vec3<f32>(0.0, 0.0, 0.0),
+    node.left + left_count,
+    vec3<f32>(0.0, 0.0, 0.0),
+    node.right,
+    vec3<f32>(0.0, 0.0, 0.0),
+    -1,
+  );
 
 }
