@@ -53,16 +53,24 @@ let canvas4 = document.createElement("canvas");
 document.body.appendChild(canvas4);
 let surface_viewport = instance.create_viewport(canvas4);
 
+let lines_scene = instance.create_scene();
+let lines = lines_scene.add_lines(vertices, new Uint32Array([0, 1, 2, 3, 4, 0, 0, 2, 1, 3, 2, 4, 3, 0]));
+let canvas5 = document.createElement("canvas");
+document.body.appendChild(canvas5);
+let lines_viewport = instance.create_viewport(canvas5);
+
 while (true) {
   instance.draw_scene_to_viewport(mesh_scene, mesh_viewport);
   instance.draw_scene_to_viewport(polyline_scene, polyline_viewport);
   instance.draw_scene_to_viewport(curve_scene, curve_viewport);
   instance.draw_scene_to_viewport(surface_scene, surface_viewport);
+  instance.draw_scene_to_viewport(lines_scene, lines_viewport);
 
   mesh_scene.rotate_geometry(mesh, [0, 0, 0], [0, 1, 0], 0.02);
   polyline_scene.rotate_geometry(poly, [0, 0, 0], [0, 1, 0], 0.02);
   curve_scene.rotate_geometry(curve, [0, 0, 0], [0, 1, 0], 0.02);
   surface_scene.rotate_geometry(surface, [0, 0, 0], [0, 1, 0], 0.02);
+  lines_scene.rotate_geometry(lines, [0, 0, 0], [0, 1, 0], 0.02);
 
   // Yeild 
   await new Promise(r => setTimeout(r, 0));

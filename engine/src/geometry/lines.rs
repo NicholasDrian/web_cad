@@ -58,6 +58,21 @@ impl Lines {
         }
     }
 
+    pub fn from_buffers(
+        renderer: Rc<Renderer>,
+        vertex_buffer: wgpu::Buffer,
+        index_buffer: wgpu::Buffer,
+        index_count: u32,
+    ) -> Self {
+        let bind_group_object = GeometryBindGroupObject::new(renderer);
+        Self {
+            vertex_buffer,
+            index_buffer,
+            bind_group_object,
+            index_count,
+        }
+    }
+
     pub fn get_vertex_buffer(&self) -> &wgpu::Buffer {
         &self.vertex_buffer
     }

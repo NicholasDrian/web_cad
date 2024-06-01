@@ -194,9 +194,40 @@ impl MeshBBHGenerator {
             input = (input.1, input.1 + total);
         }
 
-        // TODO: shrink tree buffer to size of tree
+        // eliminate extra capacity
+        // TODO: factor this out
+        let final_tree_buffer = self
+            .renderer
+            .get_device()
+            .create_buffer(&wgpu::BufferDescriptor {
+                label: Some("final tree buffer"),
+                size: (input.1 * NODE_SIZE) as u64,
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                mapped_at_creation: false,
+            });
 
-        MeshBBH::new(tree_buffer, index_buffer)
+        let mut encoder =
+            self.renderer
+                .get_device()
+                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("shrink tree buffer"),
+                });
+
+        encoder.copy_buffer_to_buffer(
+            &tree_buffer,
+            0,
+            &final_tree_buffer,
+            0,
+            (input.1 * NODE_SIZE) as u64,
+        );
+
+        let idx = self.renderer.get_queue().submit([encoder.finish()]);
+
+        self.renderer
+            .get_device()
+            .poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+        MeshBBH::new(final_tree_buffer, index_buffer, input.1)
     }
 
     // Good ez paralelism
@@ -260,7 +291,7 @@ impl MeshBBHGenerator {
         let tree_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("tree buffer"),
             size: (NODE_SIZE * triangle_count * 2) as u64, // bigger than neccesary
-            usage: wgpu::BufferUsages::STORAGE,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: true,
         });
         let queue = self.renderer.get_queue();
