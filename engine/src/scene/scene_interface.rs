@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     geometry::{
         curve::Curve,
+        lines::{Lines, LinesVertex},
         mesh::{Mesh, MeshVertex},
         polyline::{Polyline, PolylineVertex},
         surface::Surface,
@@ -64,14 +65,14 @@ impl Scene {
     }
 
     #[wasm_bindgen]
-    pub fn add_polyline(&self, positions: &[f32]) -> GeometryId {
+    pub fn add_polyline(&self, vertices: &[f32]) -> GeometryId {
         let mut verts: Vec<PolylineVertex> = Vec::new();
-        for i in 0..positions.len() / 3 {
+        for i in 0..vertices.len() / 3 {
             verts.push(PolylineVertex {
                 position: [
-                    positions[i * 3],
-                    positions[i * 3 + 1],
-                    positions[i * 3 + 2],
+                    vertices[i * 3],
+                    vertices[i * 3 + 1],
+                    vertices[i * 3 + 2],
                     1.0,
                 ],
             });
@@ -85,6 +86,31 @@ impl Scene {
         get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
             .add_polyline(polyline)
+    }
+
+    #[wasm_bindgen]
+    pub fn add_lines(&self, vertices: &[f32], indices: &[u32]) -> GeometryId {
+        let mut verts: Vec<LinesVertex> = Vec::new();
+        for i in 0..vertices.len() / 3 {
+            verts.push(LinesVertex {
+                position: [
+                    vertices[i * 3],
+                    vertices[i * 3 + 1],
+                    vertices[i * 3 + 2],
+                    1.0,
+                ],
+            });
+        }
+
+        let lines = Lines::new(
+            get_instance_mut!(&self.instance_handle).get_renderer(),
+            &verts[..],
+            indices,
+        );
+
+        get_instance_mut!(&self.instance_handle)
+            .get_scene_mut(self.scene_handle)
+            .add_lines(lines)
     }
 
     /// Controls ar packed into a flat list of floats for performance and ease

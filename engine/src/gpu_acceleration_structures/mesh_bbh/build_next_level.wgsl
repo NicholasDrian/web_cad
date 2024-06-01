@@ -80,7 +80,7 @@ fn build_next_level(
     // reorder the indices in place
     var low = node.l;
     var high = node.l;
-    var left_count = 0;
+    var left_count: u32 = 0;
 
     while (high < node.r) {
 
@@ -108,26 +108,25 @@ fn build_next_level(
 
     }
 
-  
   // set child pointers
   let left_child_idx = node.r + prefix_sum[id.x] * 2; 
-  tree[id.x + offset].left_child = left_child_idx;
+  tree[id.x + params.offset].left_child = left_child_idx;
 
 
   // write out next level
   tree[left_child_idx] = Node(
     vec3<f32>(0.0, 0.0, 0.0),
-    node.left,
+    node.l,
     vec3<f32>(0.0, 0.0, 0.0),
-    node.left + left_count,
+    node.l + left_count,
     vec3<f32>(0.0, 0.0, 0.0),
     0,
   );
   tree[left_child_idx + 1] = Node(
     vec3<f32>(0.0, 0.0, 0.0),
-    node.left + left_count,
+    node.l + left_count,
     vec3<f32>(0.0, 0.0, 0.0),
-    node.right,
+    node.r,
     vec3<f32>(0.0, 0.0, 0.0),
     0,
   );

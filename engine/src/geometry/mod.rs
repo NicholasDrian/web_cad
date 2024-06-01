@@ -1,6 +1,7 @@
 pub mod bind_group;
 pub mod curve;
 pub mod curve_generators;
+pub mod lines;
 pub mod mesh;
 pub mod polyline;
 pub mod surface;

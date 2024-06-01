@@ -7,6 +7,7 @@ pub struct Renderer {
     adapter: wgpu::Adapter,
     mesh_render_pipeline: wgpu::RenderPipeline,
     line_strip_render_pipeline: wgpu::RenderPipeline,
+    lines_render_pipeline: wgpu::RenderPipeline,
     viewport_bind_group_layout: wgpu::BindGroupLayout,
     geometry_bind_group_layout: wgpu::BindGroupLayout,
 }
@@ -91,6 +92,13 @@ impl Renderer {
             PipelinePrimitive::LineStrip,
             4u32,
         );
+        let lines_render_pipeline = create_render_pipeline(
+            &device,
+            &[&viewport_bind_group_layout, &geometry_bind_group_layout],
+            &line_strip_shader,
+            PipelinePrimitive::Lines,
+            4u32,
+        );
 
         Renderer {
             device,
@@ -99,6 +107,7 @@ impl Renderer {
             instance,
             mesh_render_pipeline,
             line_strip_render_pipeline,
+            lines_render_pipeline,
             viewport_bind_group_layout,
             geometry_bind_group_layout,
         }
@@ -189,6 +198,16 @@ impl Renderer {
                 render_pass.set_bind_group(1, polyline.get_bind_group(), &[]);
                 render_pass.set_vertex_buffer(0, polyline.get_vertex_buffer().slice(..));
                 render_pass.draw(0..polyline.get_vertex_count(), 0..1);
+            }
+            render_pass.set_pipeline(&self.lines_render_pipeline);
+            for lines in scene.get_lines().values() {
+                render_pass.set_bind_group(1, lines.get_bind_group(), &[]);
+                render_pass.set_vertex_buffer(0, lines.get_vertex_buffer().slice(..));
+                render_pass.set_index_buffer(
+                    lines.get_index_buffer().slice(..),
+                    wgpu::IndexFormat::Uint32,
+                );
+                render_pass.draw_indexed(0..lines.get_index_count(), 0, 0..1);
             }
         }
 

@@ -1,4 +1,7 @@
-use crate::geometry::{mesh::MESH_VERTEX_BUFFER_LAYOUT, polyline::POLYLINE_VERTEX_BUFFER_LAYOUT};
+use crate::geometry::{
+    lines::LINES_VERTEX_BUFFER_LAYOUT, mesh::MESH_VERTEX_BUFFER_LAYOUT,
+    polyline::POLYLINE_VERTEX_BUFFER_LAYOUT,
+};
 
 pub enum PipelinePrimitive {
     Mesh,
@@ -19,7 +22,7 @@ pub fn create_render_pipeline(
             label: Some(match primitive {
                 PipelinePrimitive::Mesh => "Triangle Pipeline Layout",
                 PipelinePrimitive::LineStrip => "Line Strip Pipeline Layout",
-                PipelinePrimitive::Lines => "Curve Pipeline Layout",
+                PipelinePrimitive::Lines => "Lines Layout",
                 PipelinePrimitive::Points => "Surface Pipeline Layout",
             }),
             bind_group_layouts: layouts,
@@ -63,7 +66,7 @@ pub fn create_render_pipeline(
                 PipelinePrimitive::Mesh => MESH_VERTEX_BUFFER_LAYOUT.clone(),
                 PipelinePrimitive::LineStrip => POLYLINE_VERTEX_BUFFER_LAYOUT.clone(),
                 PipelinePrimitive::Points => todo!(),
-                PipelinePrimitive::Lines => todo!(),
+                PipelinePrimitive::Lines => LINES_VERTEX_BUFFER_LAYOUT.clone(),
             }][..],
             compilation_options: wgpu::PipelineCompilationOptions::default(),
         },
