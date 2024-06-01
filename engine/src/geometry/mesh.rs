@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use wgpu::util::DeviceExt;
 
-use crate::render::renderer::Renderer;
+use crate::{gpu_acceleration_structures::mesh_bbh::MeshBBH, render::renderer::Renderer};
 
 use super::{bind_group::GeometryBindGroupObject, Geometry};
 
@@ -36,6 +36,7 @@ pub struct Mesh {
     index_buffer: wgpu::Buffer,
     bind_group_object: GeometryBindGroupObject,
     index_count: u32,
+    bbh: Option<MeshBBH>,
 }
 
 impl Mesh {
@@ -62,6 +63,7 @@ impl Mesh {
             index_buffer,
             index_count: indices.len() as u32,
             bind_group_object: bind_group,
+            bbh: None,
         }
     }
 
@@ -78,6 +80,10 @@ impl Mesh {
     }
     pub fn get_bind_group(&self) -> &wgpu::BindGroup {
         self.bind_group_object.get_bind_group()
+    }
+    pub fn add_bbh(&mut self, bbh: MeshBBH) -> &mut Self {
+        self.bbh = Some(bbh);
+        self
     }
 }
 

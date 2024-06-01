@@ -49,7 +49,7 @@ pub fn create_prefix_sum_resources(
     (bind_group_layout, pipeline)
 }
 
-pub fn prefix_sum(
+pub async fn prefix_sum(
     resources: &AlgorithmResources,
     values: &wgpu::Buffer,
     value_count: u32,
@@ -157,9 +157,25 @@ pub fn prefix_sum(
     device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
     // might be doing this wrong
-    let sum_bytes: &[u8] = &intermediate.slice(..).get_mapped_range();
+    let (sender, receiver) = futures::channel::oneshot::channel();
 
-    // TODO: see if this should be big endian sometimes?
+    let slice = intermediate.slice(..);
+    slice.map_async(wgpu::MapMode::Read, |result| {
+        let _ = sender.send(result);
+    });
+
+    receiver
+        .await
+        .expect("communication failed")
+        .expect("buffer reading failed");
+
+    //pollster::block_on(cx);
+    /*
+        let request = buffer_slice.map_async(wgpu::MapMode::Read);
+    // wait for the GPU to finish
+    device.poll(wgpu::Maintain::Wait);
+    */
+    let sum_bytes: &[u8] = &slice.get_mapped_range();
     let sum = u32::from_le_bytes(sum_bytes[0..4].try_into().unwrap());
 
     (res, sum)

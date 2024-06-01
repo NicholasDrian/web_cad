@@ -30,7 +30,7 @@ const surface_controls = [
 
 
 let mesh_scene = instance.create_scene();
-let mesh = mesh_scene.add_mesh(vertices, normals, indices);
+let mesh = await mesh_scene.add_mesh(vertices, normals, indices);
 let canvas1 = document.createElement("canvas");
 document.body.appendChild(canvas1);
 let mesh_viewport = instance.create_viewport(canvas1);

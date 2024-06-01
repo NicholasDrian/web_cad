@@ -26,7 +26,8 @@ bytemuck = { version = "1.15", features = ["derive"] }
 console_log = "1.0"
 log = "0.4"
 lazy_static = "1.4"
-
+futures = "0.3"
+pollster = "0.3"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

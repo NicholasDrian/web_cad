@@ -162,7 +162,7 @@ impl MeshBBHGenerator {
             build_next_level_pipeline,
         }
     }
-    pub fn generate_mesh_bbh(&self, mesh: &Mesh) -> MeshBBH {
+    pub async fn generate_mesh_bbh(&self, mesh: &Mesh) -> MeshBBH {
         let triangle_count = mesh.get_index_count() / 3;
         let triangle_bbs: wgpu::Buffer = self.create_triangle_bbs(mesh);
         let index_buffer = iota(&self.algorithm_resources, triangle_count, 16);
@@ -173,7 +173,7 @@ impl MeshBBHGenerator {
             self.build_bbs(&tree_buffer, &index_buffer, &triangle_bbs, input);
 
             // prefix sum of number of nodes with children
-            let (prefix_sum, total) = self.prefix_sum(&tree_buffer, input);
+            let (prefix_sum, total) = self.prefix_sum(&tree_buffer, input).await;
             if (total == 0) {
                 // Input is all leaves. were done
                 break;
@@ -307,7 +307,7 @@ impl MeshBBHGenerator {
     }
 
     // I got this paralell
-    fn prefix_sum(&self, tree: &wgpu::Buffer, range: (u32, u32)) -> (wgpu::Buffer, u32) {
+    async fn prefix_sum(&self, tree: &wgpu::Buffer, range: (u32, u32)) -> (wgpu::Buffer, u32) {
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("create prefix sum input"),
@@ -363,6 +363,7 @@ impl MeshBBHGenerator {
             &prefix_sum_input,
             range.1 - range.0,
         )
+        .await
     }
 
     // TODO: replace this with bottum up version
