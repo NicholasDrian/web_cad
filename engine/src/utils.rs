@@ -65,3 +65,15 @@ pub(crate) fn create_compute_pipeline(
         compilation_options: wgpu::PipelineCompilationOptions::default(),
     })
 }
+
+// dumps a buffer with MAP_READ usage
+pub(crate) fn dump_buffer_map_read(buffer: &wgpu::Buffer) {
+    // need to figure out how to make this block (in browser)
+    todo!();
+}
+
+// dumps a buffer with COPY_SRC usage
+pub(crate) fn dump_buffer_copy_src(buffer: &wgpu::Buffer) {
+    // need to figure out how to make this block
+    todo!();
+}

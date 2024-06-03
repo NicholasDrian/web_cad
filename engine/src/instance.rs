@@ -31,7 +31,7 @@ pub struct InstanceInternal {
     viewports: HashMap<Handle, ViewportInternal>,
     curve_sampler: Rc<CurveSampler>,
     surface_sampler: Rc<SurfaceSampler>,
-    mesh_bbh_generator: MeshBBHGenerator,
+    mesh_bbh_generator: Rc<MeshBBHGenerator>,
 }
 unsafe impl Send for InstanceInternal {}
 
@@ -41,8 +41,10 @@ impl InstanceInternal {
         let algorithm_resources = Rc::new(AlgorithmResources::new(renderer.clone()));
         let curve_sampler = Rc::new(CurveSampler::new(renderer.clone()));
         let surface_sampler = Rc::new(SurfaceSampler::new(renderer.clone()));
-        let mesh_bbh_generator =
-            MeshBBHGenerator::new(renderer.clone(), algorithm_resources.clone());
+        let mesh_bbh_generator = Rc::new(MeshBBHGenerator::new(
+            renderer.clone(),
+            algorithm_resources.clone(),
+        ));
         let instance = InstanceInternal {
             scenes: HashMap::new(),
             viewports: HashMap::new(),
@@ -99,7 +101,7 @@ impl InstanceInternal {
     pub fn get_surface_sampler(&self) -> Rc<SurfaceSampler> {
         self.surface_sampler.clone()
     }
-    pub fn get_mesh_bbh_generator(&self) -> &MeshBBHGenerator {
-        &self.mesh_bbh_generator
+    pub fn get_mesh_bbh_generator(&self) -> Rc<MeshBBHGenerator> {
+        self.mesh_bbh_generator.clone()
     }
 }

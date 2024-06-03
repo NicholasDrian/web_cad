@@ -162,11 +162,18 @@ impl MeshBBHGenerator {
             build_next_level_pipeline,
         }
     }
-    pub async fn generate_mesh_bbh(&self, mesh: &Mesh) -> MeshBBH {
-        let triangle_count = mesh.get_index_count() / 3;
-        let triangle_bbs: wgpu::Buffer = self.create_triangle_bbs(mesh);
+    pub async fn generate_mesh_bbh(
+        &self,
+        vertex_buffer: &wgpu::Buffer,
+        vertex_count: u32,
+        index_buffer: &wgpu::Buffer,
+        index_count: u32,
+    ) -> MeshBBH {
+        let triangle_count = index_count / 3;
+        let triangle_bbs: wgpu::Buffer =
+            self.create_triangle_bbs(vertex_buffer, vertex_count, index_buffer, index_count);
         let index_buffer = iota(&self.algorithm_resources, triangle_count, 16);
-        let tree_buffer = self.init_tree_buffer(mesh);
+        let tree_buffer = self.init_tree_buffer(index_count);
         let mut input: (u32, u32) = (0, 1);
         loop {
             // TODO: remove this in favor of bottom up approach
@@ -231,10 +238,16 @@ impl MeshBBHGenerator {
     }
 
     // Good ez paralelism
-    fn create_triangle_bbs(&self, mesh: &Mesh) -> wgpu::Buffer {
+    fn create_triangle_bbs(
+        &self,
+        vertex_buffer: &wgpu::Buffer,
+        vertex_count: u32,
+        index_buffer: &wgpu::Buffer,
+        index_count: u32,
+    ) -> wgpu::Buffer {
         let device = self.renderer.get_device();
 
-        let triangle_count = mesh.get_index_count() / 3;
+        let triangle_count = index_count / 3;
         let triangle_info_size = 16 * 3;
         let bb_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("create bb buffer"),
@@ -244,15 +257,15 @@ impl MeshBBHGenerator {
             mapped_at_creation: false,
         });
 
-        let vertex_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let vertex_buffer_clone = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("vert buff"),
-            size: mesh.get_vertex_count() as u64 * std::mem::size_of::<MeshVertex>() as u64,
+            size: vertex_count as u64 * std::mem::size_of::<MeshVertex>() as u64,
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
             mapped_at_creation: false,
         });
-        let index_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let index_buffer_clone = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("index buff"),
-            size: mesh.get_index_count() as u64 * std::mem::size_of::<u32>() as u64,
+            size: index_count as u64 * std::mem::size_of::<u32>() as u64,
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
             mapped_at_creation: false,
         });
@@ -264,11 +277,11 @@ impl MeshBBHGenerator {
                 wgpu::BindGroupEntry {
                     binding: 0,
                     // TODO: copy this to storage or add storage flag to mesh
-                    resource: vertex_buffer.as_entire_binding(),
+                    resource: vertex_buffer_clone.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: index_buffer.as_entire_binding(),
+                    resource: index_buffer_clone.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
@@ -281,18 +294,18 @@ impl MeshBBHGenerator {
         });
 
         encoder.copy_buffer_to_buffer(
-            mesh.get_index_buffer(),
+            index_buffer,
             0,
-            &index_buffer,
+            &index_buffer_clone,
             0,
-            mesh.get_index_count() as u64 * std::mem::size_of::<u32>() as u64,
+            index_count as u64 * std::mem::size_of::<u32>() as u64,
         );
         encoder.copy_buffer_to_buffer(
-            mesh.get_vertex_buffer(),
+            vertex_buffer,
             0,
-            &vertex_buffer,
+            &vertex_buffer_clone,
             0,
-            mesh.get_vertex_count() as u64 * std::mem::size_of::<MeshVertex>() as u64,
+            vertex_count as u64 * std::mem::size_of::<MeshVertex>() as u64,
         );
 
         {
@@ -313,8 +326,8 @@ impl MeshBBHGenerator {
     }
 
     // EZ
-    fn init_tree_buffer(&self, mesh: &Mesh) -> wgpu::Buffer {
-        let triangle_count = mesh.get_index_count() / 3;
+    fn init_tree_buffer(&self, index_count: u32) -> wgpu::Buffer {
+        let triangle_count = index_count / 3;
         let device = self.renderer.get_device();
         let tree_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("tree buffer"),
@@ -327,7 +340,7 @@ impl MeshBBHGenerator {
 
         {
             let mut buffer_view = tree_buffer.slice(..).get_mapped_range_mut();
-            let data: &mut [u32] = bytemuck::cast_slice_mut(&mut *buffer_view);
+            let data: &mut [u32] = bytemuck::cast_slice_mut(&mut buffer_view);
             data[0] = 0;
             data[1] = 0;
             data[2] = 0;
@@ -342,7 +355,6 @@ impl MeshBBHGenerator {
         tree_buffer
     }
 
-    // I got this paralell
     async fn prefix_sum(&self, tree: &wgpu::Buffer, range: (u32, u32)) -> (wgpu::Buffer, u32) {
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -352,7 +364,7 @@ impl MeshBBHGenerator {
         });
         let prefix_sum_input = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("prefix sum input"),
-            size: ((range.1 - range.0) * NODE_SIZE) as u64,
+            size: (range.1 - range.0) as u64 * std::mem::size_of::<u32>() as u64,
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
@@ -594,7 +606,5 @@ impl MeshBBHGenerator {
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
-
-        todo!();
     }
 }

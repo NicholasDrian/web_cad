@@ -9,7 +9,6 @@ use crate::{
         surface::Surface,
         GeometryId,
     },
-    gpu_acceleration_structures::debug::mesh_bbh_to_lines::mesh_bbh_to_lines,
     instance::Handle,
     math::linear_algebra::{vec3::Vec3, vec4::Vec4},
     utils::get_instance_mut,
@@ -37,12 +36,7 @@ impl Scene {
     }
 
     #[wasm_bindgen]
-    pub async fn add_mesh(
-        &self,
-        positions: &[f32],
-        normals: &[f32],
-        indices: &[u32],
-    ) -> GeometryId {
+    pub fn add_mesh(&self, positions: &[f32], normals: &[f32], indices: &[u32]) -> GeometryId {
         let mut verts: Vec<MeshVertex> = Vec::new();
         for i in 0..positions.len() / 3 {
             verts.push(MeshVertex {
@@ -57,25 +51,13 @@ impl Scene {
         }
         // TODO: why do i need two gets????
         // I currently hate the borrow checker
-        let mut mesh = Mesh::new(
+        let mesh = Mesh::new(
             get_instance_mut!(&self.instance_handle)
                 .get_renderer()
                 .clone(),
             &verts[..],
             indices,
         );
-        let bbh = get_instance_mut!(&self.instance_handle)
-            .get_mesh_bbh_generator()
-            .generate_mesh_bbh(&mesh)
-            .await;
-
-        // For debug
-        let renderer = get_instance_mut!(&self.instance_handle).get_renderer();
-        get_instance_mut!(&self.instance_handle)
-            .get_scene_mut(self.scene_handle)
-            .add_lines(mesh_bbh_to_lines(renderer, &bbh));
-
-        mesh.add_bbh(bbh);
 
         get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
@@ -191,7 +173,7 @@ impl Scene {
     ///
 
     #[wasm_bindgen]
-    pub fn add_surface(
+    pub async fn add_surface(
         &self,
         degree_u: u32,
         degree_v: u32,
@@ -210,8 +192,11 @@ impl Scene {
                 z: controls[i * 3 + 2],
             });
         }
+        let surface_sampler = get_instance_mut!(&self.instance_handle).get_surface_sampler();
+        let mesh_bbh_generator = get_instance_mut!(&self.instance_handle).get_mesh_bbh_generator();
         let surface = Surface::new(
-            get_instance_mut!(&self.instance_handle).get_surface_sampler(),
+            surface_sampler,
+            mesh_bbh_generator,
             control_count_u,
             control_count_v,
             degree_u,
@@ -220,7 +205,10 @@ impl Scene {
             weights,
             knots_u,
             knots_v,
-        );
+            // with bbh
+            true,
+        )
+        .await;
 
         get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)

@@ -49,6 +49,8 @@ pub fn create_prefix_sum_resources(
     (bind_group_layout, pipeline)
 }
 
+// TODO make this syncronized
+// Difficult in browser
 pub async fn prefix_sum(
     resources: &AlgorithmResources,
     values: &wgpu::Buffer,
@@ -60,13 +62,13 @@ pub async fn prefix_sum(
 
     let descriptor = &wgpu::BufferDescriptor {
         label: Some("prefix sum next buffer"),
-        size: (value_count + 1) as u64 * std::mem::size_of::<f32>() as u64,
+        size: (value_count + 1) as u64 * std::mem::size_of::<u32>() as u64,
         usage: wgpu::BufferUsages::STORAGE
             | wgpu::BufferUsages::COPY_DST
             | wgpu::BufferUsages::COPY_SRC,
         mapped_at_creation: false,
     };
-    // I think this is the best way to read sum from prefixu sum buffer
+    // I think this is the best way to read sum from prefix sum buffer
     let intermediate = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("prefix sum intermediate"),
         size: 4,
@@ -84,7 +86,7 @@ pub async fn prefix_sum(
     });
 
     // Look into this
-    let iterations = f32::log2((value_count + 1) as f32).ceil() as u32;
+    let iterations = f32::log2(value_count as f32).ceil() as u32;
     log::info!("iterations{:?}", iterations);
 
     encoder.copy_buffer_to_buffer(values, 0, &buffer_a, 4, value_count as u64 * 4);
@@ -119,7 +121,7 @@ pub async fn prefix_sum(
             })
         } else {
             device.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("prefix sum even"),
+                label: Some("prefix sum odd"),
                 layout: bind_group_layout,
                 entries: &[
                     wgpu::BindGroupEntry {
@@ -155,7 +157,7 @@ pub async fn prefix_sum(
         buffer_b
     };
 
-    encoder.copy_buffer_to_buffer(&res, (value_count - 1) as u64 * 4, &intermediate, 0, 4);
+    encoder.copy_buffer_to_buffer(&res, value_count as u64 * 4, &intermediate, 0, 4);
 
     let idx = resources.renderer.get_queue().submit([encoder.finish()]);
     device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
@@ -173,15 +175,10 @@ pub async fn prefix_sum(
         .expect("communication failed")
         .expect("buffer reading failed");
 
-    /*
-        let request = buffer_slice.map_async(wgpu::MapMode::Read);
-    // wait for the GPU to finish
-    device.poll(wgpu::Maintain::Wait);
-    */
     let sum_bytes: &[u8] = &slice.get_mapped_range();
-    let sum = u32::from_le_bytes(sum_bytes[0..4].try_into().unwrap());
-    let sum_be = u32::from_be_bytes(sum_bytes[0..4].try_into().unwrap());
 
-    log::info!("sum_bytes{:?} le{:?} be{:?}", sum_bytes, sum, sum_be);
+    let sum = u32::from_le_bytes(sum_bytes[0..4].try_into().unwrap());
+
+    //log::info!("sum_bytes{:?} le{:?}", sum_bytes, sum);
     (res, sum)
 }

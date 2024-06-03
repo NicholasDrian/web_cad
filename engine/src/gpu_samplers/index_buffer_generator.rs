@@ -87,7 +87,9 @@ impl IndexBufferGenerator {
         let index_buffer: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("surface index buffer"),
             size: ((count_u - 1) * (count_v - 1) * 6 * std::mem::size_of::<u32>() as u32) as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::INDEX,
+            usage: wgpu::BufferUsages::STORAGE
+                | wgpu::BufferUsages::INDEX
+                | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
 

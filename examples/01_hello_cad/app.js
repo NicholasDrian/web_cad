@@ -48,7 +48,7 @@ document.body.appendChild(canvas3);
 let curve_viewport = instance.create_viewport(canvas3);
 
 let surface_scene = instance.create_scene();
-let surface = surface_scene.add_surface(2, 2, surface_controls, 3, 3, [], [], []);
+let surface = await surface_scene.add_surface(2, 2, surface_controls, 3, 3, [], [], []);
 let canvas4 = document.createElement("canvas");
 document.body.appendChild(canvas4);
 let surface_viewport = instance.create_viewport(canvas4);

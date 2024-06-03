@@ -1,10 +1,13 @@
 use crate::{
+    gpu_acceleration_structures::mesh_bbh::{mesh_bbh_generator::MeshBBHGenerator, MeshBBH},
     gpu_samplers::{params::SAMPLES_PER_SEGMENT, surface_sampler::SurfaceSampler},
     math::linear_algebra::{vec3::Vec3, vec4::Vec4},
 };
 use std::rc::Rc;
 
-use super::{bind_group::GeometryBindGroupObject, utils::default_knot_vector, Geometry};
+use super::{
+    bind_group::GeometryBindGroupObject, mesh::Mesh, utils::default_knot_vector, Geometry,
+};
 
 pub struct Surface {
     surface_sampler: Rc<SurfaceSampler>,
@@ -23,11 +26,13 @@ pub struct Surface {
     index_count: u32,
     index_buffer: wgpu::Buffer,
     bind_group_object: GeometryBindGroupObject,
+    bbh: Option<MeshBBH>,
 }
 
 impl Surface {
-    pub fn new(
+    pub async fn new(
         surface_sampler: Rc<SurfaceSampler>,
+        bbh_generator: Rc<MeshBBHGenerator>,
         control_count_u: u32,
         control_count_v: u32,
         degree_u: u32,
@@ -36,6 +41,7 @@ impl Surface {
         weights: &[f32],
         knots_u: &[f32],
         knots_v: &[f32],
+        with_bbh: bool,
     ) -> Self {
         let knots_u = if knots_u.len() == 0 {
             default_knot_vector(control_count_u as usize, degree_u)
@@ -76,6 +82,20 @@ impl Surface {
         let sample_count_v = SAMPLES_PER_SEGMENT * (control_count_v - 1) + 1;
         let index_count = (sample_count_u - 1) * (sample_count_v - 1) * 6;
         let bind_group_object = GeometryBindGroupObject::new(surface_sampler.get_renderer());
+        let bbh = if with_bbh {
+            Some(
+                bbh_generator
+                    .generate_mesh_bbh(
+                        &vertex_buffer,
+                        sample_count_u * sample_count_v,
+                        &index_buffer,
+                        index_count,
+                    )
+                    .await,
+            )
+        } else {
+            None
+        };
 
         Self {
             surface_sampler,
@@ -91,6 +111,7 @@ impl Surface {
             index_count,
             index_buffer,
             bind_group_object,
+            bbh,
         }
     }
 
