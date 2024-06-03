@@ -3,7 +3,7 @@ use std::rc::Rc;
 use wgpu::util::DeviceExt;
 
 use crate::{
-    geometry::mesh::Mesh,
+    geometry::mesh::{Mesh, MeshVertex},
     gpu_algorithms::{iota::iota, prefix_sum::prefix_sum, AlgorithmResources},
     render::renderer::Renderer,
     utils::create_compute_pipeline,
@@ -174,7 +174,7 @@ impl MeshBBHGenerator {
 
             // prefix sum of number of nodes with children
             let (prefix_sum, total) = self.prefix_sum(&tree_buffer, input).await;
-            if (total == 0) {
+            if total == 0 {
                 // Input is all leaves. were done
                 break;
             }
@@ -244,8 +244,17 @@ impl MeshBBHGenerator {
             mapped_at_creation: false,
         });
 
-        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("create bb buffer"),
+        let vertex_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("vert buff"),
+            size: mesh.get_vertex_count() as u64 * std::mem::size_of::<MeshVertex>() as u64,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+            mapped_at_creation: false,
+        });
+        let index_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("index buff"),
+            size: mesh.get_index_count() as u64 * std::mem::size_of::<u32>() as u64,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+            mapped_at_creation: false,
         });
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -254,11 +263,12 @@ impl MeshBBHGenerator {
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: mesh.get_vertex_buffer().as_entire_binding(),
+                    // TODO: copy this to storage or add storage flag to mesh
+                    resource: vertex_buffer.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: mesh.get_index_buffer().as_entire_binding(),
+                    resource: index_buffer.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
@@ -266,6 +276,24 @@ impl MeshBBHGenerator {
                 },
             ],
         });
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("create bb buffer"),
+        });
+
+        encoder.copy_buffer_to_buffer(
+            mesh.get_index_buffer(),
+            0,
+            &index_buffer,
+            0,
+            mesh.get_index_count() as u64 * std::mem::size_of::<u32>() as u64,
+        );
+        encoder.copy_buffer_to_buffer(
+            mesh.get_vertex_buffer(),
+            0,
+            &vertex_buffer,
+            0,
+            mesh.get_vertex_count() as u64 * std::mem::size_of::<MeshVertex>() as u64,
+        );
 
         {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
@@ -294,14 +322,22 @@ impl MeshBBHGenerator {
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: true,
         });
-        let queue = self.renderer.get_queue();
         let start = 0;
         let end = triangle_count;
-        queue.write_buffer(
-            &tree_buffer,
-            0,
-            bytemuck::cast_slice(&[0u32, 0, 0, start, 0, 0, 0, end]),
-        );
+
+        {
+            let mut buffer_view = tree_buffer.slice(..).get_mapped_range_mut();
+            let data: &mut [u32] = bytemuck::cast_slice_mut(&mut *buffer_view);
+            data[0] = 0;
+            data[1] = 0;
+            data[2] = 0;
+            data[3] = start;
+            data[4] = 0;
+            data[5] = 0;
+            data[6] = 0;
+            data[7] = end;
+        }
+
         tree_buffer.unmap();
         tree_buffer
     }
@@ -317,7 +353,7 @@ impl MeshBBHGenerator {
         let prefix_sum_input = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("prefix sum input"),
             size: ((range.1 - range.0) * NODE_SIZE) as u64,
-            usage: wgpu::BufferUsages::STORAGE,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
 

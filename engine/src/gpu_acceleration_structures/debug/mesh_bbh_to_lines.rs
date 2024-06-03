@@ -32,23 +32,19 @@ pub fn mesh_bbh_to_lines(renderer: Rc<Renderer>, mesh_bbh: &MeshBBH) -> Lines {
         "main",
     );
 
+    const VERTICES_PER_BB: u32 = 8;
+    let vertex_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("vertex buffer"),
+        size: (node_count * VERTICES_PER_BB * 16) as u64,
+        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::VERTEX,
+        mapped_at_creation: false,
+    });
     const INDICES_PER_BB: u32 = 24;
     let index_buffer = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("index buffer"),
         size: (node_count * INDICES_PER_BB * 4) as u64,
         usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::INDEX,
         mapped_at_creation: false,
-    });
-    const VERTICES_PER_BB: u32 = 8;
-    let vertex_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("vertex buffer"),
-        size: (node_count * VERTICES_PER_BB * 16) as u64,
-        usage: wgpu::BufferUsages::STORAGE,
-        mapped_at_creation: false,
-    });
-
-    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-        label: Some("mesh bbh to lines"),
     });
 
     let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -70,9 +66,13 @@ pub fn mesh_bbh_to_lines(renderer: Rc<Renderer>, mesh_bbh: &MeshBBH) -> Lines {
         ],
     });
 
+    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+        label: Some("mesh bbh to lines"),
+    });
+
     {
         let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-            label: Some("create bb buffer"),
+            label: Some("mesh bbh to lines"),
             timestamp_writes: None,
         });
 

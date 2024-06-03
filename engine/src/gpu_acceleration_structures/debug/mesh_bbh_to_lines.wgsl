@@ -17,6 +17,10 @@ fn main(
   @builtin(global_invocation_id) id: vec3<u32>
   ) {
 
+    let node = tree[id.x];
+    let min_corner = node.min_corner;
+    let max_corner = node.max_corner;
+
     let idx0 = id.x * 8 + 0;
     let idx1 = id.x * 8 + 1;
     let idx2 = id.x * 8 + 2;
@@ -26,14 +30,14 @@ fn main(
     let idx6 = id.x * 8 + 6;
     let idx7 = id.x * 8 + 7;
     
-    vertex_buffer[idx0] = vec4<f32>(min_cornder.x, min_corner.y, min_corner.z, 1.0);
-    vertex_buffer[idx1] = vec4<f32>(min_cornder.x, min_corner.y, max_corner.z, 1.0);
-    vertex_buffer[idx2] = vec4<f32>(min_cornder.x, max_corner.y, min_corner.z, 1.0);
-    vertex_buffer[idx3] = vec4<f32>(min_cornder.x, max_corner.y, max_corner.z, 1.0);
-    vertex_buffer[idx4] = vec4<f32>(max_cornder.x, min_corner.y, min_corner.z, 1.0);
-    vertex_buffer[idx5] = vec4<f32>(max_cornder.x, min_corner.y, max_corner.z, 1.0);
-    vertex_buffer[idx6] = vec4<f32>(max_cornder.x, max_corner.y, min_corner.z, 1.0);
-    vertex_buffer[idx7] = vec4<f32>(max_cornder.x, max_corner.y, max_corner.z, 1.0);
+    vertex_buffer[idx0] = vec4<f32>(min_corner.x, min_corner.y, min_corner.z, 1.0);
+    vertex_buffer[idx1] = vec4<f32>(min_corner.x, min_corner.y, max_corner.z, 1.0);
+    vertex_buffer[idx2] = vec4<f32>(min_corner.x, max_corner.y, min_corner.z, 1.0);
+    vertex_buffer[idx3] = vec4<f32>(min_corner.x, max_corner.y, max_corner.z, 1.0);
+    vertex_buffer[idx4] = vec4<f32>(max_corner.x, min_corner.y, min_corner.z, 1.0);
+    vertex_buffer[idx5] = vec4<f32>(max_corner.x, min_corner.y, max_corner.z, 1.0);
+    vertex_buffer[idx6] = vec4<f32>(max_corner.x, max_corner.y, min_corner.z, 1.0);
+    vertex_buffer[idx7] = vec4<f32>(max_corner.x, max_corner.y, max_corner.z, 1.0);
 
     index_buffer[id.x * 24 + 0] = idx0;
     index_buffer[id.x * 24 + 1] = idx1;

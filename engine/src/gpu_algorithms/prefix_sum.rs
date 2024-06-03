@@ -54,6 +54,7 @@ pub async fn prefix_sum(
     values: &wgpu::Buffer,
     value_count: u32,
 ) -> (wgpu::Buffer, u32) {
+    log::info!("value count{:?}", value_count);
     let device = resources.get_renderer().get_device();
     let (bind_group_layout, pipeline) = resources.get_resources(super::Algorithm::PrefixSum);
 
@@ -82,7 +83,9 @@ pub async fn prefix_sum(
         label: Some("prefix sum"),
     });
 
+    // Look into this
     let iterations = f32::log2((value_count + 1) as f32).ceil() as u32;
+    log::info!("iterations{:?}", iterations);
 
     encoder.copy_buffer_to_buffer(values, 0, &buffer_a, 4, value_count as u64 * 4);
 
@@ -142,6 +145,7 @@ pub async fn prefix_sum(
         compute_pass.set_pipeline(pipeline);
         compute_pass.set_bind_group(0, &bind_group, &[]);
 
+        log::info!("offset{:?}", offset);
         compute_pass.dispatch_workgroups(value_count - offset, 1, 1);
     }
 
@@ -169,7 +173,6 @@ pub async fn prefix_sum(
         .expect("communication failed")
         .expect("buffer reading failed");
 
-    //pollster::block_on(cx);
     /*
         let request = buffer_slice.map_async(wgpu::MapMode::Read);
     // wait for the GPU to finish
@@ -177,6 +180,8 @@ pub async fn prefix_sum(
     */
     let sum_bytes: &[u8] = &slice.get_mapped_range();
     let sum = u32::from_le_bytes(sum_bytes[0..4].try_into().unwrap());
+    let sum_be = u32::from_be_bytes(sum_bytes[0..4].try_into().unwrap());
 
+    log::info!("sum_bytes{:?} le{:?} be{:?}", sum_bytes, sum, sum_be);
     (res, sum)
 }

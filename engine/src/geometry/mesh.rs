@@ -36,6 +36,7 @@ pub struct Mesh {
     index_buffer: wgpu::Buffer,
     bind_group_object: GeometryBindGroupObject,
     index_count: u32,
+    vertex_count: u32,
     bbh: Option<MeshBBH>,
 }
 
@@ -47,14 +48,14 @@ impl Mesh {
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("Vertex Buffer"),
                     contents: bytemuck::cast_slice(verts),
-                    usage: wgpu::BufferUsages::VERTEX,
+                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_SRC,
                 });
         let index_buffer =
             renderer
                 .get_device()
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("Index Buffer"),
-                    usage: wgpu::BufferUsages::INDEX,
+                    usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_SRC,
                     contents: bytemuck::cast_slice(indices),
                 });
         let bind_group = GeometryBindGroupObject::new(renderer);
@@ -62,6 +63,7 @@ impl Mesh {
             vertex_buffer,
             index_buffer,
             index_count: indices.len() as u32,
+            vertex_count: verts.len() as u32,
             bind_group_object: bind_group,
             bbh: None,
         }
@@ -84,6 +86,10 @@ impl Mesh {
     pub fn add_bbh(&mut self, bbh: MeshBBH) -> &mut Self {
         self.bbh = Some(bbh);
         self
+    }
+
+    pub fn get_vertex_count(&self) -> u32 {
+        self.vertex_count
     }
 }
 

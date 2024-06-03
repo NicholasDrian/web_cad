@@ -3,7 +3,6 @@
 @group(0) @binding(2) var<storage, read> triangle_bbs: array<BoundingBox>;
 @group(0) @binding(3) var<storage, read_write> tree: array<Node>;
 
-
 struct Params {
   offset: u32
 }
