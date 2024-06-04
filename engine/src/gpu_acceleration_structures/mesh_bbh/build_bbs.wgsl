@@ -40,7 +40,6 @@ fn build_bbs(
   tree[params.offset + id.x].min_corner = min_corner;
   tree[params.offset + id.x].max_corner = max_corner;
   tree[params.offset + id.x].center = (max_corner + min_corner) / 2.0;
-    
 }
 
 

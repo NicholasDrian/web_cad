@@ -9,6 +9,7 @@ use crate::{
         surface::Surface,
         GeometryId,
     },
+    gpu_acceleration_structures::debug::mesh_bbh_to_lines::mesh_bbh_to_lines,
     instance::Handle,
     math::linear_algebra::{vec3::Vec3, vec4::Vec4},
     utils::get_instance_mut,
@@ -209,6 +210,12 @@ impl Scene {
             true,
         )
         .await;
+
+        let renderer = get_instance_mut!(&self.instance_handle).get_renderer();
+
+        get_instance_mut!(&self.instance_handle)
+            .get_scene_mut(self.scene_handle)
+            .add_lines(mesh_bbh_to_lines(renderer, surface.get_bbh().unwrap()));
 
         get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)

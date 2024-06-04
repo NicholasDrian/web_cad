@@ -5,9 +5,7 @@ use crate::{
 };
 use std::rc::Rc;
 
-use super::{
-    bind_group::GeometryBindGroupObject, mesh::Mesh, utils::default_knot_vector, Geometry,
-};
+use super::{bind_group::GeometryBindGroupObject, utils::default_knot_vector, Geometry};
 
 pub struct Surface {
     surface_sampler: Rc<SurfaceSampler>,
@@ -172,6 +170,15 @@ impl Surface {
     }
     pub fn get_bind_group(&self) -> &wgpu::BindGroup {
         self.bind_group_object.get_bind_group()
+    }
+
+    /// Unsafe
+    pub fn get_bbh(&self) -> Option<&MeshBBH> {
+        if self.bbh.is_some() {
+            Some(self.bbh.as_ref().unwrap())
+        } else {
+            None
+        }
     }
 }
 
