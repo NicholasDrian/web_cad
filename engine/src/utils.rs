@@ -66,6 +66,60 @@ pub(crate) fn create_compute_pipeline(
     })
 }
 
+pub(crate) async fn dump_buffer<T>(
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+    buffer: &wgpu::Buffer,
+    offset: u32,
+    count: u32,
+) where
+    T: std::fmt::Debug,
+{
+    let intermediate = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("debug print intermediate"),
+        size: count as u64 * std::mem::size_of::<T>() as u64,
+        usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    });
+    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+        label: Some("debug print"),
+    });
+    encoder.copy_buffer_to_buffer(
+        buffer,
+        offset as u64 * std::mem::size_of::<T>() as u64,
+        &intermediate,
+        0,
+        count as u64 * std::mem::size_of::<T>() as u64,
+    );
+
+    let idx = queue.submit([encoder.finish()]);
+    device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+    let (sender, receiver) = futures::channel::oneshot::channel();
+
+    let slice = intermediate.slice(..);
+    slice.map_async(wgpu::MapMode::Read, |result| {
+        let _ = sender.send(result);
+    });
+
+    receiver
+        .await
+        .expect("communication failed")
+        .expect("buffer reading failed");
+
+    let bytes: &[u8] = &slice.get_mapped_range();
+
+    let (head, body, _tail) = unsafe { bytes.align_to::<T>() };
+    debug_assert!(head.is_empty(), "Data was not aligned");
+
+    for i in 0..count {
+        log::info!("buffer object {:?}: {:?}", i, body[i as usize]);
+        if i % 12 == 11 {
+            log::info!("\n");
+        }
+    }
+}
+
 // dumps a buffer with COPY_SRC usage
 pub(crate) async fn dump_buffer_of_u32(
     device: &wgpu::Device,

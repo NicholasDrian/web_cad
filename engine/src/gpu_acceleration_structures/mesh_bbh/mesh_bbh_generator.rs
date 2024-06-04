@@ -5,8 +5,9 @@ use wgpu::util::DeviceExt;
 use crate::{
     geometry::mesh::{Mesh, MeshVertex},
     gpu_algorithms::{iota::iota, prefix_sum::prefix_sum, AlgorithmResources},
+    math::linear_algebra::vec3::Vec3,
     render::renderer::Renderer,
-    utils::{create_compute_pipeline, dump_buffer_of_u32},
+    utils::{create_compute_pipeline, dump_buffer, dump_buffer_of_u32},
 };
 
 use super::MeshBBH;
@@ -15,6 +16,18 @@ const NODE_SIZE: u32 = 48;
 const MAX_TRIS_PER_LEAF: u32 = 8;
 const SPLIT_CANDIDATES: u32 = 8;
 const SPLIT_EVALUATION_SIZE: u32 = 32;
+
+// used for debug print
+#[repr(C)]
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+struct MeshBBHNode {
+    pub min_corner: Vec3,
+    pub l: u32,
+    pub max_corner: Vec3,
+    pub r: u32,
+    pub center: Vec3,
+    pub left_child: u32,
+}
 
 pub struct MeshBBHGenerator {
     renderer: Rc<Renderer>,
@@ -185,16 +198,26 @@ impl MeshBBHGenerator {
                 level,
                 input.1 - input.0
             );
-            dump_buffer_of_u32(
+            /*
+                        dump_buffer_of_u32(
+                            self.renderer.get_device(),
+                            self.renderer.get_queue(),
+                            &tree_buffer,
+                            input.0 * 12,
+                            (input.1 - input.0) * 12,
+                        ).await;
+            */
+            dump_buffer::<MeshBBHNode>(
                 self.renderer.get_device(),
                 self.renderer.get_queue(),
                 &tree_buffer,
-                input.0 * 12,
-                (input.1 - input.0) * 12,
+                input.0,
+                input.1 - input.0,
             )
             .await;
             level += 1;
-            if level == 10 {
+            if level == 100 {
+                // TODO: remove
                 break;
             }
 
@@ -441,6 +464,7 @@ impl MeshBBHGenerator {
         triangle_bbs: &wgpu::Buffer,
         range: (u32, u32),
     ) {
+        log::info!("building bbs{:?}", range);
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("build bbs"),

@@ -41,26 +41,30 @@ fn main(
 
     index_buffer[id.x * 24 + 0] = idx0;
     index_buffer[id.x * 24 + 1] = idx1;
-    index_buffer[id.x * 24 + 2] = idx1;
+    index_buffer[id.x * 24 + 2] = idx0;
     index_buffer[id.x * 24 + 3] = idx2;
-    index_buffer[id.x * 24 + 4] = idx2;
-    index_buffer[id.x * 24 + 5] = idx3;
+    index_buffer[id.x * 24 + 4] = idx0;
+    index_buffer[id.x * 24 + 5] = idx4;
+
     index_buffer[id.x * 24 + 6] = idx3;
-    index_buffer[id.x * 24 + 7] = idx0;
-    index_buffer[id.x * 24 + 8] = idx0;
-    index_buffer[id.x * 24 + 9] = idx4;
-    index_buffer[id.x * 24 + 10] = idx1;
-    index_buffer[id.x * 24 + 11] = idx5;
-    index_buffer[id.x * 24 + 12] = idx2;
-    index_buffer[id.x * 24 + 13] = idx6;
-    index_buffer[id.x * 24 + 14] = idx3;
-    index_buffer[id.x * 24 + 15] = idx7;
-    index_buffer[id.x * 24 + 16] = idx4;
-    index_buffer[id.x * 24 + 17] = idx5;
-    index_buffer[id.x * 24 + 18] = idx5;
-    index_buffer[id.x * 24 + 19] = idx6;
+    index_buffer[id.x * 24 + 7] = idx1;
+    index_buffer[id.x * 24 + 8] = idx3;
+    index_buffer[id.x * 24 + 9] = idx2;
+    index_buffer[id.x * 24 + 10] = idx3;
+    index_buffer[id.x * 24 + 11] = idx7;
+
+    index_buffer[id.x * 24 + 12] = idx5;
+    index_buffer[id.x * 24 + 13] = idx1;
+    index_buffer[id.x * 24 + 14] = idx5;
+    index_buffer[id.x * 24 + 15] = idx4;
+    index_buffer[id.x * 24 + 16] = idx5;
+    index_buffer[id.x * 24 + 17] = idx7;
+
+    index_buffer[id.x * 24 + 18] = idx6;
+    index_buffer[id.x * 24 + 19] = idx2;
     index_buffer[id.x * 24 + 20] = idx6;
-    index_buffer[id.x * 24 + 21] = idx7;
-    index_buffer[id.x * 24 + 22] = idx7;
-    index_buffer[id.x * 24 + 23] = idx4;
+    index_buffer[id.x * 24 + 21] = idx4;
+    index_buffer[id.x * 24 + 22] = idx6;
+    index_buffer[id.x * 24 + 23] = idx7;
+
   }

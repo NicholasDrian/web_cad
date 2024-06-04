@@ -83,7 +83,7 @@ fn build_next_level(
     // reorder the indices in place
     var low = node.l;
     var high = node.l;
-    var left_count: u32 = 0;
+    var left_count: u32 = 0; // could calc this
 
     while (high < node.r) {
 
@@ -100,6 +100,7 @@ fn build_next_level(
         is_left = delta.z > 0.0;
       }
 
+// could optimize
       if (is_left) {
         left_count++;
         swap_indices(low, high);
