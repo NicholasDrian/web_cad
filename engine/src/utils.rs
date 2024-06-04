@@ -66,14 +66,57 @@ pub(crate) fn create_compute_pipeline(
     })
 }
 
-// dumps a buffer with MAP_READ usage
-pub(crate) fn dump_buffer_map_read(buffer: &wgpu::Buffer) {
-    // need to figure out how to make this block (in browser)
-    todo!();
-}
-
 // dumps a buffer with COPY_SRC usage
-pub(crate) fn dump_buffer_copy_src(buffer: &wgpu::Buffer) {
-    // need to figure out how to make this block
-    todo!();
+pub(crate) async fn dump_buffer_of_u32(
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+    buffer: &wgpu::Buffer,
+    offset: u32,
+    count: u32,
+) {
+    let intermediate = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("debug print intermediate"),
+        size: count as u64 * 4,
+        usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    });
+    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+        label: Some("debug print"),
+    });
+    encoder.copy_buffer_to_buffer(
+        buffer,
+        offset as u64 * std::mem::size_of::<u32>() as u64,
+        &intermediate,
+        0,
+        count as u64 * std::mem::size_of::<u32>() as u64,
+    );
+
+    let idx = queue.submit([encoder.finish()]);
+    device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+    let (sender, receiver) = futures::channel::oneshot::channel();
+
+    let slice = intermediate.slice(..);
+    slice.map_async(wgpu::MapMode::Read, |result| {
+        let _ = sender.send(result);
+    });
+
+    receiver
+        .await
+        .expect("communication failed")
+        .expect("buffer reading failed");
+
+    let bytes: &[u8] = &slice.get_mapped_range();
+
+    for i in 0..count {
+        if i % 12 == 0 {
+            log::info!("\n");
+        }
+        let num = u32::from_le_bytes(
+            bytes[(i as usize * 4)..(i as usize * 4 + 4)]
+                .try_into()
+                .unwrap(),
+        );
+        log::info!("{:?} - buffer num = {:?}", i, num);
+    }
 }

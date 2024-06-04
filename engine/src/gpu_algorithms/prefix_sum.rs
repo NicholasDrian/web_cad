@@ -6,7 +6,10 @@ use std::rc::Rc;
 
 use wgpu::util::DeviceExt;
 
-use crate::{render::renderer::Renderer, utils::create_compute_pipeline};
+use crate::{
+    render::renderer::Renderer,
+    utils::{create_compute_pipeline, dump_buffer_of_u32},
+};
 
 use super::AlgorithmResources;
 
@@ -58,6 +61,7 @@ pub async fn prefix_sum(
 ) -> (wgpu::Buffer, u32) {
     log::info!("value count{:?}", value_count);
     let device = resources.get_renderer().get_device();
+    let queue = resources.get_renderer().get_queue();
     let (bind_group_layout, pipeline) = resources.get_resources(super::Algorithm::PrefixSum);
 
     let descriptor = &wgpu::BufferDescriptor {
@@ -76,8 +80,7 @@ pub async fn prefix_sum(
         mapped_at_creation: false,
     });
 
-    // These buffers should be effectively zero initialized
-    // This is very important
+    // These buffers are zero initialized
     let buffer_a = device.create_buffer(descriptor);
     let buffer_b = device.create_buffer(descriptor);
 
@@ -146,9 +149,7 @@ pub async fn prefix_sum(
         });
         compute_pass.set_pipeline(pipeline);
         compute_pass.set_bind_group(0, &bind_group, &[]);
-
-        log::info!("offset{:?}", offset);
-        compute_pass.dispatch_workgroups(value_count - offset, 1, 1);
+        compute_pass.dispatch_workgroups(value_count - offset + 1, 1, 1);
     }
 
     let res = if iterations & 1 == 0 {
@@ -162,7 +163,9 @@ pub async fn prefix_sum(
     let idx = resources.renderer.get_queue().submit([encoder.finish()]);
     device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
-    // might be doing this wrong
+    log::info!("prefix sum res");
+    dump_buffer_of_u32(device, queue, &res, 0, value_count + 1).await;
+
     let (sender, receiver) = futures::channel::oneshot::channel();
 
     let slice = intermediate.slice(..);
@@ -179,6 +182,6 @@ pub async fn prefix_sum(
 
     let sum = u32::from_le_bytes(sum_bytes[0..4].try_into().unwrap());
 
-    //log::info!("sum_bytes{:?} le{:?}", sum_bytes, sum);
+    log::info!("sum_bytes{:?} le{:?}", sum_bytes, sum);
     (res, sum)
 }

@@ -43,10 +43,13 @@ const FLOAT_MAX = 3.40282346638528859812e+38f;
 @compute @workgroup_size(1,1,1)
 fn build_next_level(
   @builtin(global_invocation_id) id: vec3<u32>,
+  @builtin(num_workgroups) size: vec3<u32>,
 ) {
 
   let node = tree[id.x + params.offset];
   let span = node.r - node.l;
+
+
 
   if (span <= params.max_tris_per_leaf) {
     // is leaf, no need to build next level
@@ -109,7 +112,7 @@ fn build_next_level(
     }
 
   // set child pointers
-  let left_child_idx = node.r + prefix_sum[id.x] * 2; 
+  let left_child_idx = params.offset + size.x + prefix_sum[id.x] * 2; 
   tree[id.x + params.offset].left_child = left_child_idx;
 
 
