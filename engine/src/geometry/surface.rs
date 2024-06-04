@@ -81,11 +81,6 @@ impl Surface {
         let sample_count_v = SAMPLES_PER_SEGMENT * (control_count_v - 1) + 1;
         let index_count = (sample_count_u - 1) * (sample_count_v - 1) * 6;
         let bind_group_object = GeometryBindGroupObject::new(surface_sampler.get_renderer());
-        log::info!(
-            "creating surface with {:?} triangles and {:?} verts",
-            index_count / 3,
-            sample_count_v * sample_count_u
-        );
         let bbh = if with_bbh {
             Some(
                 bbh_generator

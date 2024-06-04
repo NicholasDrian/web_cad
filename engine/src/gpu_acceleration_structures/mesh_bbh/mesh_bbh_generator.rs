@@ -7,7 +7,7 @@ use crate::{
     gpu_algorithms::{iota::iota, prefix_sum::prefix_sum, AlgorithmResources},
     math::linear_algebra::vec3::Vec3,
     render::renderer::Renderer,
-    utils::{create_compute_pipeline, dump_buffer},
+    utils::{create_compute_pipeline},
 };
 
 use super::MeshBBH;
@@ -199,16 +199,6 @@ impl MeshBBHGenerator {
             mesh_index_buffer,
             mesh_index_count,
         );
-        /*
-                dump_buffer::<f32>(
-                    self.renderer.get_device(),
-                    self.renderer.get_queue(),
-                    &triangle_bbs,
-                    7000,
-                    50,
-                )
-                .await;
-        */
         let index_buffer = iota(&self.algorithm_resources, triangle_count, 16);
         let tree_buffer = self.init_tree_buffer(mesh_index_count);
         let mut input: (u32, u32) = (0, 1);
@@ -217,19 +207,6 @@ impl MeshBBHGenerator {
             // TODO: remove this in favor of bottom up approach
             self.build_bbs(&tree_buffer, &index_buffer, &triangle_bbs, input);
 
-            log::info!(
-                "building level {:?} with {:?} nodes",
-                level,
-                input.1 - input.0
-            );
-            dump_buffer::<MeshBBHNode>(
-                self.renderer.get_device(),
-                self.renderer.get_queue(),
-                &tree_buffer,
-                input.0,
-                input.1 - input.0,
-            )
-            .await;
             level += 1;
             if level == 100 {
                 // TODO: remove
@@ -479,7 +456,6 @@ impl MeshBBHGenerator {
         triangle_bbs: &wgpu::Buffer,
         range: (u32, u32),
     ) {
-        log::info!("building bbs{:?}", range);
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("build bbs"),
