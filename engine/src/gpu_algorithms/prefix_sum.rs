@@ -2,11 +2,13 @@
 // The depth is optimal but the work n log n.
 // The optimal algorithm seems too complex to be worth the meager savings
 // TODO: improve work complexity later
-use std::rc::Rc;
 
 use wgpu::util::DeviceExt;
 
-use crate::{render::renderer::Renderer, utils::create_compute_pipeline};
+use crate::{
+    render::renderer::Renderer,
+    utils::{create_compute_pipeline, dump_buffer},
+};
 
 use super::AlgorithmResources;
 
@@ -51,8 +53,11 @@ pub async fn prefix_sum(
     value_count: u32,
 ) -> (wgpu::Buffer, u32) {
     let device = resources.get_renderer().get_device();
+    let queue = resources.get_renderer().get_queue();
     let (bind_group_layout, pipeline) = resources.get_resources(super::Algorithm::PrefixSum);
 
+    log::info!("prefix_sum_input:");
+    dump_buffer::<u32>(device, queue, values, 0, value_count).await;
     let descriptor = &wgpu::BufferDescriptor {
         label: Some("prefix sum next buffer"),
         size: (value_count + 1) as u64 * std::mem::size_of::<u32>() as u64,
@@ -83,7 +88,9 @@ pub async fn prefix_sum(
     encoder.copy_buffer_to_buffer(values, 0, &buffer_a, 4, value_count as u64 * 4);
 
     for i in 0..iterations {
-        let offset = u32::pow(2, i);
+        // check this
+        let offset = 2u32.pow(i);
+        log::info!("iter:{}, offset:{}", i, offset);
 
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("prefix sum params"),
@@ -92,6 +99,7 @@ pub async fn prefix_sum(
         });
 
         let bind_group = if i & 1 == 0 {
+            // TODO: factor bind groups out of for loop;
             device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("prefix sum even"),
                 layout: bind_group_layout,
@@ -130,14 +138,13 @@ pub async fn prefix_sum(
                 ],
             })
         };
-
         let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
             label: Some("prefix sum"),
             timestamp_writes: None,
         });
         compute_pass.set_pipeline(pipeline);
         compute_pass.set_bind_group(0, &bind_group, &[]);
-        compute_pass.dispatch_workgroups(value_count - offset + 1, 1, 1);
+        compute_pass.dispatch_workgroups(value_count + 1, 1, 1);
     }
 
     let res = if iterations & 1 == 0 {
@@ -148,8 +155,11 @@ pub async fn prefix_sum(
 
     encoder.copy_buffer_to_buffer(&res, value_count as u64 * 4, &intermediate, 0, 4);
 
-    let idx = resources.renderer.get_queue().submit([encoder.finish()]);
+    let idx = queue.submit([encoder.finish()]);
     device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+    log::info!("prefix sum output");
+    dump_buffer::<u32>(device, queue, &res, 0, value_count + 1).await;
 
     let (sender, receiver) = futures::channel::oneshot::channel();
 

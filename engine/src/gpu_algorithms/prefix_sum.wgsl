@@ -10,5 +10,8 @@ struct Params {
 fn prefix_sum(
   @builtin( global_invocation_id) id: vec3<u32>,
 ) {
-  next[id.x + params.offset] = values[id.x + params.offset] + values[id.x];
+  next[id.x] = values[id.x];
+  if (id.x >= params.offset) {
+    next[id.x] += values[id.x - params.offset];
+  }
 }

@@ -3,7 +3,7 @@ use std::rc::Rc;
 use wgpu::util::DeviceExt;
 
 use crate::{
-    geometry::mesh::{Mesh, MeshVertex},
+    geometry::mesh::MeshVertex,
     gpu_algorithms::{iota::iota, prefix_sum::prefix_sum, AlgorithmResources},
     math::linear_algebra::vec3::Vec3,
     render::renderer::Renderer,
@@ -13,7 +13,7 @@ use crate::{
 use super::MeshBBH;
 
 const NODE_SIZE: u32 = 48;
-const MAX_TRIS_PER_LEAF: u32 = 8;
+const MAX_TRIS_PER_LEAF: u32 = 4;
 const SPLIT_CANDIDATES: u32 = 64;
 const SPLIT_EVALUATION_SIZE: u32 = 32;
 
@@ -231,7 +231,7 @@ impl MeshBBHGenerator {
             )
             .await;
             level += 1;
-            if level == 10 {
+            if level == 100 {
                 // TODO: remove
                 break;
             }
