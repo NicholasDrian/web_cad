@@ -109,14 +109,14 @@ pub(crate) async fn dump_buffer_of_u32(
     let bytes: &[u8] = &slice.get_mapped_range();
 
     for i in 0..count {
-        if i % 12 == 0 {
-            log::info!("\n");
-        }
         let num = u32::from_le_bytes(
             bytes[(i as usize * 4)..(i as usize * 4 + 4)]
                 .try_into()
                 .unwrap(),
         );
         log::info!("{:?} - buffer num = {:?}", i, num);
+        if i % 12 == 11 {
+            log::info!("\n");
+        }
     }
 }

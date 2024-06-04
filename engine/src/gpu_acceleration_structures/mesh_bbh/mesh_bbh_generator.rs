@@ -175,20 +175,28 @@ impl MeshBBHGenerator {
         let index_buffer = iota(&self.algorithm_resources, triangle_count, 16);
         let tree_buffer = self.init_tree_buffer(index_count);
         let mut input: (u32, u32) = (0, 1);
+        let mut level = 0;
         loop {
             // TODO: remove this in favor of bottom up approach
             self.build_bbs(&tree_buffer, &index_buffer, &triangle_bbs, input);
 
-            /*
+            log::info!(
+                "building level {:?} with {:?} nodes",
+                level,
+                input.1 - input.0
+            );
             dump_buffer_of_u32(
                 self.renderer.get_device(),
                 self.renderer.get_queue(),
                 &tree_buffer,
-                0,
-                36,
+                input.0 * 12,
+                (input.1 - input.0) * 12,
             )
             .await;
-            */
+            level += 1;
+            if level == 10 {
+                break;
+            }
 
             // prefix sum of number of nodes with children
             let (prefix_sum, total) = self.prefix_sum(&tree_buffer, input).await;
@@ -417,16 +425,6 @@ impl MeshBBHGenerator {
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
-        log::info!("prefix_sum_input{:?}:#$%^#$%&#$%&#", range.1 - range.0);
-        dump_buffer_of_u32(
-            self.renderer.get_device(),
-            self.renderer.get_queue(),
-            &prefix_sum_input,
-            0,
-            range.1 - range.0,
-        )
-        .await;
-
         prefix_sum(
             &self.algorithm_resources,
             &prefix_sum_input,
@@ -578,8 +576,6 @@ impl MeshBBHGenerator {
             contents: bytemuck::cast_slice(&[input.0, MAX_TRIS_PER_LEAF, SPLIT_CANDIDATES]),
             usage: wgpu::BufferUsages::UNIFORM,
         });
-
-        log::info!("####offset:{:?} count:{:?}", input.0, input.1 - input.0);
 
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("build next level"),

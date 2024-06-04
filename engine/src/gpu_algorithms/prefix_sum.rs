@@ -59,9 +59,7 @@ pub async fn prefix_sum(
     values: &wgpu::Buffer,
     value_count: u32,
 ) -> (wgpu::Buffer, u32) {
-    log::info!("value count{:?}", value_count);
     let device = resources.get_renderer().get_device();
-    let queue = resources.get_renderer().get_queue();
     let (bind_group_layout, pipeline) = resources.get_resources(super::Algorithm::PrefixSum);
 
     let descriptor = &wgpu::BufferDescriptor {
@@ -90,7 +88,6 @@ pub async fn prefix_sum(
 
     // Look into this
     let iterations = f32::log2(value_count as f32).ceil() as u32;
-    log::info!("iterations{:?}", iterations);
 
     encoder.copy_buffer_to_buffer(values, 0, &buffer_a, 4, value_count as u64 * 4);
 
@@ -163,9 +160,6 @@ pub async fn prefix_sum(
     let idx = resources.renderer.get_queue().submit([encoder.finish()]);
     device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
-    log::info!("prefix sum res");
-    dump_buffer_of_u32(device, queue, &res, 0, value_count + 1).await;
-
     let (sender, receiver) = futures::channel::oneshot::channel();
 
     let slice = intermediate.slice(..);
@@ -182,6 +176,5 @@ pub async fn prefix_sum(
 
     let sum = u32::from_le_bytes(sum_bytes[0..4].try_into().unwrap());
 
-    log::info!("sum_bytes{:?} le{:?}", sum_bytes, sum);
     (res, sum)
 }
