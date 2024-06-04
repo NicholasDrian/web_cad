@@ -83,7 +83,6 @@ fn build_next_level(
     // reorder the indices in place
     var low = node.l;
     var high = node.l;
-    var left_count: u32 = 0; // could calc this
 
     while (high < node.r) {
 
@@ -100,15 +99,11 @@ fn build_next_level(
         is_left = delta.z > 0.0;
       }
 
-// could optimize
       if (is_left) {
-        left_count++;
         swap_indices(low, high);
         low++;
-        high++;
-      } else {
-          high++;
-      }
+      } 
+      high++;
 
     }
 
@@ -122,13 +117,14 @@ fn build_next_level(
     vec3<f32>(0.0, 0.0, 0.0),
     node.l,
     vec3<f32>(0.0, 0.0, 0.0),
-    node.l + left_count,
+    node.l + low,
     vec3<f32>(0.0, 0.0, 0.0),
     0,
   );
+
   tree[left_child_idx + 1] = Node(
     vec3<f32>(0.0, 0.0, 0.0),
-    node.l + left_count,
+    node.l + low,
     vec3<f32>(0.0, 0.0, 0.0),
     node.r,
     vec3<f32>(0.0, 0.0, 0.0),
