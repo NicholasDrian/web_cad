@@ -19,7 +19,7 @@ const SPLIT_EVALUATION_SIZE: u32 = 32;
 
 // used for debug print
 #[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 struct MeshBBHNode {
     pub min_corner: Vec3,
     pub l: u32,
@@ -27,6 +27,16 @@ struct MeshBBHNode {
     pub r: u32,
     pub center: Vec3,
     pub left_child: u32,
+}
+
+impl std::fmt::Debug for MeshBBHNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Node \n range:({},{})\n min:{} max:{}\n left_child:{}",
+            self.l, self.r, self.min_corner, self.max_corner, self.left_child
+        )
+    }
 }
 
 pub struct MeshBBHGenerator {
@@ -189,14 +199,16 @@ impl MeshBBHGenerator {
             mesh_index_buffer,
             mesh_index_count,
         );
-        dump_buffer::<f32>(
-            self.renderer.get_device(),
-            self.renderer.get_queue(),
-            &triangle_bbs,
-            7000,
-            50,
-        )
-        .await;
+        /*
+                dump_buffer::<f32>(
+                    self.renderer.get_device(),
+                    self.renderer.get_queue(),
+                    &triangle_bbs,
+                    7000,
+                    50,
+                )
+                .await;
+        */
         let index_buffer = iota(&self.algorithm_resources, triangle_count, 16);
         let tree_buffer = self.init_tree_buffer(mesh_index_count);
         let mut input: (u32, u32) = (0, 1);
@@ -219,7 +231,7 @@ impl MeshBBHGenerator {
             )
             .await;
             level += 1;
-            if level == 3 {
+            if level == 10 {
                 // TODO: remove
                 break;
             }

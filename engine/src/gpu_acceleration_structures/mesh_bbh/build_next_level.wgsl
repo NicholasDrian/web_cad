@@ -92,7 +92,7 @@ fn build_next_level(
       var is_left = false;
       if (best_dir == 0) {
         is_left = delta.x > 0.0;
-      } else if (best_dir == 0) {
+      } else if (best_dir == 1) {
         is_left = delta.y > 0.0;
       } else {
         is_left = delta.z > 0.0;

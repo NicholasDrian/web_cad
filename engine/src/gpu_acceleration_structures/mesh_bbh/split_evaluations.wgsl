@@ -54,6 +54,8 @@ fn add_bbs(a: BoundingBox, b: BoundingBox) -> BoundingBox {
   );
 }
 
+// TODO: add sah
+
 @compute @workgroup_size(1,1,1)
 fn main(
   @builtin(global_invocation_id) id: vec3<u32>,
@@ -68,10 +70,16 @@ fn main(
     return;
   }
 
-  let random_u32 = pcg(seed(id.x, id.y));
+  //let random_u32 = pcg(seed(id.x, id.y));
 
-  let candidate_idx = index_buffer[random_u32 % span + node.l];
-  let candidate_center = triangle_bbs[candidate_idx].center;
+  // TODO: think about this
+  var acummulated_bb = triangle_bbs[index_buffer[node.l]];
+  for (var i = node.l + 1; i < node.r; i++) {
+    acummulated_bb = add_bbs(acummulated_bb, triangle_bbs[index_buffer[i]]);
+  }
+
+  //let candidate_idx = index_buffer[random_u32 % span + node.l];
+  //let candidate_center = triangle_bbs[candidate_idx].center;
   var quality = vec3<f32>(0.0, 0.0, 0.0);
   
 
@@ -82,18 +90,13 @@ fn main(
     // double sign used to create -1 or 1
     // rather than -1, 0 or 1
     // s is 1 for left and -1 for right
-    let s = sign(sign(candidate_center - center) + vec3<f32>(0.5, 0.5, 0.5));
+    let s = sign(sign(acummulated_bb.center - center) + vec3<f32>(0.5, 0.5, 0.5));
     quality += s; 
   }
 
-  // TODO: think about this
-  var acummulated_bb = triangle_bbs[index_buffer[node.l]];
-  for (var i = node.l + 1; i < node.r; i++) {
-    acummulated_bb = add_bbs(acummulated_bb, triangle_bbs[index_buffer[i]]);
-  }
 
   split_evaluations[id.x * size.y + id.y] = SplitEval (
-      candidate_center,
+      acummulated_bb.center,
       abs(quality)
   );
 

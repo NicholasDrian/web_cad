@@ -26,6 +26,12 @@ impl From<&[f32]> for Vec3 {
     }
 }
 
+impl std::fmt::Display for Vec3 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "vec3({:.2}, {:.2}, {:.2})", self.x, self.y, self.z)
+    }
+}
+
 impl Vec3 {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
