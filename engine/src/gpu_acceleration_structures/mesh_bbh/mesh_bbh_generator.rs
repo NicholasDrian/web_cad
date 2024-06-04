@@ -7,14 +7,14 @@ use crate::{
     gpu_algorithms::{iota::iota, prefix_sum::prefix_sum, AlgorithmResources},
     math::linear_algebra::vec3::Vec3,
     render::renderer::Renderer,
-    utils::{create_compute_pipeline, dump_buffer, dump_buffer_of_u32},
+    utils::{create_compute_pipeline, dump_buffer},
 };
 
 use super::MeshBBH;
 
 const NODE_SIZE: u32 = 48;
 const MAX_TRIS_PER_LEAF: u32 = 8;
-const SPLIT_CANDIDATES: u32 = 8;
+const SPLIT_CANDIDATES: u32 = 64;
 const SPLIT_EVALUATION_SIZE: u32 = 32;
 
 // used for debug print
@@ -179,14 +179,26 @@ impl MeshBBHGenerator {
         &self,
         vertex_buffer: &wgpu::Buffer,
         vertex_count: u32,
-        index_buffer: &wgpu::Buffer,
-        index_count: u32,
+        mesh_index_buffer: &wgpu::Buffer,
+        mesh_index_count: u32,
     ) -> MeshBBH {
-        let triangle_count = index_count / 3;
-        let triangle_bbs: wgpu::Buffer =
-            self.create_triangle_bbs(vertex_buffer, vertex_count, index_buffer, index_count);
+        let triangle_count = mesh_index_count / 3;
+        let triangle_bbs: wgpu::Buffer = self.create_triangle_bbs(
+            vertex_buffer,
+            vertex_count,
+            mesh_index_buffer,
+            mesh_index_count,
+        );
+        dump_buffer::<f32>(
+            self.renderer.get_device(),
+            self.renderer.get_queue(),
+            &triangle_bbs,
+            7000,
+            50,
+        )
+        .await;
         let index_buffer = iota(&self.algorithm_resources, triangle_count, 16);
-        let tree_buffer = self.init_tree_buffer(index_count);
+        let tree_buffer = self.init_tree_buffer(mesh_index_count);
         let mut input: (u32, u32) = (0, 1);
         let mut level = 0;
         loop {
@@ -198,15 +210,6 @@ impl MeshBBHGenerator {
                 level,
                 input.1 - input.0
             );
-            /*
-                        dump_buffer_of_u32(
-                            self.renderer.get_device(),
-                            self.renderer.get_queue(),
-                            &tree_buffer,
-                            input.0 * 12,
-                            (input.1 - input.0) * 12,
-                        ).await;
-            */
             dump_buffer::<MeshBBHNode>(
                 self.renderer.get_device(),
                 self.renderer.get_queue(),
@@ -216,7 +219,7 @@ impl MeshBBHGenerator {
             )
             .await;
             level += 1;
-            if level == 100 {
+            if level == 2 {
                 // TODO: remove
                 break;
             }
@@ -295,7 +298,7 @@ impl MeshBBHGenerator {
             label: Some("create bb buffer"),
             // Check this
             size: (triangle_count * triangle_info_size) as u64,
-            usage: wgpu::BufferUsages::STORAGE,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
 
@@ -358,7 +361,7 @@ impl MeshBBHGenerator {
 
             compute_pass.set_pipeline(&self.create_triangle_bbs_pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
-            compute_pass.dispatch_workgroups(triangle_count / 3, 1, 1);
+            compute_pass.dispatch_workgroups(triangle_count, 1, 1);
         }
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);

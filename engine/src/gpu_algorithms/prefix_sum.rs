@@ -6,18 +6,9 @@ use std::rc::Rc;
 
 use wgpu::util::DeviceExt;
 
-use crate::{
-    render::renderer::Renderer,
-    utils::{create_compute_pipeline, dump_buffer_of_u32},
-};
+use crate::{render::renderer::Renderer, utils::create_compute_pipeline};
 
 use super::AlgorithmResources;
-
-pub struct PrefixSumGenerator {
-    renderer: Rc<Renderer>,
-    prefix_sum_bind_group_layout: wgpu::BindGroupLayout,
-    prefix_sum_pipeline: wgpu::ComputePipeline,
-}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]

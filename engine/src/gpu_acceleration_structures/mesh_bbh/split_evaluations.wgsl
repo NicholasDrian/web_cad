@@ -43,6 +43,17 @@ fn pcg(v: u32) -> u32
 	return (w >> 22u) ^ w;
 }
 
+fn add_bbs(a: BoundingBox, b: BoundingBox) -> BoundingBox {
+  let min_corner = min(a.min_corner, b.min_corner);
+  let max_corner = max(a.max_corner, b.max_corner);
+  let center = (min_corner + max_corner) / 2.0;
+  return BoundingBox(
+    min_corner,
+    max_corner,
+    center,
+  );
+}
+
 @compute @workgroup_size(1,1,1)
 fn main(
   @builtin(global_invocation_id) id: vec3<u32>,
@@ -62,6 +73,7 @@ fn main(
   let candidate_idx = index_buffer[random_u32 % span + node.l];
   let candidate_center = triangle_bbs[candidate_idx].center;
   var quality = vec3<f32>(0.0, 0.0, 0.0);
+  
 
   for (var i = node.l; i < node.r; i++) {
     let center = triangle_bbs[index_buffer[i]].center;
@@ -72,6 +84,12 @@ fn main(
     // s is 1 for left and -1 for right
     let s = sign(sign(candidate_center - center) + vec3<f32>(0.5, 0.5, 0.5));
     quality += s; 
+  }
+
+  // TODO: think about this
+  var acummulated_bb = triangle_bbs[index_buffer[node.l]];
+  for (var i = node.l + 1; i < node.r; i++) {
+    acummulated_bb = add_bbs(acummulated_bb, triangle_bbs[index_buffer[i]]);
   }
 
   split_evaluations[id.x * size.y + id.y] = SplitEval (
