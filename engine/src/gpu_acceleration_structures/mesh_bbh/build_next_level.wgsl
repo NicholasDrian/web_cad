@@ -90,7 +90,6 @@ fn build_next_level(
       let delta = point - best_point; 
 
       var is_left = false;
-      // could use enum for directions
       if (best_dir == 0) {
         is_left = delta.x > 0.0;
       } else if (best_dir == 0) {
@@ -117,14 +116,14 @@ fn build_next_level(
     vec3<f32>(0.0, 0.0, 0.0),
     node.l,
     vec3<f32>(0.0, 0.0, 0.0),
-    node.l + low,
+    low,
     vec3<f32>(0.0, 0.0, 0.0),
     0,
   );
 
   tree[left_child_idx + 1] = Node(
     vec3<f32>(0.0, 0.0, 0.0),
-    node.l + low,
+    low,
     vec3<f32>(0.0, 0.0, 0.0),
     node.r,
     vec3<f32>(0.0, 0.0, 0.0),

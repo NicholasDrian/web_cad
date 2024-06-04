@@ -219,7 +219,7 @@ impl MeshBBHGenerator {
             )
             .await;
             level += 1;
-            if level == 2 {
+            if level == 3 {
                 // TODO: remove
                 break;
             }

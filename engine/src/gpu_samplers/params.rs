@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 
 // TODO: use a more sophisticated way of allocating samples.
 // Could take into account curvature, knot distribution, degree...
-pub const SAMPLES_PER_SEGMENT: u32 = 10;
+pub const SAMPLES_PER_SEGMENT: u32 = 3;
 
 #[wasm_bindgen]
 pub fn get_samples_per_segment() -> u32 {
