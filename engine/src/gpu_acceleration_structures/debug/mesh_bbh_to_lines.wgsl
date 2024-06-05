@@ -1,7 +1,11 @@
-@group(0) @binding(0) var<storage, read> tree: array<Node>;
-@group(0) @binding(1) var<storage, read_write> vertex_buffer: array<vec4<f32>>;
-@group(0) @binding(2) var<storage, read_write> index_buffer: array<u32>;
+@group(0) @binding(0) var<uniform> params: Params;
+@group(0) @binding(1) var<storage, read> tree: array<Node>;
+@group(0) @binding(2) var<storage, read_write> vertex_buffer: array<vec4<f32>>;
+@group(0) @binding(3) var<storage, read_write> index_buffer: array<u32>;
 
+struct Params {
+    max_tris_per_leaf: u32
+}
 
 struct Node {
   min_corner: vec3<f32>,
@@ -18,6 +22,12 @@ fn main(
   ) {
 
     let node = tree[id.x];
+
+    // use this to only show leaf boxes
+    if (node.r - node.l > params.max_tris_per_leaf) {
+      return;
+    }
+
     let min_corner = node.min_corner;
     let max_corner = node.max_corner;
 

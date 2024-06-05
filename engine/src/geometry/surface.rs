@@ -9,6 +9,7 @@ use super::{bind_group::GeometryBindGroupObject, utils::default_knot_vector, Geo
 
 pub struct Surface {
     surface_sampler: Rc<SurfaceSampler>,
+    bbh_generator: Rc<MeshBBHGenerator>,
     controls: Vec<Vec3>,
     control_count_u: u32,
     control_count_v: u32,
@@ -41,17 +42,17 @@ impl Surface {
         knots_v: &[f32],
         with_bbh: bool,
     ) -> Self {
-        let knots_u = if knots_u.len() == 0 {
+        let knots_u = if knots_u.is_empty() {
             default_knot_vector(control_count_u as usize, degree_u)
         } else {
             knots_u.to_vec()
         };
-        let knots_v = if knots_v.len() == 0 {
+        let knots_v = if knots_v.is_empty() {
             default_knot_vector(control_count_v as usize, degree_v)
         } else {
             knots_v.to_vec()
         };
-        let weights = if weights.len() == 0 {
+        let weights = if weights.is_empty() {
             vec![1.0; controls.len()]
         } else {
             weights.to_vec()
@@ -98,6 +99,7 @@ impl Surface {
 
         Self {
             surface_sampler,
+            bbh_generator,
             controls,
             control_count_u,
             control_count_v,
@@ -114,7 +116,9 @@ impl Surface {
         }
     }
 
-    pub fn update_params(
+    /// Control count u and v must not change
+    /// TODO: update to be able to change these
+    pub async fn update_params(
         &mut self,
         degree_u: u32,
         degree_v: u32,
@@ -122,6 +126,7 @@ impl Surface {
         weights: &[f32],
         knots_u: &[f32],
         knots_v: &[f32],
+        with_bbh: bool,
     ) {
         self.degree_u = degree_u;
         self.degree_v = degree_v;
@@ -159,6 +164,24 @@ impl Surface {
             &self.knots_v[..],
         );
         self.vertex_buffer = vertex_buffer;
+
+        let sample_count_u = SAMPLES_PER_SEGMENT * (self.control_count_u - 1) + 1;
+        let sample_count_v = SAMPLES_PER_SEGMENT * (self.control_count_v - 1) + 1;
+
+        self.bbh = if with_bbh {
+            Some(
+                self.bbh_generator
+                    .generate_mesh_bbh(
+                        &self.vertex_buffer,
+                        sample_count_u * sample_count_v,
+                        &self.index_buffer,
+                        self.index_count,
+                    )
+                    .await,
+            )
+        } else {
+            None
+        };
     }
     pub fn get_index_buffer(&self) -> &wgpu::Buffer {
         &self.index_buffer

@@ -7,17 +7,19 @@ use crate::{
     gpu_algorithms::{iota::iota, prefix_sum::prefix_sum, AlgorithmResources},
     math::linear_algebra::vec3::Vec3,
     render::renderer::Renderer,
-    utils::{create_compute_pipeline},
+    utils::create_compute_pipeline,
 };
 
 use super::MeshBBH;
 
-const NODE_SIZE: u32 = 48;
-const MAX_TRIS_PER_LEAF: u32 = 4;
-const SPLIT_CANDIDATES: u32 = 64;
-const SPLIT_EVALUATION_SIZE: u32 = 32;
+pub(crate) const NODE_SIZE: u32 = 48;
+pub(crate) const MAX_TRIS_PER_LEAF: u32 = 8;
+pub(crate) const SPLIT_CANDIDATES: u32 = 64;
+pub(crate) const SPLIT_EVALUATION_SIZE: u32 = 32;
 
 // used for debug print
+// keep around for future debug
+#[allow(dead_code)]
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 struct MeshBBHNode {

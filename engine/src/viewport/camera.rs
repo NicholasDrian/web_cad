@@ -156,7 +156,6 @@ impl Camera {
                 mapped_at_creation: false,
             });
         self.update_view_proj();
-        log::info!("here");
     }
 
     pub fn get_view_proj(&self) -> Mat4 {

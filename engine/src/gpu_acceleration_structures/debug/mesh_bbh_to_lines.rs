@@ -1,8 +1,12 @@
 use std::rc::Rc;
 
+use wgpu::util::DeviceExt;
+
 use crate::{
-    geometry::lines::Lines, gpu_acceleration_structures::mesh_bbh::MeshBBH,
-    render::renderer::Renderer, utils::create_compute_pipeline,
+    geometry::lines::Lines,
+    gpu_acceleration_structures::mesh_bbh::{mesh_bbh_generator::MAX_TRIS_PER_LEAF, MeshBBH},
+    render::renderer::Renderer,
+    utils::create_compute_pipeline,
 };
 
 // Rebuilding pipeline and such every call.
@@ -16,12 +20,14 @@ pub fn mesh_bbh_to_lines(renderer: Rc<Renderer>, mesh_bbh: &MeshBBH) -> Lines {
     let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
         label: Some("build next level"),
         entries: &[
+            // params
+            crate::utils::compute_uniform_bind_group_layout_entry(0),
             // tree
-            crate::utils::compute_buffer_bind_group_layout_entry(0, true),
+            crate::utils::compute_buffer_bind_group_layout_entry(1, true),
             // vertex buffer
-            crate::utils::compute_buffer_bind_group_layout_entry(1, false),
-            // index buffer
             crate::utils::compute_buffer_bind_group_layout_entry(2, false),
+            // index buffer
+            crate::utils::compute_buffer_bind_group_layout_entry(3, false),
         ],
     });
     let pipeline = create_compute_pipeline(
@@ -46,6 +52,11 @@ pub fn mesh_bbh_to_lines(renderer: Rc<Renderer>, mesh_bbh: &MeshBBH) -> Lines {
         usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::INDEX,
         mapped_at_creation: false,
     });
+    let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("mesh bbh to lines params"),
+        contents: bytemuck::cast_slice(&[MAX_TRIS_PER_LEAF]),
+        usage: wgpu::BufferUsages::UNIFORM,
+    });
 
     let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: Some("mesh bbh to lines"),
@@ -53,14 +64,18 @@ pub fn mesh_bbh_to_lines(renderer: Rc<Renderer>, mesh_bbh: &MeshBBH) -> Lines {
         entries: &[
             wgpu::BindGroupEntry {
                 binding: 0,
-                resource: tree_buffer.as_entire_binding(),
+                resource: params.as_entire_binding(),
             },
             wgpu::BindGroupEntry {
                 binding: 1,
-                resource: vertex_buffer.as_entire_binding(),
+                resource: tree_buffer.as_entire_binding(),
             },
             wgpu::BindGroupEntry {
                 binding: 2,
+                resource: vertex_buffer.as_entire_binding(),
+            },
+            wgpu::BindGroupEntry {
+                binding: 3,
                 resource: index_buffer.as_entire_binding(),
             },
         ],

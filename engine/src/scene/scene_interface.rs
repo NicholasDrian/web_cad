@@ -184,6 +184,7 @@ impl Scene {
         weights: &[f32],
         knots_u: &[f32],
         knots_v: &[f32],
+        with_bbh: bool,
     ) -> GeometryId {
         let mut control_points: Vec<Vec3> = Vec::new();
         for i in 0..controls.len() / 3 {
@@ -206,16 +207,9 @@ impl Scene {
             weights,
             knots_u,
             knots_v,
-            // with bbh
-            true,
+            with_bbh,
         )
         .await;
-
-        let renderer = get_instance_mut!(&self.instance_handle).get_renderer();
-
-        get_instance_mut!(&self.instance_handle)
-            .get_scene_mut(self.scene_handle)
-            .add_lines(mesh_bbh_to_lines(renderer, surface.get_bbh().unwrap()));
 
         get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
@@ -239,7 +233,7 @@ impl Scene {
     // NOTE: this will break once adaptive sampling is added
     /// Control point count cannot change in either dimension.
     #[wasm_bindgen]
-    pub fn update_surface_params(
+    pub async fn update_surface_params(
         &self,
         id: GeometryId,
         degree_u: u32,
@@ -248,6 +242,7 @@ impl Scene {
         weights: &[f32],
         knots_u: &[f32],
         knots_v: &[f32],
+        with_bbh: bool,
     ) {
         if let Some(surface) = get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
@@ -262,14 +257,38 @@ impl Scene {
                     z: controls[i * 3 + 2],
                 });
             }
-            surface.update_params(
-                degree_u,
-                degree_v,
-                control_points,
-                weights,
-                knots_u,
-                knots_v,
-            )
+            surface
+                .update_params(
+                    degree_u,
+                    degree_v,
+                    control_points,
+                    weights,
+                    knots_u,
+                    knots_v,
+                    with_bbh,
+                    // BUG:
+                )
+                .await;
         }
+    }
+
+    pub async fn add_surface_bbh_debug_lines(&self, surface: GeometryId) -> GeometryId {
+        // TODO: remove unwrap
+        let renderer = get_instance_mut!(&self.instance_handle).get_renderer();
+
+        let lines = mesh_bbh_to_lines(
+            renderer,
+            get_instance_mut!(&self.instance_handle)
+                .get_scene_mut(self.scene_handle)
+                .get_surfaces()
+                .get(&surface)
+                .unwrap()
+                .get_bbh()
+                .unwrap(),
+        );
+
+        get_instance_mut!(&self.instance_handle)
+            .get_scene_mut(self.scene_handle)
+            .add_lines(lines)
     }
 }
