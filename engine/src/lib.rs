@@ -7,6 +7,7 @@ pub mod gpu_samplers;
 pub mod instance;
 pub mod instance_interface;
 pub mod math;
+pub mod profiling;
 pub mod render;
 pub mod scene;
 pub mod utils;

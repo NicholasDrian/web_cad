@@ -18,10 +18,8 @@ fn main(
   @builtin(global_invocation_id) id: vec3<u32>,
   @builtin(num_workgroups) size: vec3<u32>
   ) {
-
   let u: f32 = f32(id.x) / f32(size.x - 1) * knots[params.knotCount - 1];
   let s = spans[id.x];
-
 
   let offset: u32 = id.x * (params.degree + 1);
   basisFuncs[offset] = 1.0;

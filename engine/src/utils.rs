@@ -7,7 +7,6 @@ macro_rules! get_instance_mut {
             .unwrap()
     }};
 }
-
 pub(crate) use get_instance_mut;
 
 pub(crate) const fn compute_buffer_bind_group_layout_entry(

@@ -273,39 +273,6 @@ impl Mat4 {
             o: 0.0,
             p: 1.0,
         }
-
-        /*
-          let x = axis[0];
-          let y = axis[1];
-          let z = axis[2];
-          const n = Math.sqrt(x * x + y * y + z * z);
-          x /= n;
-          y /= n;
-          z /= n;
-          const xx = x * x;
-          const yy = y * y;
-          const zz = z * z;
-          const c = Math.cos(angleInRadians);
-          const s = Math.sin(angleInRadians);
-          const oneMinusCosine = 1 - c;
-
-          dst[ 0] = xx + (1 - xx) * c;
-          dst[ 1] = x * y * oneMinusCosine + z * s;
-          dst[ 2] = x * z * oneMinusCosine - y * s;
-          dst[ 3] = 0;
-          dst[ 4] = x * y * oneMinusCosine - z * s;
-          dst[ 5] = yy + (1 - yy) * c;
-          dst[ 6] = y * z * oneMinusCosine + x * s;
-          dst[ 7] = 0;
-          dst[ 8] = x * z * oneMinusCosine + y * s;
-          dst[ 9] = y * z * oneMinusCosine - x * s;
-          dst[10] = zz + (1 - zz) * c;
-          dst[11] = 0;
-          dst[12] = 0;
-          dst[13] = 0;
-          dst[14] = 0;
-          dst[15] = 1;
-        */
     }
 
     pub fn transform_vector(&self, v: &Vec3) -> Vec3 {

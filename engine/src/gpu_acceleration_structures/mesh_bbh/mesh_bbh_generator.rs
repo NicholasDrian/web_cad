@@ -1,11 +1,13 @@
 use std::rc::Rc;
 
+use js_sys::Date;
 use wgpu::util::DeviceExt;
 
 use crate::{
     geometry::mesh::MeshVertex,
     gpu_algorithms::{iota::iota, prefix_sum::prefix_sum, AlgorithmResources},
     math::linear_algebra::vec3::Vec3,
+    profiling::stats::Stats,
     render::renderer::Renderer,
     utils::create_compute_pipeline,
 };
@@ -14,7 +16,7 @@ use super::MeshBBH;
 
 pub(crate) const NODE_SIZE: u32 = 48;
 pub(crate) const MAX_TRIS_PER_LEAF: u32 = 8;
-pub(crate) const SPLIT_CANDIDATES: u32 = 64;
+pub(crate) const SPLIT_CANDIDATES: u32 = 8;
 pub(crate) const SPLIT_EVALUATION_SIZE: u32 = 32;
 
 // used for debug print
@@ -59,6 +61,8 @@ pub struct MeshBBHGenerator {
 
     build_next_level_bind_group_layout: wgpu::BindGroupLayout,
     build_next_level_pipeline: wgpu::ComputePipeline,
+
+    stats: Stats,
 }
 
 impl MeshBBHGenerator {
@@ -185,6 +189,7 @@ impl MeshBBHGenerator {
             split_evaluations_pipeline,
             build_next_level_bind_group_layout,
             build_next_level_pipeline,
+            stats: Stats::new(),
         }
     }
     pub async fn generate_mesh_bbh(
@@ -194,6 +199,7 @@ impl MeshBBHGenerator {
         mesh_index_buffer: &wgpu::Buffer,
         mesh_index_count: u32,
     ) -> MeshBBH {
+        let start_time = Date::now();
         let triangle_count = mesh_index_count / 3;
         let triangle_bbs: wgpu::Buffer = self.create_triangle_bbs(
             vertex_buffer,
@@ -270,6 +276,10 @@ impl MeshBBHGenerator {
             .get_device()
             .poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
+        self.stats
+            .add("mesh bbh creation time", Date::now() - start_time);
+        log::info!("{:}", self.stats);
+
         MeshBBH::new(final_tree_buffer, index_buffer, input.1)
     }
 
@@ -281,6 +291,7 @@ impl MeshBBHGenerator {
         index_buffer: &wgpu::Buffer,
         index_count: u32,
     ) -> wgpu::Buffer {
+        let start_time = Date::now();
         let device = self.renderer.get_device();
 
         let triangle_count = index_count / 3;
@@ -358,6 +369,9 @@ impl MeshBBHGenerator {
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
+        self.stats
+            .add("create triangle bbs", Date::now() - start_time);
+
         bb_buffer
     }
 
@@ -388,10 +402,12 @@ impl MeshBBHGenerator {
         }
 
         tree_buffer.unmap();
+
         tree_buffer
     }
 
     async fn prefix_sum(&self, tree: &wgpu::Buffer, range: (u32, u32)) -> (wgpu::Buffer, u32) {
+        let start_time = Date::now();
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("create prefix sum input"),
@@ -442,12 +458,16 @@ impl MeshBBHGenerator {
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
-        prefix_sum(
+        let res = prefix_sum(
             &self.algorithm_resources,
             &prefix_sum_input,
             range.1 - range.0,
         )
-        .await
+        .await;
+
+        self.stats.add("prefix sum", Date::now() - start_time);
+
+        res
     }
 
     // TODO: replace this with bottum up version
@@ -458,6 +478,7 @@ impl MeshBBHGenerator {
         triangle_bbs: &wgpu::Buffer,
         range: (u32, u32),
     ) {
+        let start_time = Date::now();
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("build bbs"),
@@ -505,6 +526,8 @@ impl MeshBBHGenerator {
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+        self.stats.add("build bbs", Date::now() - start_time);
     }
 
     // TODO: make more paralel
@@ -515,6 +538,7 @@ impl MeshBBHGenerator {
         triangle_bbs: &wgpu::Buffer,
         range: (u32, u32),
     ) -> wgpu::Buffer {
+        let start_time = Date::now();
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("split evaluations"),
@@ -573,6 +597,8 @@ impl MeshBBHGenerator {
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
+        self.stats
+            .add("split evaluations", Date::now() - start_time);
         res
     }
 
@@ -587,6 +613,7 @@ impl MeshBBHGenerator {
         prefix_sum: &wgpu::Buffer,
         input: (u32, u32),
     ) {
+        let start_time = Date::now();
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("build next level"),
@@ -642,5 +669,7 @@ impl MeshBBHGenerator {
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+        self.stats.add("build next level", Date::now() - start_time);
     }
 }
