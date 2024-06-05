@@ -53,6 +53,9 @@ pub struct MeshBBHGenerator {
     create_prefix_sum_input_bind_group_layout: wgpu::BindGroupLayout,
     create_prefix_sum_input_pipeline: wgpu::ComputePipeline,
 
+    find_node_offsets_bind_group_layout: wgpu::BindGroupLayout,
+    find_node_offsets_pipeline: wgpu::ComputePipeline,
+
     build_bbs_bind_group_layout: wgpu::BindGroupLayout,
     build_bbs_pipeline: wgpu::ComputePipeline,
 
@@ -81,6 +84,18 @@ impl MeshBBHGenerator {
                 ],
             });
         let create_prefix_sum_input_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("create prefix sum input"),
+                entries: &[
+                    // Params
+                    crate::utils::compute_uniform_bind_group_layout_entry(0),
+                    // Tree
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
+                    // Output
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, false),
+                ],
+            });
+        let find_node_offsets_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("create prefix sum input"),
                 entries: &[
@@ -154,6 +169,13 @@ impl MeshBBHGenerator {
             &create_prefix_sum_input_bind_group_layout,
             "main",
         );
+        let find_node_offsets_pipeline = create_compute_pipeline(
+            device,
+            "find node offsets",
+            include_str!("find_node_offsets.wgsl"),
+            &find_node_offsets_bind_group_layout,
+            "main",
+        );
         let build_bbs_pipeline = create_compute_pipeline(
             device,
             "build bbs",
@@ -183,6 +205,8 @@ impl MeshBBHGenerator {
             create_triangle_bbs_pipeline,
             create_prefix_sum_input_bind_group_layout,
             create_prefix_sum_input_pipeline,
+            find_node_offsets_bind_group_layout,
+            find_node_offsets_pipeline,
             build_bbs_bind_group_layout,
             build_bbs_pipeline,
             split_evaluations_bind_group_layout,
@@ -222,7 +246,7 @@ impl MeshBBHGenerator {
             }
 
             // prefix sum of number of nodes with children
-            let (prefix_sum, total) = self.prefix_sum(&tree_buffer, input).await;
+            let (prefix_sum, total) = self.find_node_offsets(&tree_buffer, input).await;
             if total == 0 {
                 // Input is all leaves. were done
                 break;
@@ -404,6 +428,105 @@ impl MeshBBHGenerator {
         tree_buffer.unmap();
 
         tree_buffer
+    }
+
+    // Prefix sum over nodes in current level that need children. Allows building next level in parallel.
+    // TODO:, make parallel;
+    async fn find_node_offsets(
+        &self,
+        tree: &wgpu::Buffer,
+        range: (u32, u32),
+    ) -> (wgpu::Buffer, u32) {
+        let start_time = Date::now();
+
+        let device = self.renderer.get_device();
+        let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("create prefix sum input"),
+            contents: bytemuck::cast_slice(&[range.0, range.1, MAX_TRIS_PER_LEAF]),
+            usage: wgpu::BufferUsages::UNIFORM,
+        });
+        // zero initialized
+        let result = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("prefix sum"),
+            size: (range.1 - range.0 + 1) as u64 * std::mem::size_of::<u32>() as u64,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        });
+
+        let sum_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("sum"),
+            size: 4,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        });
+
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("create prefix sum input"),
+        });
+
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("create prefix sum input"),
+            layout: &self.find_node_offsets_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: params.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: tree.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: result.as_entire_binding(),
+                },
+            ],
+        });
+
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("create prefix sum input"),
+                timestamp_writes: None,
+            });
+
+            compute_pass.set_pipeline(&self.find_node_offsets_pipeline);
+            compute_pass.set_bind_group(0, &bind_group, &[]);
+            compute_pass.dispatch_workgroups(1, 1, 1);
+        }
+
+        encoder.copy_buffer_to_buffer(&result, (range.1 - range.0) as u64 * 4, &sum_buffer, 0, 4);
+
+        let idx = self.renderer.get_queue().submit([encoder.finish()]);
+        device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+        self.stats
+            .add("find node children", Date::now() - start_time);
+
+        let start_time = Date::now();
+
+        // TODO: eliminate this
+        // this read is from VRAM is huge bottleneck
+        let (sender, receiver) = futures::channel::oneshot::channel();
+
+        let sum = {
+            let slice = sum_buffer.slice(..);
+            slice.map_async(wgpu::MapMode::Read, |result| {
+                let _ = sender.send(result);
+            });
+
+            receiver
+                .await
+                .expect("communication failed")
+                .expect("buffer reading failed");
+
+            let bytes: [u8; 4] = slice.get_mapped_range()[0..4].try_into().unwrap();
+            u32::from_le_bytes(bytes)
+        };
+
+        self.stats
+            .add("read sum from gpu", Date::now() - start_time);
+
+        (result, sum)
     }
 
     async fn prefix_sum(&self, tree: &wgpu::Buffer, range: (u32, u32)) -> (wgpu::Buffer, u32) {

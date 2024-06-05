@@ -2,13 +2,11 @@
 // The depth is optimal but the work n log n.
 // The optimal algorithm seems too complex to be worth the meager savings
 // TODO: improve work complexity later
+// TODO: faster
 
 use wgpu::util::DeviceExt;
 
-use crate::{
-    render::renderer::Renderer,
-    utils::{create_compute_pipeline, dump_buffer},
-};
+use crate::{render::renderer::Renderer, utils::create_compute_pipeline};
 
 use super::AlgorithmResources;
 
@@ -152,7 +150,6 @@ pub async fn prefix_sum(
 
     let idx = queue.submit([encoder.finish()]);
     device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
-
 
     let (sender, receiver) = futures::channel::oneshot::channel();
 
