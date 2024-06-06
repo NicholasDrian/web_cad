@@ -38,16 +38,16 @@ fn make_ascend(i: u32, j: u32, sign: i64) {
 fn main(
   @builtin(global_invocation_id) id: vec3<u32>,
 ) {
+
+  // number of soon to be sorted segment
   let sort_num = id.x / (params.sort_size / 2);
-  var sort_start = sort_num * sort_size;
-  var sort_end = sort_start + sort_size - 1; // inclusive
-
-  if (sort_num & 1 == 1) {
-    let temp = sort_end; 
-    sort_end = sort_start;
-    sort_start = temp;
-  }
-
-  // think about this TODO: 
-  let position_in_sort = id.x % sort_num;
+  let sort_start = sort_num * sort_size;
+  let position_in_sort = id.x % (params.sort_size / 2);
+  var sign: i32 = 1;
+  if (sort_num & 1 == 1) { sign = -1; }
+  make_ascend(
+    sort_start + position_in_sort,
+    sort_start + position_in_sort + params.sort_size / 2,
+    sign
+  ); 
 }
