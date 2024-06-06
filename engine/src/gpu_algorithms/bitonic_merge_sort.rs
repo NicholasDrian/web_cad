@@ -52,6 +52,7 @@ pub fn radix_sort(
 ) {
     let device = resources.get_renderer().get_device();
     let queue = resources.get_renderer().get_queue();
+    let num_threads = count / 2;
 
     let (bind_group_layout, pipeline) = resources.get_resources(super::Algorithm::BitonicMergeSort);
 
@@ -65,7 +66,7 @@ pub fn radix_sort(
     while sort_size <= count {
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("bitonic merge sort"),
-            contents: bytemuck::cast_slice(&[sort_size, step_size]),
+            contents: bytemuck::cast_slice(&[sort_size, step_size, count]),
             usage: wgpu::BufferUsages::UNIFORM,
         });
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -93,7 +94,6 @@ pub fn radix_sort(
         });
         compute_pass.set_pipeline(pipeline);
         compute_pass.set_bind_group(0, &bind_group, &[]);
-        let num_threads = (count + sort_size - 1) / sort_size;
         compute_pass.dispatch_workgroups(num_threads, 1, 1);
 
         if step_size == 1 {
