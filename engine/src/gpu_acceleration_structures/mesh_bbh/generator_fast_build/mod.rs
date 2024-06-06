@@ -27,4 +27,13 @@ impl MeshBBHGeneratorFastBuild {
     ) -> MeshBBH {
         todo!()
     }
+
+    fn calculate_morton_codes(
+        vertex_buffer: &wgpu::Buffer,
+        vertex_count: u32,
+        index_buffer: &wgpu::Buffer,
+        index_count: u32,
+    ) -> wgpu::Buffer {
+        todo!()
+    }
 }
