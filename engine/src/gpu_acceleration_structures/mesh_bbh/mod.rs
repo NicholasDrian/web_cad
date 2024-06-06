@@ -1,3 +1,5 @@
+pub mod generator_fast_build;
+pub mod generator_fast_trace;
 pub mod mesh_bbh_generator;
 
 pub struct MeshBBH {

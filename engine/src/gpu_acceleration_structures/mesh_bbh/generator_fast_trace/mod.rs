@@ -1,3 +1,5 @@
+//! BBH generator optimized for fast tracing
+//!
 use std::rc::Rc;
 
 use js_sys::Date;
@@ -15,9 +17,11 @@ use crate::{
 use super::MeshBBH;
 
 pub(crate) const NODE_SIZE: u32 = 48;
-pub(crate) const MAX_TRIS_PER_LEAF: u32 = 8;
-pub(crate) const SPLIT_CANDIDATES: u32 = 8;
 pub(crate) const SPLIT_EVALUATION_SIZE: u32 = 32;
+pub(crate) const SPLIT_CANDIDATES: u32 = 8;
+
+// Make this a member of the mesh bbh class
+pub(crate) const MAX_TRIS_PER_LEAF: u32 = 8;
 
 // used for debug print
 // keep around for future debug
@@ -43,7 +47,7 @@ impl std::fmt::Debug for MeshBBHNode {
     }
 }
 
-pub struct MeshBBHGenerator {
+pub struct MeshBBHGeneratorFastTrace {
     renderer: Rc<Renderer>,
     algorithm_resources: Rc<AlgorithmResources>,
 
@@ -68,7 +72,7 @@ pub struct MeshBBHGenerator {
     stats: Stats,
 }
 
-impl MeshBBHGenerator {
+impl MeshBBHGeneratorFastTrace {
     pub fn new(renderer: Rc<Renderer>, algorithm_resources: Rc<AlgorithmResources>) -> Self {
         let device = renderer.get_device();
         let create_triangle_bbs_bind_group_layout =

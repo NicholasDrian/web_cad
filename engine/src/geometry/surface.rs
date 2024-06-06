@@ -1,7 +1,5 @@
 use crate::{
-    gpu_acceleration_structures::mesh_bbh_fast_trace::{
-        mesh_bbh_generator::MeshBBHGenerator, MeshBBH,
-    },
+    gpu_acceleration_structures::mesh_bbh::{mesh_bbh_generator::MeshBBHGenerator, MeshBBH},
     gpu_samplers::{params::SAMPLES_PER_SEGMENT, surface_sampler::SurfaceSampler},
     math::linear_algebra::{vec3::Vec3, vec4::Vec4},
 };
@@ -87,7 +85,7 @@ impl Surface {
         let bbh = if with_bbh {
             Some(
                 bbh_generator
-                    .generate_mesh_bbh(
+                    .generate_mesh_bbh_fast_trace(
                         &vertex_buffer,
                         sample_count_u * sample_count_v,
                         &index_buffer,
@@ -173,7 +171,7 @@ impl Surface {
         self.bbh = if with_bbh {
             Some(
                 self.bbh_generator
-                    .generate_mesh_bbh(
+                    .generate_mesh_bbh_fast_trace(
                         &self.vertex_buffer,
                         sample_count_u * sample_count_v,
                         &self.index_buffer,

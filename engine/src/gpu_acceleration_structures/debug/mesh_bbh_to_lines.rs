@@ -4,9 +4,7 @@ use wgpu::util::DeviceExt;
 
 use crate::{
     geometry::lines::Lines,
-    gpu_acceleration_structures::mesh_bbh_fast_trace::{
-        mesh_bbh_generator::MAX_TRIS_PER_LEAF, MeshBBH,
-    },
+    gpu_acceleration_structures::mesh_bbh::{generator_fast_trace::MAX_TRIS_PER_LEAF, MeshBBH},
     render::renderer::Renderer,
     utils::create_compute_pipeline,
 };

@@ -2,9 +2,7 @@ use std::rc::Rc;
 
 use wgpu::util::DeviceExt;
 
-use crate::{
-    gpu_acceleration_structures::mesh_bbh_fast_trace::MeshBBH, render::renderer::Renderer,
-};
+use crate::{gpu_acceleration_structures::mesh_bbh::MeshBBH, render::renderer::Renderer};
 
 use super::{bind_group::GeometryBindGroupObject, Geometry};
 
