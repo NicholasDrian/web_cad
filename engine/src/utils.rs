@@ -47,7 +47,7 @@ pub(crate) fn create_compute_pipeline(
     entry_point: &str,
 ) -> wgpu::ComputePipeline {
     let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-        label: Some("bb buffer gen"),
+        label: Some(label),
         source: wgpu::ShaderSource::Wgsl(shader_src.into()),
     });
     let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -65,6 +65,7 @@ pub(crate) fn create_compute_pipeline(
     })
 }
 
+// TODO: make this return a slice
 pub(crate) async fn dump_buffer<T>(
     device: &wgpu::Device,
     queue: &wgpu::Queue,

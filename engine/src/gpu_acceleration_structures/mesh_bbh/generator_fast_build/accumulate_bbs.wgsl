@@ -12,7 +12,9 @@ struct TriangleInfo {
     morton_code: u64,
 }
 
+
+
 @compute @workgroup_size(1,1,1)
 fn main() {
-
-  }
+  
+}

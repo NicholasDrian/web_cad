@@ -9,6 +9,7 @@
 struct Params {
   mesh_bb_min_corner: vec3<f32>,
   mesh_bb_max_corner: vec3<f32>,
+  mesh_bb_size: vec3<f32>,
 }
 
 struct TriangleInfo {
@@ -19,8 +20,10 @@ struct TriangleInfo {
 
 fn calculate_morton_code(point: vec3<f32>) -> u64 {
   // descretize into 20 integer bits
-  
+  let max_size = params.
+
   // interlace the bits
+
 }
 
 @compute @workgroup_size(1,1,1)

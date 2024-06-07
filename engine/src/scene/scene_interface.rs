@@ -244,6 +244,7 @@ impl Scene {
         knots_v: &[f32],
         with_bbh: bool,
     ) {
+        todo!();
         if let Some(surface) = get_instance_mut!(&self.instance_handle)
             .get_scene_mut(self.scene_handle)
             .get_surfaces_mut()
