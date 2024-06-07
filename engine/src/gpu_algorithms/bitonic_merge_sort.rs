@@ -44,7 +44,7 @@ pub fn create_bitonic_merge_sort_resources(
 }
 
 // for now, keys are i64 and values are u32
-pub fn radix_sort(
+pub fn bitonic_merge_sort(
     resources: &AlgorithmResources,
     keys: &wgpu::Buffer,
     values: &wgpu::Buffer,

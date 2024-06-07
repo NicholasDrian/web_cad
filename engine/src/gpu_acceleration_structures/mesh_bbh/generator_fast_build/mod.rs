@@ -2,7 +2,11 @@
 //! Sorts primitives along morton curve then partitions into tree
 
 use super::MeshBBH;
-use crate::{geometry::mesh::MeshVertex, utils::create_compute_pipeline};
+use crate::{
+    geometry::mesh::MeshVertex,
+    gpu_algorithms::{bitonic_merge_sort::bitonic_merge_sort, iota::iota},
+    utils::create_compute_pipeline,
+};
 
 pub struct MeshBBHGeneratorFastBuild {
     renderer: std::rc::Rc<crate::render::renderer::Renderer>,
@@ -108,7 +112,19 @@ impl MeshBBHGeneratorFastBuild {
         let accumulated_bb = self.accumulate_bbs(&triangle_bbs, triangle_count);
         let morton_codes =
             self.calculate_morton_codes(&triangle_bbs, triangle_count, &accumulated_bb);
-        self.build_tree(&triangle_bbs, &morton_codes, triangle_count)
+        let bbh_index_buffer = iota(&self.algorithm_resources, triangle_count, 16);
+        bitonic_merge_sort(
+            &self.algorithm_resources,
+            &morton_codes,
+            &bbh_index_buffer,
+            triangle_count,
+        );
+        self.build_tree(
+            &triangle_bbs,
+            &morton_codes,
+            &bbh_index_buffer,
+            triangle_count,
+        )
     }
 
     // calculate triangle morton codes and bbs
@@ -216,6 +232,7 @@ impl MeshBBHGeneratorFastBuild {
         &self,
         triangle_bbs: &wgpu::Buffer,
         morton_codes: &wgpu::Buffer,
+        bbh_index_buffer: &wgpu::Buffer,
         triangle_count: u32,
     ) -> MeshBBH {
         todo!()
