@@ -40,3 +40,11 @@ fn generate_bb_buffer(
     ); 
 
 }
+fn calculate_morton_code(point: vec3<f32>) -> u64 {
+  // descretize into 20 integer bits
+  let max_size = params.
+
+  // interlace the bits
+
+}
+
