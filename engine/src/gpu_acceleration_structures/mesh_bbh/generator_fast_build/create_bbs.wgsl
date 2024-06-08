@@ -10,7 +10,6 @@ struct Vertex {
 struct BoundingBox {
   min_corner: vec3<f32>,
   max_corner: vec3<f32>,
-  center: vec3<f32>,
 }
 
 @compute @workgroup_size(1,1,1) 
@@ -31,20 +30,11 @@ fn generate_bb_buffer(
         max(max(p1.y, p2.y), p3.y),
         max(max(p1.z, p2.z), p3.z),
       );
-    let center = (min_corner + max_corner) / 2;
 
     bb_buffer[id.x] = BoundingBox(
       min_corner,
       max_corner,
-      center
     ); 
-
-}
-fn calculate_morton_code(point: vec3<f32>) -> u64 {
-  // descretize into 20 integer bits
-  let max_size = params.
-
-  // interlace the bits
 
 }
 

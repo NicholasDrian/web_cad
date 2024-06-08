@@ -1,15 +1,11 @@
 
-@group(0) @binding(0) var<uniform> params: Params;
-@group(0) @binding(1) var<storage, read> bb_buffer: array<BoundingBox>;
+@group(0) @binding(0) var<storage, read> bb_buffer: array<BoundingBox>;
+@group(0) @binding(1) var<storage, read> mesh_bb: BoundingBox;
 @group(0) @binding(2) var<storage, read_write> morton_codes: array<u64>;
 
 BoundingBox {
   min_corner: vec3<f32>,
   max_corner: vec3<f32>,
-}
-
-struct Params {
-  mesh_bb: BouddingBox
 }
 
 struct MeshVertex {
@@ -28,8 +24,8 @@ const TINY_VEC = vec3<f32>(TINY, TINY, TINY);
 // TODO: Some of this can be pre computed on cpu once
 fn discretize(v: vec3<f32>) -> vec3<f32> {
   // normalize
-  let non_zero_size = params.mesh_bb.max_corner - params.mesh_bb.min_corner + TINY_VEC;
-  v -= params.mesh_bb.min_corner;
+  let non_zero_size = mesh_bb.max_corner - mesh_bb.min_corner + TINY_VEC;
+  v -= mesh_bb.min_corner;
   v /= non_zero_size;
   v *= BIGGEST_VEC;
   // discretize

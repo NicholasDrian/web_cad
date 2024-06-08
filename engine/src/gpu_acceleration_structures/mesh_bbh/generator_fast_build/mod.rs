@@ -12,11 +12,14 @@ pub struct MeshBBHGeneratorFastBuild {
     renderer: std::rc::Rc<crate::render::renderer::Renderer>,
     algorithm_resources: std::rc::Rc<crate::gpu_algorithms::AlgorithmResources>,
 
-    create_triangle_info_bind_group_layout: wgpu::BindGroupLayout,
-    create_triangle_info_pipeline: wgpu::ComputePipeline,
+    create_bbs_bind_group_layout: wgpu::BindGroupLayout,
+    create_bbs_pipeline: wgpu::ComputePipeline,
 
     accumulate_bbs_bind_group_layout: wgpu::BindGroupLayout,
     accumulate_bbs_pipeline: wgpu::ComputePipeline,
+
+    calculate_morton_codes_bind_group_layout: wgpu::BindGroupLayout,
+    calculate_morton_codes_pipeline: wgpu::ComputePipeline,
 
     build_tree_bind_group_layout: wgpu::BindGroupLayout,
     build_tree_pipeline: wgpu::ComputePipeline,
@@ -28,9 +31,9 @@ impl MeshBBHGeneratorFastBuild {
         algorithm_resources: std::rc::Rc<crate::gpu_algorithms::AlgorithmResources>,
     ) -> Self {
         let device = renderer.get_device();
-        let create_triangle_info_bind_group_layout =
+        let create_bbs_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("create_triangle info buffer"),
+                label: Some("create bbs"),
                 entries: &[
                     // Vertex_buffer
                     crate::utils::compute_buffer_bind_group_layout_entry(0, true),
@@ -50,6 +53,18 @@ impl MeshBBHGeneratorFastBuild {
                     crate::utils::compute_buffer_bind_group_layout_entry(1, false),
                 ],
             });
+        let calculate_morton_codes_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("calculate morton codes bbs"),
+                entries: &[
+                    // bb_buffer
+                    crate::utils::compute_buffer_bind_group_layout_entry(0, false),
+                    // accumulated_bb
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, false),
+                    // morton code buffer
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                ],
+            });
         let build_tree_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("build tree"),
@@ -66,11 +81,11 @@ impl MeshBBHGeneratorFastBuild {
                     crate::utils::compute_buffer_bind_group_layout_entry(4, false),
                 ],
             });
-        let create_triangle_info_pipeline = create_compute_pipeline(
+        let create_bbs_pipeline = create_compute_pipeline(
             device,
-            "create triangle info",
-            include_str!("create_triangle_info_pipeline.wgsl"),
-            &create_triangle_info_bind_group_layout,
+            "create bbs",
+            include_str!("create_bbs.wgsl"),
+            &create_bbs_bind_group_layout,
             "main",
         );
         let accumulate_bbs_pipeline = create_compute_pipeline(
@@ -78,6 +93,13 @@ impl MeshBBHGeneratorFastBuild {
             "accumulate bbs",
             include_str!("accumulate_bbs.wgsl"),
             &accumulate_bbs_bind_group_layout,
+            "main",
+        );
+        let calculate_morton_codes_pipeline = create_compute_pipeline(
+            device,
+            "calculate morton codes",
+            include_str!("calculate_morton_codes.wgsl"),
+            &calculate_morton_codes_bind_group_layout,
             "main",
         );
         let build_tree_pipeline = create_compute_pipeline(
@@ -90,10 +112,12 @@ impl MeshBBHGeneratorFastBuild {
         Self {
             renderer,
             algorithm_resources,
-            create_triangle_info_bind_group_layout,
-            create_triangle_info_pipeline,
+            create_bbs_bind_group_layout,
+            create_bbs_pipeline,
             accumulate_bbs_bind_group_layout,
             accumulate_bbs_pipeline,
+            calculate_morton_codes_bind_group_layout,
+            calculate_morton_codes_pipeline,
             build_tree_bind_group_layout,
             build_tree_pipeline,
         }
@@ -162,7 +186,7 @@ impl MeshBBHGeneratorFastBuild {
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("create bb buffer"),
-            layout: &self.create_triangle_info_bind_group_layout,
+            layout: &self.create_bbs_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
@@ -204,7 +228,7 @@ impl MeshBBHGeneratorFastBuild {
                 timestamp_writes: None,
             });
 
-            compute_pass.set_pipeline(&self.create_triangle_info_pipeline);
+            compute_pass.set_pipeline(&self.create_bbs_pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
             compute_pass.dispatch_workgroups(triangle_count, 1, 1);
         }
