@@ -16,8 +16,19 @@ struct Vertex {
 
 struct Node {
   min_corner: vec3<f32>,
+  l: u32,
   max_corner: vec3<f32>,
+  r: u32,
+  center: vec3<f32>,
   left_child: u32,
+}
+
+fn intersect_bounding_box(ray: Ray, bb: BoundingBox) -> some shit {
+
+}
+
+fn intersect_tri(ray: Ray, tri: Tri) -> some shit {
+
 }
 
 @compute @workgroup_size(1,1,1) 
