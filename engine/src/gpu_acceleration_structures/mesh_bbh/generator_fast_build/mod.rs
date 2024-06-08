@@ -1,6 +1,8 @@
 //! BBH generator optimized for fast creation
 //! Sorts primitives along morton curve then partitions into tree
 
+use wgpu::util::DeviceExt;
+
 use super::MeshBBH;
 use crate::{
     geometry::mesh::MeshVertex,
@@ -163,14 +165,13 @@ impl MeshBBHGeneratorFastBuild {
 
         let triangle_count = index_count / 3;
         let triangle_info_size = 16 * 3;
-        let triangle_info_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let bb_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("create bb buffer"),
             // Check this
             size: (triangle_count * triangle_info_size) as u64,
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
-
         let vertex_buffer_clone = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("vert buff"),
             size: vertex_count as u64 * std::mem::size_of::<MeshVertex>() as u64,
@@ -183,7 +184,6 @@ impl MeshBBHGeneratorFastBuild {
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
             mapped_at_creation: false,
         });
-
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("create bb buffer"),
             layout: &self.create_bbs_bind_group_layout,
@@ -199,14 +199,13 @@ impl MeshBBHGeneratorFastBuild {
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
-                    resource: triangle_info_buffer.as_entire_binding(),
+                    resource: bb_buffer.as_entire_binding(),
                 },
             ],
         });
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("create triangle_info_buffer"),
+            label: Some("create bb buffer"),
         });
-
         encoder.copy_buffer_to_buffer(
             index_buffer,
             0,
@@ -227,7 +226,6 @@ impl MeshBBHGeneratorFastBuild {
                 label: Some("create bb buffer"),
                 timestamp_writes: None,
             });
-
             compute_pass.set_pipeline(&self.create_bbs_pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
             compute_pass.dispatch_workgroups(triangle_count, 1, 1);
@@ -236,11 +234,70 @@ impl MeshBBHGeneratorFastBuild {
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
-        triangle_info_buffer
+        bb_buffer
     }
 
     fn accumulate_bbs(&self, bb_buffer: &wgpu::Buffer, triangle_count: u32) -> wgpu::Buffer {
-        todo!()
+        let device = self.renderer.get_device();
+        let triangle_info_size = 16 * 3;
+        let bb_buffer_clone = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("bb accumulation"),
+            // Check this
+            size: (triangle_count * triangle_info_size) as u64,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("accumulate bbs"),
+        });
+        encoder.copy_buffer_to_buffer(
+            bb_buffer,
+            0,
+            &bb_buffer_clone,
+            0,
+            triangle_count as u64 * 32,
+        );
+
+        let mut offset = 1;
+        while offset < triangle_count {
+            let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("mesh bbh to lines params"),
+                contents: bytemuck::cast_slice(&[offset]),
+                usage: wgpu::BufferUsages::UNIFORM,
+            });
+            let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("accumulate bbs"),
+                layout: &self.accumulate_bbs_bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        // TODO: copy this to storage or add storage flag to mesh
+                        resource: params.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: bb_buffer_clone.as_entire_binding(),
+                    },
+                ],
+            });
+            {
+                let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                    label: Some("accumulate bbs"),
+                    timestamp_writes: None,
+                });
+                compute_pass.set_pipeline(&self.accumulate_bbs_pipeline);
+                compute_pass.set_bind_group(0, &bind_group, &[]);
+                compute_pass.dispatch_workgroups(triangle_count, 1, 1);
+            }
+
+            offset *= 2;
+        }
+
+        let idx = self.renderer.get_queue().submit([encoder.finish()]);
+        device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+        bb_buffer_clone
     }
 
     fn calculate_morton_codes(
