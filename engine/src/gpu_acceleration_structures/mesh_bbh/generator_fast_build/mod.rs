@@ -239,11 +239,9 @@ impl MeshBBHGeneratorFastBuild {
 
     fn accumulate_bbs(&self, bb_buffer: &wgpu::Buffer, triangle_count: u32) -> wgpu::Buffer {
         let device = self.renderer.get_device();
-        let triangle_info_size = 16 * 3;
         let bb_buffer_clone = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("bb accumulation"),
-            // Check this
-            size: (triangle_count * triangle_info_size) as u64,
+            size: triangle_count as u64 * 32,
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
@@ -288,7 +286,9 @@ impl MeshBBHGeneratorFastBuild {
                 });
                 compute_pass.set_pipeline(&self.accumulate_bbs_pipeline);
                 compute_pass.set_bind_group(0, &bind_group, &[]);
-                compute_pass.dispatch_workgroups(triangle_count, 1, 1);
+                // TODO: check this.
+                let thread_count = (triangle_count + offset) / (offset * 2);
+                compute_pass.dispatch_workgroups(thread_count, 1, 1);
             }
 
             offset *= 2;
@@ -306,7 +306,49 @@ impl MeshBBHGeneratorFastBuild {
         triangle_count: u32,
         accumulated_bb: &wgpu::Buffer,
     ) -> wgpu::Buffer {
-        todo!()
+        let device = self.renderer.get_device();
+        let morton_codes = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("morton_codes"),
+            size: triangle_count as u64 * 8,
+            usage: wgpu::BufferUsages::STORAGE,
+            mapped_at_creation: false,
+        });
+
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("morton_codes"),
+            layout: &self.calculate_morton_codes_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: bb_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: accumulated_bb.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: morton_codes.as_entire_binding(),
+                },
+            ],
+        });
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("morton_codes"),
+        });
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("morton_codes"),
+                timestamp_writes: None,
+            });
+            compute_pass.set_pipeline(&self.calculate_morton_codes_pipeline);
+            compute_pass.set_bind_group(0, &bind_group, &[]);
+            compute_pass.dispatch_workgroups(triangle_count, 1, 1);
+        }
+
+        let idx = self.renderer.get_queue().submit([encoder.finish()]);
+        device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+        morton_codes
     }
 
     fn build_tree(
