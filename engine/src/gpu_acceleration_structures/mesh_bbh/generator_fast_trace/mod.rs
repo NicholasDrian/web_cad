@@ -1,6 +1,10 @@
 //! BBH generator optimized for fast tracing
 //!
+//! TODO: less parallel for bigger input
+//!
 //! TODO: deal with degen
+//! TODO: deal with duplicates
+//! NOTE: could use random jitter to do this
 //! Note degenerates will break this
 //!
 use std::rc::Rc;
@@ -14,14 +18,14 @@ use crate::{
     math::linear_algebra::vec3::Vec3,
     profiling::stats::Stats,
     render::renderer::Renderer,
-    utils::{create_compute_pipeline, dump_buffer},
+    utils::create_compute_pipeline,
 };
 
 use super::MeshBBH;
 
 pub(crate) const NODE_SIZE: u32 = 48;
 pub(crate) const SPLIT_EVALUATION_SIZE: u32 = 32;
-pub(crate) const SPLIT_CANDIDATES: u32 = 8;
+pub(crate) const SPLIT_CANDIDATES: u32 = 4;
 // Make this a member of the mesh bbh class
 pub(crate) const MAX_TRIS_PER_LEAF: u32 = 8;
 
@@ -396,20 +400,8 @@ impl MeshBBHGeneratorFastTrace {
         {
             let mut buffer_view = tree_buffer.slice(..).get_mapped_range_mut();
             let data: &mut [u32] = bytemuck::cast_slice_mut(&mut buffer_view);
-            data[0] = 0;
-            data[1] = 0;
-            data[2] = 0;
-            data[3] = 0;
-
-            data[4] = 0;
-            data[5] = 0;
-            data[6] = 0;
             data[7] = start;
-
             data[8] = end;
-            data[9] = 0;
-            data[10] = 0;
-            data[11] = 0;
         }
 
         tree_buffer.unmap();

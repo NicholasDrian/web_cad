@@ -99,7 +99,7 @@ fn main(
 
   split_evaluations[id.x * size.y + id.y] = SplitEval (
       candidate_center,
-      area_diff + bb_size,
+      area_diff + bb_size * 0.4,
   );
 
 

@@ -1,4 +1,5 @@
 //! BBH generator optimized for fast creation
+//!
 //! Sorts primitives along morton curve then partitions into tree
 
 use wgpu::util::DeviceExt;
