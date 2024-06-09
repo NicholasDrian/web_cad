@@ -1,6 +1,10 @@
 //! BBH generator optimized for fast creation
 //!
 //! Sorts primitives along morton curve then partitions into tree
+//!
+//! The tree is level, this means that children are in predictable positions
+//! Child pointer not required for this, but included to be generic
+//!
 
 use wgpu::util::DeviceExt;
 
@@ -62,11 +66,11 @@ impl MeshBBHGeneratorFastBuild {
                 label: Some("calculate morton codes bbs"),
                 entries: &[
                     // bb_buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(0, false),
+                    crate::utils::compute_buffer_bind_group_layout_entry(0, true),
                     // accumulated_bb
-                    crate::utils::compute_buffer_bind_group_layout_entry(1, false),
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
                     // morton code buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, false),
                 ],
             });
         let build_tree_bind_group_layout =
@@ -77,9 +81,7 @@ impl MeshBBHGeneratorFastBuild {
                     crate::utils::compute_uniform_bind_group_layout_entry(0),
                     // bbh index buffer
                     crate::utils::compute_buffer_bind_group_layout_entry(1, true),
-                    // Index buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
-                    // Triangle info buffer
+                    // Triangle bbs
                     crate::utils::compute_buffer_bind_group_layout_entry(3, true),
                     // tree buffer
                     crate::utils::compute_buffer_bind_group_layout_entry(4, false),
@@ -149,11 +151,10 @@ impl MeshBBHGeneratorFastBuild {
         );
         self.build_tree(
             &triangle_bbs,
-            &morton_codes,
             bbh_index_buffer,
             triangle_count,
             // i think this gotta be a power of two TODO: figure this out
-            2,
+            4,
         )
     }
 
@@ -358,7 +359,6 @@ impl MeshBBHGeneratorFastBuild {
     fn build_tree(
         &self,
         triangle_bbs: &wgpu::Buffer,
-        morton_codes: &wgpu::Buffer,
         bbh_index_buffer: wgpu::Buffer,
         triangle_count: u32,
         tris_per_leaf: u32,
@@ -374,9 +374,52 @@ impl MeshBBHGeneratorFastBuild {
             mapped_at_creation: false,
         });
 
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("build tree"),
+        });
+
         for level in 0..level_count {
-            todo!();
+            {
+                let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("build tree"),
+                    contents: bytemuck::cast_slice(&[tris_per_leaf, level]),
+                    usage: wgpu::BufferUsages::UNIFORM,
+                });
+                let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("build tree"),
+                    layout: &self.build_tree_bind_group_layout,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: params.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: bbh_index_buffer.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 2,
+                            resource: triangle_bbs.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 3,
+                            resource: tree_buffer.as_entire_binding(),
+                        },
+                    ],
+                });
+
+                let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                    label: Some("build tree"),
+                    timestamp_writes: None,
+                });
+                compute_pass.set_pipeline(&self.build_tree_pipeline);
+                compute_pass.set_bind_group(0, &bind_group, &[]);
+                compute_pass.dispatch_workgroups(triangle_count, 1, 1);
+            }
         }
+
+        let idx = self.renderer.get_queue().submit([encoder.finish()]);
+        device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
 
         MeshBBH::new(tree_buffer, bbh_index_buffer, node_count)
     }

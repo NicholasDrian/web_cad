@@ -1,5 +1,6 @@
 //! BBH generator optimized for fast tracing
 //!
+//! TODO: factor
 //! TODO: less parallel for bigger input
 //!
 //! TODO: deal with degen
@@ -33,7 +34,7 @@ pub(crate) const MAX_TRIS_PER_LEAF: u32 = 8;
 // keep around for future debug
 #[allow(dead_code)]
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, bytemuck::NoUninit)]
 struct MeshBBHNode {
     pub min_corner: Vec3,
     pub max_corner: Vec3,

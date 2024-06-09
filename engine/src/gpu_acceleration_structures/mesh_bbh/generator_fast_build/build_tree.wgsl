@@ -1,3 +1,4 @@
+TODO: variable branch factor?
 
 @group(0) @binding(0) var<uniform> params: array<Params>;
 @group(0) @binding(0) var<buffer, read> bbh_index_buffer: array<u32>;
@@ -6,7 +7,6 @@
 
 struct Params {
     tris_per_leaf: u32,
-    branch_factor: u32,
     level: u32,
 }
 
@@ -36,7 +36,6 @@ struct BoundingBox {
 
 fn main(
   @builtin(global_invocation_id) id: vec3<u32>,
-  @builtin(num_workgroups) size: vec3<u32>,
 ) {
     ///todo!()
 }

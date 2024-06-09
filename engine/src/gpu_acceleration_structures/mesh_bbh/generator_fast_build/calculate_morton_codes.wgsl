@@ -37,9 +37,11 @@ fn interlace(v: vec3<u32>) -> u64 {
   let res = 0u64;
   for (var i = 0; i < 20; i++) {
     res |= (v.x & 1) << bit; 
-    res |= (v.y & 1) << bit + 1; 
-    res |= (v.z & 1) << bit + 2; 
-    bit += 3;
+    bit++;
+    res |= (v.y & 1) << bit; 
+    bit++;
+    res |= (v.z & 1) << bit; 
+    bit++;
     v >>= 1;
   }    
   return res;
