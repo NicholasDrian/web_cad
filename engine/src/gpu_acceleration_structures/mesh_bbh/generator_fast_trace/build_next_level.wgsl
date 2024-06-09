@@ -59,20 +59,20 @@ fn build_next_level(
     // figure out what split was best
     var best_point = vec3<f32>(0.0, 0.0, 0.0);
     var best_dir = 0u;
-    var best_sah = FLOAT_MAX;
+    var best_sah = 0.0;
     for (var i = 0u; i < params.split_candidates; i++) {
       let split_eval = split_evaluations[id.x * params.split_candidates + i];
-      if (split_eval.quality.x < best_sah) {
+      if (split_eval.quality.x > best_sah) {
         best_point = split_eval.point;
         best_sah = split_eval.quality.x;
         best_dir = 0u;
       } 
-      if (split_eval.quality.y < best_sah) {
+      if (split_eval.quality.y > best_sah) {
         best_point = split_eval.point;
         best_sah = split_eval.quality.y;
         best_dir = 1u;
       } 
-      if (split_eval.quality.z < best_sah) {
+      if (split_eval.quality.z > best_sah) {
         best_point = split_eval.point;
         best_sah = split_eval.quality.z;
         best_dir = 2u;

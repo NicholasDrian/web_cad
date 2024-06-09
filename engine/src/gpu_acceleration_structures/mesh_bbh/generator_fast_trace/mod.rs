@@ -1,5 +1,8 @@
 //! BBH generator optimized for fast tracing
 //!
+//! TODO: deal with degen
+//! Note degenerates will break this
+//!
 use std::rc::Rc;
 
 use js_sys::Date;
