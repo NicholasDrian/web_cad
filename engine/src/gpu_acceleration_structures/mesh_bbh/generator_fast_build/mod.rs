@@ -6,6 +6,7 @@ use wgpu::util::DeviceExt;
 use super::MeshBBH;
 use crate::{
     geometry::mesh::MeshVertex,
+    gpu_acceleration_structures::mesh_bbh::generator_fast_trace::NODE_SIZE,
     gpu_algorithms::{bitonic_merge_sort::bitonic_merge_sort, iota::iota},
     utils::create_compute_pipeline,
 };
@@ -148,8 +149,10 @@ impl MeshBBHGeneratorFastBuild {
         self.build_tree(
             &triangle_bbs,
             &morton_codes,
-            &bbh_index_buffer,
+            bbh_index_buffer,
             triangle_count,
+            // i think this gotta be a power of two TODO: figure this out
+            2,
         )
     }
 
@@ -355,9 +358,25 @@ impl MeshBBHGeneratorFastBuild {
         &self,
         triangle_bbs: &wgpu::Buffer,
         morton_codes: &wgpu::Buffer,
-        bbh_index_buffer: &wgpu::Buffer,
+        bbh_index_buffer: wgpu::Buffer,
         triangle_count: u32,
+        tris_per_leaf: u32,
     ) -> MeshBBH {
-        todo!()
+        let device = self.renderer.get_device();
+        let level_count = f32::log2(triangle_count as f32).ceil() as u32 + 1;
+        let node_count = triangle_count * 2 - 1;
+
+        let tree_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("bbh tree"),
+            size: (node_count * NODE_SIZE) as u64,
+            usage: wgpu::BufferUsages::STORAGE,
+            mapped_at_creation: false,
+        });
+
+        for level in 0..level_count {
+            todo!();
+        }
+
+        MeshBBH::new(tree_buffer, bbh_index_buffer, node_count)
     }
 }

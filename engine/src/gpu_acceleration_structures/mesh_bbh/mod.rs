@@ -23,6 +23,8 @@ impl MeshBBH {
     pub fn get_indices(&self) -> &wgpu::Buffer {
         &self.indices
     }
+
+    // for debug print
     pub fn get_node_count(&self) -> u32 {
         self.node_count
     }

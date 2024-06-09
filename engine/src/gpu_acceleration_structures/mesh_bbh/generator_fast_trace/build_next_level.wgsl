@@ -1,5 +1,5 @@
 @group(0) @binding(0) var<uniform> params: Params;
-@group(0) @binding(1) var<storage, read> triangle_bbs: array<BoundingBox>;
+@group(0) @binding(1) var<storage, read> triangle_info: array<TriangleInfo>;
 @group(0) @binding(2) var<storage, read> split_evaluations: array<SplitEval>;
 @group(0) @binding(3) var<storage, read> prefix_sum: array<u32>;
 @group(0) @binding(4) var<storage, read_write> index_buffer: array<u32>;
@@ -17,18 +17,17 @@ struct SplitEval {
   quality: vec3<f32>,
 }
 
-struct BoundingBox {
+struct TriangleInfo {
   min_corner: vec3<f32>,
   max_corner: vec3<f32>,
-  center: vec3<f32>,
+  surface_area: f32,
 }
 
 struct Node {
   min_corner: vec3<f32>,
-  l: u32,
   max_corner: vec3<f32>,
+  l: u32,
   r: u32,
-  center: vec3<f32>,
   left_child: u32,
 }
 
@@ -86,8 +85,9 @@ fn build_next_level(
 
     while (high < node.r) {
 
-      let point = triangle_bbs[index_buffer[high]].center;
-      let delta = point - best_point; 
+      let info = triangle_info[index_buffer[high]];
+      let center = (info.min_corner + info.max_corner) / 2.0;
+      let delta = center - best_point; 
 
       var is_left = false;
       if (best_dir == 0) {
@@ -114,19 +114,17 @@ fn build_next_level(
   // write out next level
   tree[left_child_idx] = Node(
     vec3<f32>(0.0, 0.0, 0.0),
+    vec3<f32>(0.0, 0.0, 0.0),
     node.l,
-    vec3<f32>(0.0, 0.0, 0.0),
     low,
-    vec3<f32>(0.0, 0.0, 0.0),
     0,
   );
 
   tree[left_child_idx + 1] = Node(
     vec3<f32>(0.0, 0.0, 0.0),
+    vec3<f32>(0.0, 0.0, 0.0),
     low,
-    vec3<f32>(0.0, 0.0, 0.0),
     node.r,
-    vec3<f32>(0.0, 0.0, 0.0),
     0,
   );
 

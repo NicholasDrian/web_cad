@@ -1,6 +1,6 @@
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> index_buffer: array<u32>;
-@group(0) @binding(2) var<storage, read> triangle_bbs: array<BoundingBox>;
+@group(0) @binding(2) var<storage, read> triangle_info: array<TriangleInfo>;
 @group(0) @binding(3) var<storage, read> tree: array<Node>;
 @group(0) @binding(4) var<storage, read_write> split_evaluations: array<SplitEval>;
 
@@ -21,18 +21,18 @@ fn seed(x: u32, y: u32) -> u32 {
     return 19u * x + 47u * y + 101u;
 }
 
-struct BoundingBox {
+
+struct TriangleInfo {
   min_corner: vec3<f32>,
   max_corner: vec3<f32>,
-  center: vec3<f32>,
+  surface_area: f32,
 }
 
 struct Node {
   min_corner: vec3<f32>,
-  l: u32,
   max_corner: vec3<f32>,
+  l: u32,
   r: u32,
-  center: vec3<f32>,
   left_child: u32,
 }
 
@@ -43,18 +43,16 @@ fn pcg(v: u32) -> u32
 	return (w >> 22u) ^ w;
 }
 
-fn add_bbs(a: BoundingBox, b: BoundingBox) -> BoundingBox {
+fn add_bbs(a: TriangleInfo, b: TriangleInfo) -> TriangleInfo {
   let min_corner = min(a.min_corner, b.min_corner);
   let max_corner = max(a.max_corner, b.max_corner);
-  let center = (min_corner + max_corner) / 2.0;
-  return BoundingBox(
+  return TriangleInfo(
     min_corner,
     max_corner,
-    center,
+    0.0,
   );
 }
 
-// TODO: add sah
 
 @compute @workgroup_size(1,1,1)
 fn main(
@@ -70,33 +68,26 @@ fn main(
     return;
   }
 
-  //let random_u32 = pcg(seed(id.x, id.y));
-
-  // TODO: think about this
-  var acummulated_bb = triangle_bbs[index_buffer[node.l]];
-  for (var i = node.l + 1; i < node.r; i++) {
-    acummulated_bb = add_bbs(acummulated_bb, triangle_bbs[index_buffer[i]]);
-  }
-
-  //let candidate_idx = index_buffer[random_u32 % span + node.l];
-  //let candidate_center = triangle_bbs[candidate_idx].center;
+  let random_u32 = pcg(seed(id.x, id.y));
+  let candidate = triangle_info[index_buffer[random_u32 % span + node.l]];
+  let candidate_center = (candidate.min_corner + candidate.max_corner) / 2.0;
   var quality = vec3<f32>(0.0, 0.0, 0.0);
-  
 
   for (var i = node.l; i < node.r; i++) {
-    let center = triangle_bbs[index_buffer[i]].center;
+    let info = triangle_info[index_buffer[i]];
+    let center = (info.min_corner + info.max_corner) / 2.0;
 
     // fancy sign() used to eliminate condition
     // double sign used to create -1 or 1
     // rather than -1, 0 or 1
     // s is 1 for left and -1 for right
-    let s = sign(sign(acummulated_bb.center - center) + vec3<f32>(0.5, 0.5, 0.5));
-    quality += s; 
+    let s = sign(sign(candidate_center - center) + vec3<f32>(0.5, 0.5, 0.5));
+    quality += s ;//* info.surface_area; 
   }
 
 
   split_evaluations[id.x * size.y + id.y] = SplitEval (
-      acummulated_bb.center,
+      candidate_center,
       abs(quality)
   );
 

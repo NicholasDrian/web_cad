@@ -1,7 +1,7 @@
-@group(0) @binding(0) var<uniform> params: Params,
+@group(0) @binding(0) var<uniform> params: Params;
 // TODO: parameterized key type and value type
-@group(0) @binding(1) var<storage, read_write> keys: array<i64>,
-@group(0) @binding(2) var<storage, read_write> values: array<u32>,
+@group(0) @binding(1) var<storage, read_write> keys: array<i64>;
+@group(0) @binding(2) var<storage, read_write> values: array<u32>;
 
 struct Params {
   sort_size: u32,
@@ -27,7 +27,7 @@ fn make_ascend(i: u32, j: u32, sign: i64) {
   // if i or j are out of bounds, ignore them
   // TODO: try to elminate this for speed!
   // if num workgroups is correctly setup, shouldnt need this.
-  if (i >= num_values || j >= num_values) return;
+  if (i >= num_values || j >= num_values){ return; }
 
   if ((keys[i] - keys[j]) * sign > 0) {
     swap_indices(i, j);
@@ -44,7 +44,7 @@ fn main(
   let sort_start = sort_num * sort_size;
   let position_in_sort = id.x % (params.sort_size / 2);
   var sign: i32 = 1;
-  if (sort_num & 1 == 1) { sign = -1; }
+  if ((sort_num & 1) == 1) { sign = -1; }
   make_ascend(
     sort_start + position_in_sort,
     sort_start + position_in_sort + params.sort_size / 2,

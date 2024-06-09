@@ -9,10 +9,9 @@ struct Params {
 
 struct Node {
   min_corner: vec3<f32>,
-  l: u32,
   max_corner: vec3<f32>,
+  l: u32,
   r: u32,
-  center: vec3<f32>,
   left_child: u32,
 }
 

@@ -7,11 +7,11 @@ use wgpu::util::DeviceExt;
 
 use crate::{
     geometry::mesh::MeshVertex,
-    gpu_algorithms::{iota::iota, prefix_sum::prefix_sum, AlgorithmResources},
+    gpu_algorithms::{iota::iota, AlgorithmResources},
     math::linear_algebra::vec3::Vec3,
     profiling::stats::Stats,
     render::renderer::Renderer,
-    utils::create_compute_pipeline,
+    utils::{create_compute_pipeline, dump_buffer},
 };
 
 use super::MeshBBH;
@@ -19,7 +19,6 @@ use super::MeshBBH;
 pub(crate) const NODE_SIZE: u32 = 48;
 pub(crate) const SPLIT_EVALUATION_SIZE: u32 = 32;
 pub(crate) const SPLIT_CANDIDATES: u32 = 8;
-
 // Make this a member of the mesh bbh class
 pub(crate) const MAX_TRIS_PER_LEAF: u32 = 8;
 
@@ -30,10 +29,9 @@ pub(crate) const MAX_TRIS_PER_LEAF: u32 = 8;
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 struct MeshBBHNode {
     pub min_corner: Vec3,
-    pub l: u32,
     pub max_corner: Vec3,
+    pub l: u32,
     pub r: u32,
-    pub center: Vec3,
     pub left_child: u32,
 }
 
@@ -216,14 +214,12 @@ impl MeshBBHGeneratorFastTrace {
         let mut input: (u32, u32) = (0, 1);
         let mut level = 0;
         loop {
-            // TODO: remove this in favor of bottom up approach
-            self.build_bbs(&tree_buffer, &index_buffer, &triangle_bbs, input);
-
-            level += 1;
             if level == 100 {
-                // TODO: remove
+                // TODO: shouldnt need this
                 break;
             }
+            // TODO: remove this in favor of bottom up approach
+            self.build_bbs(&tree_buffer, &index_buffer, &triangle_bbs, input);
 
             // prefix sum of number of nodes with children
             // TODO: use prefix sum for this
@@ -246,6 +242,7 @@ impl MeshBBHGeneratorFastTrace {
             );
 
             input = (input.1, input.1 + total * 2);
+            level += 1;
         }
 
         // eliminate extra capacity
@@ -399,11 +396,17 @@ impl MeshBBHGeneratorFastTrace {
             data[0] = 0;
             data[1] = 0;
             data[2] = 0;
-            data[3] = start;
+            data[3] = 0;
+
             data[4] = 0;
             data[5] = 0;
             data[6] = 0;
-            data[7] = end;
+            data[7] = start;
+
+            data[8] = end;
+            data[9] = 0;
+            data[10] = 0;
+            data[11] = 0;
         }
 
         tree_buffer.unmap();
