@@ -29,6 +29,9 @@ pub struct MeshBBHGeneratorFastBuild {
     calculate_morton_codes_bind_group_layout: wgpu::BindGroupLayout,
     calculate_morton_codes_pipeline: wgpu::ComputePipeline,
 
+    init_tree_bind_group_layout: wgpu::BindGroupLayout,
+    init_tree_pipeline: wgpu::ComputePipeline,
+
     build_tree_bind_group_layout: wgpu::BindGroupLayout,
     build_tree_pipeline: wgpu::ComputePipeline,
 }
@@ -73,18 +76,28 @@ impl MeshBBHGeneratorFastBuild {
                     crate::utils::compute_buffer_bind_group_layout_entry(2, false),
                 ],
             });
+        let init_tree_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("init tree"),
+                entries: &[
+                    // params
+                    crate::utils::compute_uniform_bind_group_layout_entry(0),
+                    // Triangle bbs
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
+                    // bbh index buffer
+                    crate::utils::compute_buffer_bind_group_layout_entry(2, true),
+                    // tree buffer
+                    crate::utils::compute_buffer_bind_group_layout_entry(3, false),
+                ],
+            });
         let build_tree_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("build tree"),
                 entries: &[
                     // params
                     crate::utils::compute_uniform_bind_group_layout_entry(0),
-                    // bbh index buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
-                    // Triangle bbs
-                    crate::utils::compute_buffer_bind_group_layout_entry(3, true),
                     // tree buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(4, false),
+                    crate::utils::compute_buffer_bind_group_layout_entry(1, false),
                 ],
             });
         let create_bbs_pipeline = create_compute_pipeline(
@@ -108,6 +121,13 @@ impl MeshBBHGeneratorFastBuild {
             &calculate_morton_codes_bind_group_layout,
             "main",
         );
+        let init_tree_pipeline = create_compute_pipeline(
+            device,
+            "init tree",
+            include_str!("build_leaves.wgsl"),
+            &init_tree_bind_group_layout,
+            "main",
+        );
         let build_tree_pipeline = create_compute_pipeline(
             device,
             "build tree",
@@ -124,6 +144,8 @@ impl MeshBBHGeneratorFastBuild {
             accumulate_bbs_pipeline,
             calculate_morton_codes_bind_group_layout,
             calculate_morton_codes_pipeline,
+            init_tree_bind_group_layout,
+            init_tree_pipeline,
             build_tree_bind_group_layout,
             build_tree_pipeline,
         }
@@ -154,7 +176,7 @@ impl MeshBBHGeneratorFastBuild {
             bbh_index_buffer,
             triangle_count,
             // i think this gotta be a power of two TODO: figure this out
-            4,
+            8,
         )
     }
 
@@ -356,6 +378,7 @@ impl MeshBBHGeneratorFastBuild {
         morton_codes
     }
 
+    // first build leaves, then build tree
     fn build_tree(
         &self,
         triangle_bbs: &wgpu::Buffer,
@@ -365,7 +388,8 @@ impl MeshBBHGeneratorFastBuild {
     ) -> MeshBBH {
         let device = self.renderer.get_device();
         let level_count = f32::log2(triangle_count as f32).ceil() as u32 + 1;
-        let node_count = triangle_count * 2 - 1;
+        let leaf_count = (triangle_count + tris_per_leaf - 1) / tris_per_leaf;
+        let node_count = leaf_count * 2 - 1;
 
         let tree_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("bbh tree"),
@@ -374,15 +398,53 @@ impl MeshBBHGeneratorFastBuild {
             mapped_at_creation: false,
         });
 
+        let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("build tree"),
+            contents: bytemuck::cast_slice(&[offset]),
+            usage: wgpu::BufferUsages::UNIFORM,
+        });
+        let init_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("build tree"),
+            layout: &self.build_tree_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: params.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: triangle_bbs.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: bbh_index_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: tree_buffer.as_entire_binding(),
+                },
+            ],
+        });
+
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("build tree"),
         });
+        // init tree
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("init tree"),
+                timestamp_writes: None,
+            });
+            compute_pass.set_pipeline(&self.init_tree_pipeline);
+            compute_pass.set_bind_group(0, &init_bind_group, &[]);
+            compute_pass.dispatch_workgroups(leaf_count, 1, 1);
+        }
 
         for level in 0..level_count {
             {
                 let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("build tree"),
-                    contents: bytemuck::cast_slice(&[tris_per_leaf, level]),
+                    contents: bytemuck::cast_slice(&[offset]),
                     usage: wgpu::BufferUsages::UNIFORM,
                 });
                 let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -395,14 +457,6 @@ impl MeshBBHGeneratorFastBuild {
                         },
                         wgpu::BindGroupEntry {
                             binding: 1,
-                            resource: bbh_index_buffer.as_entire_binding(),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 2,
-                            resource: triangle_bbs.as_entire_binding(),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 3,
                             resource: tree_buffer.as_entire_binding(),
                         },
                     ],

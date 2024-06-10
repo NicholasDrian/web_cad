@@ -1,8 +1,7 @@
 TODO: variable branch factor?
 
 @group(0) @binding(0) var<uniform> params: array<Params>;
-@group(0) @binding(0) var<buffer, read> bbh_index_buffer: array<u32>;
-@group(0) @binding(0) var<buffer, read> tree: array<Node>;
+@group(0) @binding(1) var<buffer, read> tree: array<Node>;
 
 struct Params {
     offset: u32,
