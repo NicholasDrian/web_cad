@@ -390,6 +390,8 @@ impl MeshBBHGeneratorFastBuild {
         let level_count = f32::log2(triangle_count as f32).ceil() as u32 + 1;
         let leaf_count = (triangle_count + tris_per_leaf - 1) / tris_per_leaf;
         let node_count = leaf_count * 2 - 1;
+        let first_leaf_index = todo!();
+        let first_bottom_index = todo!();
 
         let tree_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("bbh tree"),
@@ -400,7 +402,13 @@ impl MeshBBHGeneratorFastBuild {
 
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("build tree"),
-            contents: bytemuck::cast_slice(&[offset]),
+            contents: bytemuck::cast_slice(&[
+                tris_per_leaf,
+                node_count,
+                triangle_count,
+                first_leaf_index,
+                first_bottom_index,
+            ]),
             usage: wgpu::BufferUsages::UNIFORM,
         });
         let init_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -441,9 +449,11 @@ impl MeshBBHGeneratorFastBuild {
         }
 
         for level in 0..level_count {
+            let offset = todo!();
+
             {
                 let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("build tree"),
+                    label: Some("build tree params"),
                     contents: bytemuck::cast_slice(&[offset]),
                     usage: wgpu::BufferUsages::UNIFORM,
                 });
