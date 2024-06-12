@@ -1,7 +1,12 @@
 @group(0) @binding(0) var<uniform> params: Params;
 // TODO: parameterized key type and value type
-@group(0) @binding(1) var<storage, read_write> keys: array<i64>;
+@group(0) @binding(1) var<storage, read_write> keys: array<MyI64>;
 @group(0) @binding(2) var<storage, read_write> values: array<u32>;
+
+struct MyI64 {
+  i32,
+  u32,
+}
 
 struct Params {
   sort_size: u32,
@@ -22,7 +27,7 @@ fn swap_indices(i: u32, j: u32) {
 // sign must be 1 or -1
 // if sign == 1: swap if the first key is larger
 // if sign == -1: swap if the first key is smaller
-fn make_ascend(i: u32, j: u32, sign: i64) {
+fn make_ascend(i: u32, j: u32, sign: i32) {
 
   // if i or j are out of bounds, ignore them
   // TODO: try to elminate this for speed!

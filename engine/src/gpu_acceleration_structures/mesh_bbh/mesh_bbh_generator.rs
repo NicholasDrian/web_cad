@@ -9,17 +9,17 @@ use super::{
 
 pub struct MeshBBHGenerator {
     fast_trace_generator: MeshBBHGeneratorFastTrace,
-    // fast_build_generator: MeshBBHGeneratorFastBuild,
+    fast_build_generator: MeshBBHGeneratorFastBuild,
 }
 
 impl MeshBBHGenerator {
     pub fn new(renderer: Rc<Renderer>, algorithm_resources: Rc<AlgorithmResources>) -> Self {
         let fast_trace_generator =
             MeshBBHGeneratorFastTrace::new(renderer.clone(), algorithm_resources.clone());
-        //let fast_build_generator = MeshBBHGeneratorFastBuild::new(renderer, algorithm_resources);
+        let fast_build_generator = MeshBBHGeneratorFastBuild::new(renderer, algorithm_resources);
         Self {
             fast_trace_generator,
-            //        fast_build_generator,
+            fast_build_generator,
         }
     }
     pub async fn generate_mesh_bbh_fast_trace(
@@ -33,7 +33,7 @@ impl MeshBBHGenerator {
             .generate_mesh_bbh(vertex_buffer, vertex_count, index_buffer, index_count)
             .await
     }
-    /*
+
     pub fn generate_mesh_bbh_fast_build(
         &self,
         vertex_buffer: &wgpu::Buffer,
@@ -48,5 +48,4 @@ impl MeshBBHGenerator {
             index_count,
         )
     }
-    */
 }
