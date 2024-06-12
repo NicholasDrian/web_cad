@@ -393,6 +393,8 @@ impl MeshBBHGeneratorFastBuild {
         let level_count = f32::log2(node_count as f32).ceil() as u32 + 1;
         let first_leaf_index = node_count - leaf_count;
         let first_bottom_index = u32::pow(2, level_count - 1) - 1;
+        let group_a_count = first_bottom_index - first_leaf_index;
+        let group_b_count = leaf_count - group_a_count;
 
         let tree_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("bbh tree"),
@@ -450,9 +452,11 @@ impl MeshBBHGeneratorFastBuild {
         }
 
         let mut level: i32 = (level_count - 2) as i32;
+        let mut thread_count = group_b_count / 2;
 
         while level >= 0 {
             let offset = u32::pow(2, level as u32) - 1;
+
             {
                 let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("build tree params"),
@@ -480,9 +484,10 @@ impl MeshBBHGeneratorFastBuild {
                 });
                 compute_pass.set_pipeline(&self.build_tree_pipeline);
                 compute_pass.set_bind_group(0, &bind_group, &[]);
-                compute_pass.dispatch_workgroups(triangle_count, 1, 1);
+                compute_pass.dispatch_workgroups(thread_count, 1, 1);
             }
             level -= 1;
+            thread_count = 2u32.pow(level as u32);
         }
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);

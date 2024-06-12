@@ -1,6 +1,5 @@
 use crate::{
     gpu_samplers::{curve_sampler::CurveSampler, params::SAMPLES_PER_SEGMENT},
-    math::linear_algebra::vec3::Vec3,
     math::linear_algebra::vec4::Vec4,
 };
 
