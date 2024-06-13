@@ -313,8 +313,13 @@ impl MeshBBHGeneratorFastBuild {
                 });
                 compute_pass.set_pipeline(&self.accumulate_bbs_pipeline);
                 compute_pass.set_bind_group(0, &bind_group, &[]);
-                // TODO: check this.
-                let thread_count = (triangle_count + offset) / (offset * 2);
+
+                // avoid division by zero
+                let thread_count = if offset == 0 {
+                    1
+                } else {
+                    (triangle_count + offset) / (offset * 2)
+                };
                 compute_pass.dispatch_workgroups(thread_count, 1, 1);
             }
 
@@ -390,13 +395,15 @@ impl MeshBBHGeneratorFastBuild {
         let device = self.renderer.get_device();
         let leaf_count = (triangle_count + tris_per_leaf - 1) / tris_per_leaf;
         let node_count = leaf_count * 2 - 1;
-        let level_count = f32::log2(node_count as f32).ceil() as u32 + 1;
+        let level_count = f32::log2(leaf_count as f32).ceil() as u32 + 1;
         let first_leaf_index = node_count - leaf_count;
-        let first_bottom_index = u32::pow(2, level_count - 1) - 1;
+        let first_bottom_index = 2u32.pow(level_count - 1) - 1;
         let group_a_count = first_bottom_index - first_leaf_index;
+        log::info!("leaf_count{leaf_count}, node_count{node_count}, levle_count{level_count}, first_leaf_idx{first_leaf_index}, first_bottom_idx{first_bottom_index}, group_a_count{group_a_count}");
         // BUG:
         let group_b_count = leaf_count - group_a_count;
 
+        log::info!("a");
         let tree_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("bbh tree"),
             size: (node_count * NODE_SIZE) as u64,
@@ -415,6 +422,7 @@ impl MeshBBHGeneratorFastBuild {
             ]),
             usage: wgpu::BufferUsages::UNIFORM,
         });
+        log::info!("b");
         let init_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("build tree"),
             layout: &self.build_tree_bind_group_layout,
@@ -455,9 +463,10 @@ impl MeshBBHGeneratorFastBuild {
         let mut level: i32 = (level_count - 2) as i32;
         let mut thread_count = group_b_count / 2;
 
+        log::info!("c");
         while level >= 0 {
             let offset = u32::pow(2, level as u32) - 1;
-
+            log::info!("offest{offset}");
             {
                 let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("build tree params"),
@@ -488,8 +497,11 @@ impl MeshBBHGeneratorFastBuild {
                 compute_pass.dispatch_workgroups(thread_count, 1, 1);
             }
             level -= 1;
-            thread_count = 2u32.pow(level as u32);
+            if level >= 0 {
+                thread_count = 2u32.pow(level as u32);
+            }
         }
+        log::info!("d");
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
