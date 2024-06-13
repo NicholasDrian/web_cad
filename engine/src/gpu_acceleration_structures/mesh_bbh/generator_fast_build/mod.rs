@@ -394,6 +394,7 @@ impl MeshBBHGeneratorFastBuild {
         let first_leaf_index = node_count - leaf_count;
         let first_bottom_index = u32::pow(2, level_count - 1) - 1;
         let group_a_count = first_bottom_index - first_leaf_index;
+        // BUG:
         let group_b_count = leaf_count - group_a_count;
 
         let tree_buffer = device.create_buffer(&wgpu::BufferDescriptor {
@@ -408,8 +409,8 @@ impl MeshBBHGeneratorFastBuild {
             contents: bytemuck::cast_slice(&[
                 tris_per_leaf,
                 node_count,
+                leaf_count,
                 triangle_count,
-                first_leaf_index,
                 first_bottom_index,
             ]),
             usage: wgpu::BufferUsages::UNIFORM,

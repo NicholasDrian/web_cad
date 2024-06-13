@@ -1,13 +1,13 @@
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> bb_buffer: array<BoundingBox>;
-@group(0) @binding(2) var<storage, read> bbh_index_buffer: array<u32>;
+@group(0) @binding(2) var<storage, read> index_buffer: array<u32>;
 @group(0) @binding(3) var<storage, read_write> tree_buffer: array<Node>;
 
 struct Params {
   tris_per_leaf: u32,
   node_count: u32,
+  leaf_count: u32,
   tri_count: u32,
-  first_leaf_idx: u32, // Idx of first leaf node
   first_bottom_idx: u32, // Idx of first bottom row node
 }
 
@@ -29,19 +29,15 @@ fn main(
   @builtin(global_invocation_id) id: vec3<u32>,
 ) {
 
-
-  // this seems iffy
-  // calculate idx of node as if its on the bottom row
   var idx = id.x + params.first_bottom_idx;
-  // if idx is invalid, re calculate it as if node is on second to last row
+
+  // node is not on last row
   if (idx >= params.node_count) {
-      idx = params.first_leaf_idx + id.x - (params.node_count - params.first_bottom_idx);
+      idx -= params.leaf_count;
   }
   
-  // TODO leaves are in wrong order
-
   let l = idx * params.tris_per_leaf; 
-  // could get rid of this min if im cleaver
+  // TODO: could get rid of this min if im cleaver
   let r = min(l + params.tris_per_leaf, params.tri_count);
 
   let first_bb = bb_buffer[index_buffer[l]];
