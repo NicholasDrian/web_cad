@@ -32,17 +32,17 @@ fn main(
 
   // this seems iffy
   // calculate idx of node as if its on the bottom row
-  var idx = id.x + first_bottom_idx;
+  var idx = id.x + params.first_bottom_idx;
   // if idx is invalid, re calculate it as if node is on second to last row
-  if (idx >= node_count) {
-      idx = first_leaf_idx + id.x - (node_count - first_bottom_idx);
+  if (idx >= params.node_count) {
+      idx = params.first_leaf_idx + id.x - (params.node_count - params.first_bottom_idx);
   }
   
   // TODO leaves are in wrong order
 
   let l = idx * params.tris_per_leaf; 
-  let r = l + params.tris_per_leaf;
-  r = min(r, params.tri_count);
+  // could get rid of this min if im cleaver
+  let r = min(l + params.tris_per_leaf, params.tri_count);
 
   let first_bb = bb_buffer[index_buffer[l]];
   var min_corner = first_bb.min_corner;
@@ -60,7 +60,7 @@ fn main(
     l,
     r,
     0,
-  )
+  );
 
 }
 
