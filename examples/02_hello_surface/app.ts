@@ -14,7 +14,7 @@ function random_controls(width: number, height: number): Float32Array {
   for (let i = 0; i < height; i++) {
     for (let j = 0; j < width; j++) {
       res[3 * (i * width + j)] = j / width * size_x - size_x / 2;
-      res[3 * (i * width + j) + 1] = Math.random() * 10;
+      res[3 * (i * width + j) + 1] = Math.random() * 30;
       res[3 * (i * width + j) + 2] = i / height * size_y - size_y / 2;
     }
   }
@@ -101,7 +101,7 @@ document.body.appendChild(canvas);
 let viewport = instance.create_viewport(canvas);
 
 // TODO: shouldnt need to pass aspect
-viewport.set_camera_params(new Float32Array([0, 20, -60]), new Float32Array([0, 0, 0]), 1.5, 1.5, 0.001, 100000.0, CameraType.CAD);
+viewport.set_camera_params(new Float32Array([0, 40, -60]), new Float32Array([0, 0, 0]), 1.5, 1.5, 0.001, 100000.0, CameraType.CAD);
 
 async function update_surface() {
   scene.delete_geometry(surface);

@@ -64,7 +64,6 @@ pub fn bitonic_merge_sort(
     let mut step_size = 1u32;
 
     while sort_size <= count {
-        log::warn!("sort_size{sort_size}, step_size{step_size}");
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("bitonic merge sort"),
             contents: bytemuck::cast_slice(&[sort_size, step_size, count]),

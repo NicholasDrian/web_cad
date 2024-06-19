@@ -20,10 +20,6 @@ fn main(
   @builtin(global_invocation_id) id: vec3<u32>
   ) {
 
-    let start = 6600u;
-    let size = 10u;
-    if (id.x < start || id.x > start + size) { return;}
-
     let node = tree[id.x];
 
     // use this to only show leaf boxes
