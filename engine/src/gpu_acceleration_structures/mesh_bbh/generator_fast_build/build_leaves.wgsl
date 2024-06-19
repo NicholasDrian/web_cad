@@ -29,14 +29,14 @@ fn main(
   @builtin(global_invocation_id) id: vec3<u32>,
 ) {
 
-  var idx = id.x + params.first_bottom_idx;
+  var node_idx = id.x + params.first_bottom_idx;
 
   // node is not on last row
-  if (idx >= params.node_count) {
-      idx -= params.leaf_count;
+  if (node_idx >= params.node_count) {
+      node_idx -= params.leaf_count;
   }
   
-  let l = idx * params.tris_per_leaf; 
+  let l = id.x * params.tris_per_leaf; 
   // TODO: could get rid of this min if im cleaver
   let r = min(l + params.tris_per_leaf, params.tri_count);
 
@@ -50,7 +50,7 @@ fn main(
       max_corner = max(max_corner, bb.max_corner);
   }
 
-  tree_buffer[idx] = Node(
+  tree_buffer[node_idx] = Node(
     min_corner,
     max_corner,
     l,

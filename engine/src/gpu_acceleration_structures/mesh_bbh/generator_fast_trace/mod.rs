@@ -16,7 +16,6 @@ use wgpu::util::DeviceExt;
 use crate::{
     geometry::mesh::MeshVertex,
     gpu_algorithms::{iota::iota, AlgorithmResources},
-    math::linear_algebra::vec3::Vec3,
     profiling::stats::Stats,
     render::renderer::Renderer,
     utils::create_compute_pipeline,
@@ -29,29 +28,6 @@ pub(crate) const SPLIT_EVALUATION_SIZE: u32 = 32;
 pub(crate) const SPLIT_CANDIDATES: u32 = 4;
 // Make this a member of the mesh bbh class
 pub(crate) const MAX_TRIS_PER_LEAF: u32 = 8;
-
-// used for debug print
-// keep around for future debug
-#[allow(dead_code)]
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::NoUninit)]
-struct MeshBBHNode {
-    pub min_corner: Vec3,
-    pub max_corner: Vec3,
-    pub l: u32,
-    pub r: u32,
-    pub left_child: u32,
-}
-
-impl std::fmt::Debug for MeshBBHNode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Node \n range:({},{})\n min:{} max:{}\n left_child:{}",
-            self.l, self.r, self.min_corner, self.max_corner, self.left_child
-        )
-    }
-}
 
 pub struct MeshBBHGeneratorFastTrace {
     renderer: Rc<Renderer>,

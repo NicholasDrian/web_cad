@@ -84,12 +84,14 @@ impl Surface {
         let bind_group_object = GeometryBindGroupObject::new(surface_sampler.get_renderer());
         let bbh = if with_bbh {
             Some(
-                bbh_generator.generate_mesh_bbh_fast_build(
-                    &vertex_buffer,
-                    sample_count_u * sample_count_v,
-                    &index_buffer,
-                    index_count,
-                ), //.await,
+                bbh_generator
+                    .generate_mesh_bbh_fast_build(
+                        &vertex_buffer,
+                        sample_count_u * sample_count_v,
+                        &index_buffer,
+                        index_count,
+                    )
+                    .await,
             )
         } else {
             None

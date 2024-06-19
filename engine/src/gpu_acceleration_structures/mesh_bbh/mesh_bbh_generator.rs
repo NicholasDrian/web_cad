@@ -34,18 +34,15 @@ impl MeshBBHGenerator {
             .await
     }
 
-    pub fn generate_mesh_bbh_fast_build(
+    pub async fn generate_mesh_bbh_fast_build(
         &self,
         vertex_buffer: &wgpu::Buffer,
         vertex_count: u32,
         index_buffer: &wgpu::Buffer,
         index_count: u32,
     ) -> MeshBBH {
-        self.fast_build_generator.generate_mesh_bbh(
-            vertex_buffer,
-            vertex_count,
-            index_buffer,
-            index_count,
-        )
+        self.fast_build_generator
+            .generate_mesh_bbh(vertex_buffer, vertex_count, index_buffer, index_count)
+            .await
     }
 }

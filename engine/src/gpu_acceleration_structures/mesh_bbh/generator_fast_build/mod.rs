@@ -8,12 +8,12 @@
 
 use wgpu::util::DeviceExt;
 
-use super::MeshBBH;
+use super::{MeshBBH, MeshBBHNode};
 use crate::{
     geometry::mesh::MeshVertex,
-    gpu_acceleration_structures::mesh_bbh::generator_fast_trace::NODE_SIZE,
+    gpu_acceleration_structures::mesh_bbh::generator_fast_trace::{MAX_TRIS_PER_LEAF, NODE_SIZE},
     gpu_algorithms::{bitonic_merge_sort::bitonic_merge_sort, iota::iota},
-    utils::create_compute_pipeline,
+    utils::{create_compute_pipeline, dump_buffer},
 };
 
 pub struct MeshBBHGeneratorFastBuild {
@@ -151,7 +151,7 @@ impl MeshBBHGeneratorFastBuild {
         }
     }
 
-    pub fn generate_mesh_bbh(
+    pub async fn generate_mesh_bbh(
         &self,
         vertex_buffer: &wgpu::Buffer,
         vertex_count: u32,
@@ -171,13 +171,32 @@ impl MeshBBHGeneratorFastBuild {
             &bbh_index_buffer,
             triangle_count,
         );
-        self.build_tree(
-            &triangle_bbs,
-            bbh_index_buffer,
-            triangle_count,
-            // i think this gotta be a power of two TODO: figure this out
-            8,
+        #[derive(Debug)]
+        struct S {
+            upper: u32,
+            lower: u32,
+        }
+        dump_buffer::<S>(
+            self.renderer.get_device(),
+            self.renderer.get_queue(),
+            &morton_codes,
+            0,
+            100,
         )
+        .await;
+        let res = self
+            .build_tree(&triangle_bbs, bbh_index_buffer, triangle_count)
+            .await;
+        /*
+                dump_buffer::<MeshBBHNode>(
+                    self.renderer.get_device(),
+                    self.renderer.get_queue(),
+                    res.get_tree(),
+                    0,
+                    8,
+                );
+        */
+        res
     }
 
     // calculate triangle morton codes and bbs
@@ -217,7 +236,6 @@ impl MeshBBHGeneratorFastBuild {
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    // TODO: copy this to storage or add storage flag to mesh
                     resource: vertex_buffer_clone.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
@@ -342,7 +360,7 @@ impl MeshBBHGeneratorFastBuild {
         let morton_codes = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("morton_codes"),
             size: triangle_count as u64 * 8,
-            usage: wgpu::BufferUsages::STORAGE,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
 
@@ -384,37 +402,33 @@ impl MeshBBHGeneratorFastBuild {
     }
 
     // first build leaves, then build tree
-    fn build_tree(
+    async fn build_tree(
         &self,
         triangle_bbs: &wgpu::Buffer,
         bbh_index_buffer: wgpu::Buffer,
         triangle_count: u32,
-        tris_per_leaf: u32,
     ) -> MeshBBH {
-        //  BUG: node count of 1 breaks this
         let device = self.renderer.get_device();
-        let leaf_count = (triangle_count + tris_per_leaf - 1) / tris_per_leaf;
+        let leaf_count = (triangle_count + MAX_TRIS_PER_LEAF - 1) / MAX_TRIS_PER_LEAF;
         let node_count = leaf_count * 2 - 1;
         let level_count = f32::log2(leaf_count as f32).ceil() as u32 + 1;
         let first_leaf_index = node_count - leaf_count;
         let first_bottom_index = 2u32.pow(level_count - 1) - 1;
         let group_a_count = first_bottom_index - first_leaf_index;
-        log::info!("leaf_count{leaf_count}, node_count{node_count}, levle_count{level_count}, first_leaf_idx{first_leaf_index}, first_bottom_idx{first_bottom_index}, group_a_count{group_a_count}");
-        // BUG:
         let group_b_count = leaf_count - group_a_count;
 
-        log::info!("a");
         let tree_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("bbh tree"),
             size: (node_count * NODE_SIZE) as u64,
-            usage: wgpu::BufferUsages::STORAGE,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
 
+        log::warn!("tris per leaf{MAX_TRIS_PER_LEAF}\nnode_count{node_count}\nleaf_count{leaf_count}\ntriangle_count{triangle_count}\nfirst_bottom_index{first_bottom_index}");
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("build tree"),
             contents: bytemuck::cast_slice(&[
-                tris_per_leaf,
+                MAX_TRIS_PER_LEAF,
                 node_count,
                 leaf_count,
                 triangle_count,
@@ -422,10 +436,9 @@ impl MeshBBHGeneratorFastBuild {
             ]),
             usage: wgpu::BufferUsages::UNIFORM,
         });
-        log::info!("b");
         let init_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("build tree"),
-            layout: &self.build_tree_bind_group_layout,
+            layout: &self.init_tree_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
@@ -463,10 +476,8 @@ impl MeshBBHGeneratorFastBuild {
         let mut level: i32 = (level_count - 2) as i32;
         let mut thread_count = group_b_count / 2;
 
-        log::info!("c");
         while level >= 0 {
             let offset = u32::pow(2, level as u32) - 1;
-            log::info!("offest{offset}");
             {
                 let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("build tree params"),
@@ -497,14 +508,20 @@ impl MeshBBHGeneratorFastBuild {
                 compute_pass.dispatch_workgroups(thread_count, 1, 1);
             }
             level -= 1;
-            if level >= 0 {
-                thread_count = 2u32.pow(level as u32);
-            }
+            thread_count = 2u32.pow(i32::max(level, 0) as u32);
         }
-        log::info!("d");
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
         device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
+
+        dump_buffer::<MeshBBHNode>(
+            device,
+            self.renderer.get_queue(),
+            &tree_buffer,
+            first_leaf_index,
+            5,
+        )
+        .await;
 
         MeshBBH::new(tree_buffer, bbh_index_buffer, node_count)
     }
