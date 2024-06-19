@@ -53,14 +53,12 @@ fn make_ascend(i: u32, j: u32, invert: bool) {
 fn main(
   @builtin(global_invocation_id) id: vec3<u32>,
 ) {
-
-  // number of soon to be sorted segment
   let sort_num = id.x / (params.sort_size / 2);
   let sort_start = sort_num * params.sort_size;
   let position_in_sort = id.x % (params.sort_size / 2);
   make_ascend(
     sort_start + position_in_sort,
-    sort_start + position_in_sort + params.sort_size / 2,
+    sort_start + position_in_sort + params.step_size,
     (sort_num & 1) == 1,
   ); 
 }
