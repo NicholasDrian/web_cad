@@ -25,9 +25,9 @@ use super::MeshBBH;
 
 pub(crate) const NODE_SIZE: u32 = 48;
 pub(crate) const SPLIT_EVALUATION_SIZE: u32 = 32;
-pub(crate) const SPLIT_CANDIDATES: u32 = 4;
+pub(crate) const SPLIT_CANDIDATES: u32 = 16;
 // Make this a member of the mesh bbh class
-pub(crate) const MAX_TRIS_PER_LEAF: u32 = 4;
+pub(crate) const MAX_TRIS_PER_LEAF: u32 = 16;
 
 pub struct MeshBBHGeneratorFastTrace {
     renderer: Rc<Renderer>,
@@ -387,7 +387,7 @@ impl MeshBBHGeneratorFastTrace {
     }
 
     // Prefix sum over nodes in current level that need children. Allows building next level in parallel.
-    // TODO:, make parallel;
+    // TODO:, make parallel lol;
     async fn find_node_offsets(
         &self,
         tree: &wgpu::Buffer,

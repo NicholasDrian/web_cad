@@ -25,7 +25,6 @@ fn seed(x: u32, y: u32) -> u32 {
 struct TriangleInfo {
   min_corner: vec3<f32>,
   max_corner: vec3<f32>,
-  surface_area: f32,
 }
 
 struct Node {
@@ -49,7 +48,6 @@ fn add_bbs(a: TriangleInfo, b: TriangleInfo) -> TriangleInfo {
   return TriangleInfo(
     min_corner,
     max_corner,
-    0.0,
   );
 }
 
@@ -71,8 +69,7 @@ fn main(
   let random_u32 = pcg(seed(id.x, id.y));
   let candidate = triangle_info[index_buffer[random_u32 % span + node.l]];
   let candidate_center = (candidate.min_corner + candidate.max_corner) / 2.0;
-  var area_diff = vec3<f32>(0.0, 0.0, 0.0);
-  var total_area = 0.0; 
+  var quality = vec3<f32>(0.0, 0.0, 0.0);
   var accumulated_bb = triangle_info[index_buffer[node.l]];
 
   for (var i = node.l; i < node.r; i++) {
@@ -84,8 +81,8 @@ fn main(
     // rather than -1, 0 or 1
     // s is 1 for left and -1 for right
     let s = sign(sign(candidate_center - center) + vec3<f32>(0.5, 0.5, 0.5));
-    area_diff += s * info.surface_area; 
-    total_area += info.surface_area;
+    quality += s;
+
     accumulated_bb = add_bbs(accumulated_bb, info);
   }
 
@@ -93,13 +90,14 @@ fn main(
   let size_sum = bb_size.x + bb_size.y + bb_size.z;
   bb_size /= size_sum;
 
-  area_diff = abs(area_diff);
-  area_diff /= total_area;
-  area_diff = 1.0 - area_diff;
+  // make quality from 0 to 1
+  // 0 bad, 1 good
+  quality = (vec3<f32>(f32(span), f32(span), f32(span)) - abs(quality)) / f32(span);
+
 
   split_evaluations[id.x * size.y + id.y] = SplitEval (
       candidate_center,
-      area_diff + bb_size * 0.5,
+      quality + bb_size * 0.5,
   );
 
 

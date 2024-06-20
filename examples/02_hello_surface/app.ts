@@ -118,7 +118,7 @@ while (true) {
   instance.draw_scene_to_viewport(scene, viewport);
 
   // yeild
-  await new Promise(r => setTimeout(r, 200));
+  await new Promise(r => setTimeout(r, 100));
 
 }
 

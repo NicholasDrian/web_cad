@@ -11,7 +11,6 @@ struct Vertex {
 struct TriangleInfo {
   min_corner: vec3<f32>,
   max_corner: vec3<f32>,
-  surface_area: f32,
 }
 
 fn triangle_surface_area(a: vec3<f32>, b: vec3<f32>, c: vec3<f32>) -> f32 {
@@ -37,12 +36,9 @@ fn generate_bb_buffer(
         max(max(p1.z, p2.z), p3.z),
       );
 
-    let surface_area = triangle_surface_area(p1, p2, p3);
-
     triangle_info[id.x] = TriangleInfo(
         min_corner,
         max_corner,
-      surface_area,
     ); 
 
 }

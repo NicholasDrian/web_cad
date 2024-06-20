@@ -83,16 +83,12 @@ impl Surface {
         let index_count = (sample_count_u - 1) * (sample_count_v - 1) * 6;
         let bind_group_object = GeometryBindGroupObject::new(surface_sampler.get_renderer());
         let bbh = if with_bbh {
-            Some(
-                bbh_generator
-                    .generate_mesh_bbh_fast_trace(
-                        &vertex_buffer,
-                        sample_count_u * sample_count_v,
-                        &index_buffer,
-                        index_count,
-                    )
-                    .await,
-            )
+            Some(bbh_generator.generate_mesh_bbh_fast_build_2(
+                &vertex_buffer,
+                sample_count_u * sample_count_v,
+                &index_buffer,
+                index_count,
+            ))
         } else {
             None
         };

@@ -1,9 +1,8 @@
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> triangle_info: array<TriangleInfo>;
 @group(0) @binding(2) var<storage, read> split_evaluations: array<SplitEval>;
-@group(0) @binding(3) var<storage, read> prefix_sum: array<u32>;
-@group(0) @binding(4) var<storage, read_write> index_buffer: array<u32>;
-@group(0) @binding(5) var<storage, read_write> tree: array<Node>;
+@group(0) @binding(3) var<storage, read_write> index_buffer: array<u32>;
+@group(0) @binding(4) var<storage, read_write> tree: array<Node>;
 
 struct Params {
   offset: u32,
@@ -20,7 +19,6 @@ struct SplitEval {
 struct TriangleInfo {
   min_corner: vec3<f32>,
   max_corner: vec3<f32>,
-  surface_area: f32,
 }
 
 struct Node {
@@ -107,7 +105,7 @@ fn build_next_level(
     }
 
   // set child pointers
-  let left_child_idx = params.offset + size.x + prefix_sum[id.x] * 2; 
+  let left_child_idx = (params.offset + id.x) * 2 + 1; 
   tree[id.x + params.offset].left_child = left_child_idx;
 
 

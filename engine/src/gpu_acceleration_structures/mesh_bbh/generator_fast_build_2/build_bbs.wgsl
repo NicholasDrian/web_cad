@@ -11,7 +11,6 @@ struct Params {
 struct TriangleInfo {
   min_corner: vec3<f32>,
   max_corner: vec3<f32>,
-  surface_area: f32,
 }
 
 struct Node {

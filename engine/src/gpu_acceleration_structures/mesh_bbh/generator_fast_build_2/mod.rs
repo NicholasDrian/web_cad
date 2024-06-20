@@ -29,15 +29,12 @@ pub(crate) const SPLIT_CANDIDATES: u32 = 4;
 // Make this a member of the mesh bbh class
 pub(crate) const MAX_TRIS_PER_LEAF: u32 = 4;
 
-pub struct MeshBBHGeneratorFastTrace {
+pub struct MeshBBHGeneratorFastBuild2 {
     renderer: Rc<Renderer>,
     algorithm_resources: Rc<AlgorithmResources>,
 
     create_triangle_bbs_bind_group_layout: wgpu::BindGroupLayout,
     create_triangle_bbs_pipeline: wgpu::ComputePipeline,
-
-    find_node_offsets_bind_group_layout: wgpu::BindGroupLayout,
-    find_node_offsets_pipeline: wgpu::ComputePipeline,
 
     build_bbs_bind_group_layout: wgpu::BindGroupLayout,
     build_bbs_pipeline: wgpu::ComputePipeline,
@@ -51,7 +48,7 @@ pub struct MeshBBHGeneratorFastTrace {
     stats: Stats,
 }
 
-impl MeshBBHGeneratorFastTrace {
+impl MeshBBHGeneratorFastBuild2 {
     pub fn new(renderer: Rc<Renderer>, algorithm_resources: Rc<AlgorithmResources>) -> Self {
         let device = renderer.get_device();
         let create_triangle_bbs_bind_group_layout =
@@ -63,18 +60,6 @@ impl MeshBBHGeneratorFastTrace {
                     // Index
                     crate::utils::compute_buffer_bind_group_layout_entry(1, true),
                     // bb_buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(2, false),
-                ],
-            });
-        let find_node_offsets_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("create prefix sum input"),
-                entries: &[
-                    // Params
-                    crate::utils::compute_uniform_bind_group_layout_entry(0),
-                    // Tree
-                    crate::utils::compute_buffer_bind_group_layout_entry(1, true),
-                    // Output
                     crate::utils::compute_buffer_bind_group_layout_entry(2, false),
                 ],
             });
@@ -118,12 +103,10 @@ impl MeshBBHGeneratorFastTrace {
                     crate::utils::compute_buffer_bind_group_layout_entry(1, true),
                     // Split evals
                     crate::utils::compute_buffer_bind_group_layout_entry(2, true),
-                    // Prefix sum
-                    crate::utils::compute_buffer_bind_group_layout_entry(3, true),
                     // Index Buffer
-                    crate::utils::compute_buffer_bind_group_layout_entry(4, false),
+                    crate::utils::compute_buffer_bind_group_layout_entry(3, false),
                     // Tree
-                    crate::utils::compute_buffer_bind_group_layout_entry(5, false),
+                    crate::utils::compute_buffer_bind_group_layout_entry(4, false),
                 ],
             });
         let create_triangle_bbs_pipeline = create_compute_pipeline(
@@ -132,13 +115,6 @@ impl MeshBBHGeneratorFastTrace {
             include_str!("create_triangle_bbs.wgsl"),
             &create_triangle_bbs_bind_group_layout,
             "generate_bb_buffer",
-        );
-        let find_node_offsets_pipeline = create_compute_pipeline(
-            device,
-            "find node offsets",
-            include_str!("find_node_offsets.wgsl"),
-            &find_node_offsets_bind_group_layout,
-            "main",
         );
         let build_bbs_pipeline = create_compute_pipeline(
             device,
@@ -167,8 +143,6 @@ impl MeshBBHGeneratorFastTrace {
             algorithm_resources,
             create_triangle_bbs_bind_group_layout,
             create_triangle_bbs_pipeline,
-            find_node_offsets_bind_group_layout,
-            find_node_offsets_pipeline,
             build_bbs_bind_group_layout,
             build_bbs_pipeline,
             split_evaluations_bind_group_layout,
@@ -178,7 +152,7 @@ impl MeshBBHGeneratorFastTrace {
             stats: Stats::new(),
         }
     }
-    pub async fn generate_mesh_bbh(
+    pub fn generate_mesh_bbh(
         &self,
         vertex_buffer: &wgpu::Buffer,
         vertex_count: u32,
@@ -193,10 +167,11 @@ impl MeshBBHGeneratorFastTrace {
             mesh_index_buffer,
             mesh_index_count,
         );
-        let index_buffer = iota(&self.algorithm_resources, triangle_count, 16);
+        let index_buffer = iota(&self.algorithm_resources, triangle_count, 32);
         let tree_buffer = self.init_tree_buffer(mesh_index_count);
         let mut input: (u32, u32) = (0, 1);
         let mut level = 0;
+        let last_level = f32::log2(triangle_count as f32 / MAX_TRIS_PER_LEAF as f32).ceil() as u32;
         loop {
             if level == 100 {
                 // TODO: shouldnt need this
@@ -207,9 +182,7 @@ impl MeshBBHGeneratorFastTrace {
 
             // prefix sum of number of nodes with children
             // TODO: use prefix sum for this
-            let (prefix_sum, total) = self.find_node_offsets(&tree_buffer, input).await;
-            if total == 0 {
-                // Input is all leaves. were done
+            if level > last_level {
                 break;
             }
 
@@ -221,12 +194,14 @@ impl MeshBBHGeneratorFastTrace {
                 &index_buffer,
                 &triangle_bbs,
                 &split_evaluations,
-                &prefix_sum,
                 input,
             );
 
-            input = (input.1, input.1 + total * 2);
             level += 1;
+
+            // TODO: this is weird, change to just offset
+            input.0 = input.1;
+            input.1 += u32::pow(2, level);
         }
 
         // eliminate extra capacity
@@ -386,105 +361,6 @@ impl MeshBBHGeneratorFastTrace {
         tree_buffer
     }
 
-    // Prefix sum over nodes in current level that need children. Allows building next level in parallel.
-    // TODO:, make parallel;
-    async fn find_node_offsets(
-        &self,
-        tree: &wgpu::Buffer,
-        range: (u32, u32),
-    ) -> (wgpu::Buffer, u32) {
-        let start_time = Date::now();
-
-        let device = self.renderer.get_device();
-        let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("create prefix sum input"),
-            contents: bytemuck::cast_slice(&[range.0, range.1, MAX_TRIS_PER_LEAF]),
-            usage: wgpu::BufferUsages::UNIFORM,
-        });
-        // zero initialized
-        let result = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("prefix sum"),
-            size: (range.1 - range.0 + 1) as u64 * std::mem::size_of::<u32>() as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-            mapped_at_creation: false,
-        });
-
-        let sum_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("sum"),
-            size: 4,
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-            mapped_at_creation: false,
-        });
-
-        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("create prefix sum input"),
-        });
-
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("create prefix sum input"),
-            layout: &self.find_node_offsets_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: params.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: tree.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: result.as_entire_binding(),
-                },
-            ],
-        });
-
-        {
-            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: Some("create prefix sum input"),
-                timestamp_writes: None,
-            });
-
-            compute_pass.set_pipeline(&self.find_node_offsets_pipeline);
-            compute_pass.set_bind_group(0, &bind_group, &[]);
-            compute_pass.dispatch_workgroups(1, 1, 1);
-        }
-
-        encoder.copy_buffer_to_buffer(&result, (range.1 - range.0) as u64 * 4, &sum_buffer, 0, 4);
-
-        let idx = self.renderer.get_queue().submit([encoder.finish()]);
-        device.poll(wgpu::Maintain::WaitForSubmissionIndex(idx));
-
-        self.stats
-            .add("find node children", Date::now() - start_time);
-
-        let start_time = Date::now();
-
-        // TODO: eliminate this
-        // this read is from VRAM is huge bottleneck
-        let (sender, receiver) = futures::channel::oneshot::channel();
-
-        let sum = {
-            let slice = sum_buffer.slice(..);
-            slice.map_async(wgpu::MapMode::Read, |result| {
-                let _ = sender.send(result);
-            });
-
-            receiver
-                .await
-                .expect("communication failed")
-                .expect("buffer reading failed");
-
-            let bytes: [u8; 4] = slice.get_mapped_range()[0..4].try_into().unwrap();
-            u32::from_le_bytes(bytes)
-        };
-
-        self.stats
-            .add("read sum from gpu", Date::now() - start_time);
-
-        (result, sum)
-    }
-
     // TODO: replace this with bottum up version
     fn build_bbs(
         &self,
@@ -625,7 +501,6 @@ impl MeshBBHGeneratorFastTrace {
         index_buffer: &wgpu::Buffer,
         triangle_bbs: &wgpu::Buffer,
         split_evaluations: &wgpu::Buffer,
-        prefix_sum: &wgpu::Buffer,
         input: (u32, u32),
     ) {
         let start_time = Date::now();
@@ -658,14 +533,10 @@ impl MeshBBHGeneratorFastTrace {
                 },
                 wgpu::BindGroupEntry {
                     binding: 3,
-                    resource: prefix_sum.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 4,
                     resource: index_buffer.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
-                    binding: 5,
+                    binding: 4,
                     resource: tree_buffer.as_entire_binding(),
                 },
             ],
