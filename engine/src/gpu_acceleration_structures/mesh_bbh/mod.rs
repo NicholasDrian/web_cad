@@ -5,6 +5,13 @@ pub mod generator_fast_build_2;
 pub mod generator_fast_trace;
 pub mod mesh_bbh_generator;
 
+pub(crate) const NODE_SIZE: u32 = 48;
+pub(crate) const SPLIT_EVALUATION_SIZE: u32 = 32;
+// Make this a param
+pub(crate) const SPLIT_CANDIDATES: u32 = 16;
+// Make this a param
+pub(crate) const MAX_TRIS_PER_LEAF: u32 = 8;
+
 pub struct MeshBBH {
     tree: wgpu::Buffer,
     indices: wgpu::Buffer,

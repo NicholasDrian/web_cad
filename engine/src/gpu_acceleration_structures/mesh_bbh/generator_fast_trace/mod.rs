@@ -15,19 +15,14 @@ use wgpu::util::DeviceExt;
 
 use crate::{
     geometry::mesh::MeshVertex,
+    gpu_acceleration_structures::mesh_bbh::NODE_SIZE,
     gpu_algorithms::{iota::iota, AlgorithmResources},
     profiling::stats::Stats,
     render::renderer::Renderer,
     utils::create_compute_pipeline,
 };
 
-use super::MeshBBH;
-
-pub(crate) const NODE_SIZE: u32 = 48;
-pub(crate) const SPLIT_EVALUATION_SIZE: u32 = 32;
-pub(crate) const SPLIT_CANDIDATES: u32 = 16;
-// Make this a member of the mesh bbh class
-pub(crate) const MAX_TRIS_PER_LEAF: u32 = 16;
+use super::{MeshBBH, MAX_TRIS_PER_LEAF, SPLIT_CANDIDATES, SPLIT_EVALUATION_SIZE};
 
 pub struct MeshBBHGeneratorFastTrace {
     renderer: Rc<Renderer>,

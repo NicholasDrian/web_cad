@@ -15,19 +15,14 @@ use wgpu::util::DeviceExt;
 
 use crate::{
     geometry::mesh::MeshVertex,
+    gpu_acceleration_structures::mesh_bbh::{MAX_TRIS_PER_LEAF, NODE_SIZE},
     gpu_algorithms::{iota::iota, AlgorithmResources},
     profiling::stats::Stats,
     render::renderer::Renderer,
     utils::create_compute_pipeline,
 };
 
-use super::MeshBBH;
-
-pub(crate) const NODE_SIZE: u32 = 48;
-pub(crate) const SPLIT_EVALUATION_SIZE: u32 = 32;
-pub(crate) const SPLIT_CANDIDATES: u32 = 4;
-// Make this a member of the mesh bbh class
-pub(crate) const MAX_TRIS_PER_LEAF: u32 = 4;
+use super::{MeshBBH, SPLIT_CANDIDATES, SPLIT_EVALUATION_SIZE};
 
 pub struct MeshBBHGeneratorFastBuild2 {
     renderer: Rc<Renderer>,
@@ -239,7 +234,10 @@ impl MeshBBHGeneratorFastBuild2 {
 
         self.stats
             .add("mesh bbh creation time", Date::now() - start_time);
-        log::info!("{:}", self.stats);
+        log::info!("{}", self.stats);
+
+        let node_count = u32::pow(2, level - 1);
+        log::info!("node_count{node_count}");
 
         MeshBBH::new(final_tree_buffer, index_buffer, input.1)
     }
