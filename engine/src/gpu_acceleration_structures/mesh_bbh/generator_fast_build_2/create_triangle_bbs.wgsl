@@ -18,7 +18,7 @@ fn triangle_surface_area(a: vec3<f32>, b: vec3<f32>, c: vec3<f32>) -> f32 {
 }
 
 // TODO: tune workgroup_size
-@compute @workgroup_size(8,8,4) 
+@compute @workgroup_size(1,1,1) 
 fn generate_bb_buffer(
   @builtin(global_invocation_id) id: vec3<u32>,
   @builtin(num_workgroups) size: vec3<u32>,

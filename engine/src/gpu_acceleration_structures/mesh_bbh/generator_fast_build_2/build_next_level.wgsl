@@ -8,6 +8,7 @@ struct Params {
   offset: u32,
   max_tris_per_leaf: u32,
   split_candidates: u32,
+  this_level_node_count: u32,
 }
 
 struct SplitEval {
@@ -43,7 +44,14 @@ fn build_next_level(
   @builtin(num_workgroups) size: vec3<u32>,
 ) {
 
-  let node = tree[id.x + params.offset];
+  let idx = 
+    id.x + 
+    id.y * size.x + 
+    id.z * size.x * size.y;
+
+  if (idx >= params.this_level_node_count) { return; }
+
+  let node = tree[idx + params.offset];
   let span = node.r - node.l;
 
 
@@ -59,7 +67,7 @@ fn build_next_level(
     var best_dir = 0u;
     var best_sah = 0.0;
     for (var i = 0u; i < params.split_candidates; i++) {
-      let split_eval = split_evaluations[id.x * params.split_candidates + i];
+      let split_eval = split_evaluations[idx * params.split_candidates + i];
       if (split_eval.quality.x > best_sah) {
         best_point = split_eval.point;
         best_sah = split_eval.quality.x;
@@ -105,8 +113,8 @@ fn build_next_level(
     }
 
   // set child pointers
-  let left_child_idx = (params.offset + id.x) * 2 + 1; 
-  tree[id.x + params.offset].left_child = left_child_idx;
+  let left_child_idx = (params.offset + idx) * 2 + 1; 
+  tree[idx + params.offset].left_child = left_child_idx;
 
 
   // write out next level

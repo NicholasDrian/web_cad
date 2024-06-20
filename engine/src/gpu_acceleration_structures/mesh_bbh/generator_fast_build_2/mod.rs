@@ -376,7 +376,7 @@ impl MeshBBHGeneratorFastBuild2 {
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("build bbs"),
-            contents: bytemuck::cast_slice(&[range.0]),
+            contents: bytemuck::cast_slice(&[range.0, range.1 - range.0]),
             usage: wgpu::BufferUsages::UNIFORM,
         });
 
@@ -488,7 +488,8 @@ impl MeshBBHGeneratorFastBuild2 {
 
             compute_pass.set_pipeline(&self.split_evaluations_pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
-            compute_pass.dispatch_workgroups(range.1 - range.0, SPLIT_CANDIDATES, 1);
+            let thread_count = f32::sqrt((range.1 - range.0) as f32).ceil() as u32;
+            compute_pass.dispatch_workgroups(thread_count, thread_count, SPLIT_CANDIDATES);
         }
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
@@ -513,7 +514,12 @@ impl MeshBBHGeneratorFastBuild2 {
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("build next level"),
-            contents: bytemuck::cast_slice(&[input.0, MAX_TRIS_PER_LEAF, SPLIT_CANDIDATES]),
+            contents: bytemuck::cast_slice(&[
+                input.0,
+                MAX_TRIS_PER_LEAF,
+                SPLIT_CANDIDATES,
+                input.1 - input.0,
+            ]),
             usage: wgpu::BufferUsages::UNIFORM,
         });
 
@@ -556,7 +562,8 @@ impl MeshBBHGeneratorFastBuild2 {
 
             compute_pass.set_pipeline(&self.build_next_level_pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
-            compute_pass.dispatch_workgroups(input.1 - input.0, 1, 1);
+            let thread_count = f32::powf((input.1 - input.0) as f32, 1.0 / 3.0).ceil() as u32;
+            compute_pass.dispatch_workgroups(thread_count, thread_count, thread_count);
         }
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);

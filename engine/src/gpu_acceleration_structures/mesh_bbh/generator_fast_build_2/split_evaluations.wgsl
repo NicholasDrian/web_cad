@@ -58,7 +58,11 @@ fn main(
   @builtin(num_workgroups) size: vec3<u32>,
 ) {
 
-  let node = tree[id.x + params.offset];
+  let node_idx = id.x + id.y * size.x;
+  let eval_idx = id.z;
+  
+
+  let node = tree[node_idx + params.offset];
   let span = node.r - node.l;
 
   if (span <= params.max_tris_per_leaf) {
@@ -66,7 +70,7 @@ fn main(
     return;
   }
 
-  let random_u32 = pcg(seed(id.x, id.y));
+  let random_u32 = pcg(seed(node_idx, eval_idx));
   let candidate = triangle_info[index_buffer[random_u32 % span + node.l]];
   let candidate_center = (candidate.min_corner + candidate.max_corner) / 2.0;
   var quality = vec3<f32>(0.0, 0.0, 0.0);
@@ -95,7 +99,7 @@ fn main(
   quality = (vec3<f32>(f32(span), f32(span), f32(span)) - abs(quality)) / f32(span);
 
 
-  split_evaluations[id.x * size.y + id.y] = SplitEval (
+  split_evaluations[node_idx * size.z + eval_idx] = SplitEval (
       candidate_center,
       quality + bb_size * 0.5,
   );

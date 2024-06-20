@@ -10,7 +10,7 @@ pub(crate) const SPLIT_EVALUATION_SIZE: u32 = 32;
 // Make this a param
 pub(crate) const SPLIT_CANDIDATES: u32 = 16;
 // Make this a param
-pub(crate) const MAX_TRIS_PER_LEAF: u32 = 8;
+pub(crate) const MAX_TRIS_PER_LEAF: u32 = 16;
 
 pub struct MeshBBH {
     tree: wgpu::Buffer,

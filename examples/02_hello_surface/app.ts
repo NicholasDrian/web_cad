@@ -14,7 +14,7 @@ function random_controls(width: number, height: number): Float32Array {
   for (let i = 0; i < height; i++) {
     for (let j = 0; j < width; j++) {
       res[3 * (i * width + j)] = j / width * size_x - size_x / 2;
-      res[3 * (i * width + j) + 1] = Math.random() * 30;
+      res[3 * (i * width + j) + 1] = Math.random() * 10;
       res[3 * (i * width + j) + 2] = i / height * size_y - size_y / 2;
     }
   }
@@ -55,8 +55,8 @@ function update_stats() {
 
 const empty = new Float32Array(0);
 // TODO: update this to load html value
-let control_count_u = 50;
-let control_count_v = 35;
+let control_count_u = 10;
+let control_count_v = 10;
 let degree_u = 2;
 let degree_v = 2;
 let total_samples = 0;
@@ -117,7 +117,6 @@ while (true) {
 
   instance.draw_scene_to_viewport(scene, viewport);
 
-  break;
   // yeild
   await new Promise(r => setTimeout(r, 100));
 
