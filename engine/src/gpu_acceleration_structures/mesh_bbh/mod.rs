@@ -1,6 +1,7 @@
 use crate::math::linear_algebra::vec3::Vec3;
 
 pub mod generator_fast_build;
+pub mod generator_fast_build_2;
 pub mod generator_fast_trace;
 pub mod mesh_bbh_generator;
 

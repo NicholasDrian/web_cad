@@ -8,12 +8,12 @@
 
 use wgpu::util::DeviceExt;
 
-use super::{MeshBBH, MeshBBHNode};
+use super::MeshBBH;
 use crate::{
     geometry::mesh::MeshVertex,
     gpu_acceleration_structures::mesh_bbh::generator_fast_trace::{MAX_TRIS_PER_LEAF, NODE_SIZE},
     gpu_algorithms::{bitonic_merge_sort::bitonic_merge_sort, iota::iota},
-    utils::{create_compute_pipeline, dump_buffer},
+    utils::create_compute_pipeline,
 };
 
 pub struct MeshBBHGeneratorFastBuild {

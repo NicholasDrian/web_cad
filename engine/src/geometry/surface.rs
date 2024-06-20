@@ -85,7 +85,7 @@ impl Surface {
         let bbh = if with_bbh {
             Some(
                 bbh_generator
-                    .generate_mesh_bbh_fast_build(
+                    .generate_mesh_bbh_fast_trace(
                         &vertex_buffer,
                         sample_count_u * sample_count_v,
                         &index_buffer,
@@ -171,6 +171,7 @@ impl Surface {
         self.bbh = if with_bbh {
             Some(
                 self.bbh_generator
+                    // TODO: which one do I build?
                     .generate_mesh_bbh_fast_trace(
                         &self.vertex_buffer,
                         sample_count_u * sample_count_v,
