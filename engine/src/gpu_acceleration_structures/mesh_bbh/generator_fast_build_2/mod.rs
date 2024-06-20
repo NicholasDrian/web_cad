@@ -322,7 +322,12 @@ impl MeshBBHGeneratorFastBuild2 {
 
             compute_pass.set_pipeline(&self.create_triangle_bbs_pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
-            compute_pass.dispatch_workgroups(triangle_count, 1, 1);
+
+            // rounding up causes out of bounds writes.
+            // I think that this is ok, out of bounds writes are ignored?
+            let thread_count = f32::powf(triangle_count as f32, 1.0 / 3.0).ceil() as u32;
+
+            compute_pass.dispatch_workgroups(thread_count, thread_count, thread_count);
         }
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);
@@ -410,7 +415,10 @@ impl MeshBBHGeneratorFastBuild2 {
 
             compute_pass.set_pipeline(&self.build_bbs_pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
-            compute_pass.dispatch_workgroups(range.1 - range.0, 1, 1);
+
+            let thread_count = f32::powf((range.1 - range.0) as f32, 1.0 / 3.0).ceil() as u32;
+
+            compute_pass.dispatch_workgroups(thread_count, thread_count, thread_count);
         }
 
         let idx = self.renderer.get_queue().submit([encoder.finish()]);

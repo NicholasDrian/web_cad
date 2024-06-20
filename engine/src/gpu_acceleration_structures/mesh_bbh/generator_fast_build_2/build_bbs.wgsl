@@ -21,12 +21,19 @@ struct Node {
   left_child: u32,
 }
 
-@compute @workgroup_size(1,1,1)
+@compute @workgroup_size(8,8,4)
 fn build_bbs(
   @builtin(global_invocation_id) id: vec3<u32>,
+  @builtin(num_workgroups) size: vec3<u32>,
 ) {
 
-  let node = tree[params.offset + id.x];
+  let idx = 
+    id.x +
+    id.y * size.x + 
+    id.z * size.x * size.y;
+    
+
+  let node = tree[params.offset + idx];
 
   var min_corner = triangle_info[index_buffer[node.l]].min_corner;
   var max_corner = triangle_info[index_buffer[node.l]].max_corner;
@@ -36,8 +43,8 @@ fn build_bbs(
     max_corner = max(max_corner, triangle_info[index_buffer[i]].max_corner);
   }
 
-  tree[params.offset + id.x].min_corner = min_corner;
-  tree[params.offset + id.x].max_corner = max_corner;
+  tree[params.offset + idx].min_corner = min_corner;
+  tree[params.offset + idx].max_corner = max_corner;
 }
 
 

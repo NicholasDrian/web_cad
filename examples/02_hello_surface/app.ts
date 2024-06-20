@@ -55,8 +55,8 @@ function update_stats() {
 
 const empty = new Float32Array(0);
 // TODO: update this to load html value
-let control_count_u = 15;
-let control_count_v = 15;
+let control_count_u = 50;
+let control_count_v = 35;
 let degree_u = 2;
 let degree_v = 2;
 let total_samples = 0;
@@ -117,6 +117,7 @@ while (true) {
 
   instance.draw_scene_to_viewport(scene, viewport);
 
+  break;
   // yeild
   await new Promise(r => setTimeout(r, 100));
 
