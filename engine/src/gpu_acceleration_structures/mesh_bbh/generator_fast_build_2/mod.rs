@@ -199,6 +199,10 @@ impl MeshBBHGeneratorFastBuild2 {
             input.1 += u32::pow(2, level);
         }
 
+        // NOTE: not sure why this is needed.
+        // TODO: think about this
+        input.1 += 1;
+
         // eliminate extra capacity
         // TODO: factor this out
         let final_tree_buffer = self
@@ -236,8 +240,7 @@ impl MeshBBHGeneratorFastBuild2 {
             .add("mesh bbh creation time", Date::now() - start_time);
         log::info!("{}", self.stats);
 
-        let node_count = u32::pow(2, level - 1);
-        log::info!("node_count{node_count}");
+        log::info!("node_count{}", input.1);
 
         MeshBBH::new(final_tree_buffer, index_buffer, input.1)
     }

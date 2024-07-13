@@ -93,7 +93,6 @@ pub fn mesh_bbh_to_lines(renderer: Rc<Renderer>, mesh_bbh: &MeshBBH) -> Lines {
 
         compute_pass.set_pipeline(&pipeline);
         compute_pass.set_bind_group(0, &bind_group, &[]);
-
         let thread_count = f32::powf(node_count as f32, 1.0 / 3.0).ceil() as u32;
 
         compute_pass.dispatch_workgroups(thread_count, thread_count, thread_count);

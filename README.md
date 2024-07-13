@@ -20,6 +20,8 @@ This repo contains a number of things:
 
 This project is in its infancy, stay tuned for updates
 
+TODO_FIRST: add model transform to debug bbh :)
+
 TODO: factor out GPU device from renderer
 TODO: nice web page
 TODO: event loop js
@@ -31,3 +33,4 @@ TODO: frustum tracing as aditional feature
 TODO: 42 warnings, lest chop this in half
 TODO: remove copy src flags used for debug
 TODO: add workgroup size
+
