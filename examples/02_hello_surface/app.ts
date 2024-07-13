@@ -101,7 +101,7 @@ document.body.appendChild(canvas);
 let viewport = instance.create_viewport(canvas);
 
 // TODO: shouldnt need to pass aspect
-viewport.set_camera_params(new Float32Array([0, 40, -60]), new Float32Array([0, 0, 0]), 1.5, 1.5, 0.001, 100000.0, CameraType.CAD);
+viewport.set_camera_params(new Float32Array([0, 40, -60]), new Float32Array([0, 0, 0]), 2.0, 1.5, 0.001, 100000.0, CameraType.CAD);
 
 async function update_surface() {
   scene.delete_geometry(surface);

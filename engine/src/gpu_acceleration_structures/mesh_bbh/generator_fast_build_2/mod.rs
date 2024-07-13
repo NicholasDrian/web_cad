@@ -373,6 +373,7 @@ impl MeshBBHGeneratorFastBuild2 {
         range: (u32, u32),
     ) {
         let start_time = Date::now();
+
         let device = self.renderer.get_device();
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("build bbs"),

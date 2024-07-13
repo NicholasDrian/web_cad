@@ -15,7 +15,7 @@ struct Node {
   left_child: u32,
 }
 
-@compute @workgroup_size(8,8,4)
+@compute @workgroup_size(1,1,1)
 fn main(
   @builtin(global_invocation_id) id: vec3<u32>,
   @builtin(num_workgroups) size: vec3<u32>
@@ -25,6 +25,7 @@ fn main(
       id.x + 
       id.y * size.x + 
       id.z * size.x * size.y;
+
 
     let node = tree[idx];
 
