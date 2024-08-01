@@ -1,4 +1,31 @@
+RN:
+
+instance is not thread safe. 
+  - place instance behind mutex (arc<mutex<Instance>>)
+  - instance is only used to create renderers and viewports
+
+devices and queues are thread safe
+  - those can stay in instance
+
+solution
+  - make one global engine instance, pretty much a wrapper around wgpu::Instance
+    - global instance should be protected with arc<mutex<Instance>>
+  - make app class
+    - should contain queue, and device, 
+    - should be automatically send + sync
+  - make renderer and scene belong to app
+    - these should have a reference to their parent app to access device and queue (lifetimes are tricky :/ )
+  - tada  
+
+Plan of execution: 
+  - break everything
+  - fix everything
+
+
+
+
 This repo contains a number of things:
+
 - A CAD library/engine for web apps
   - Written in Rust, compiled to WASM, using WebGPU, targeting modern browsers.
   - Designed to create and keep all data on the GPU.
@@ -20,8 +47,8 @@ This repo contains a number of things:
 
 This project is in its infancy, stay tuned for updates
 
+BUG: writing over data that we dont own ( due to worgroups size not being perfect cube)
 TODO_FIRST: add model transform to debug bbh :)
-
 TODO: factor out GPU device from renderer
 TODO: nice web page
 TODO: event loop js

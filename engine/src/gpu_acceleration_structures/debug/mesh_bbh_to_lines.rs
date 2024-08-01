@@ -108,4 +108,3 @@ pub fn mesh_bbh_to_lines(renderer: Rc<Renderer>, mesh_bbh: &MeshBBH) -> Lines {
         node_count * INDICES_PER_BB,
     )
 }
-

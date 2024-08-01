@@ -5,8 +5,9 @@ const webpack = require('webpack');
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
 module.exports = env => {
+
   return {
-    entry: [`./examples/${env.name}/app.${env.extension}`],
+    entry: [`./${env.name}/app.${env.extension}`],
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'app.js',
@@ -33,7 +34,7 @@ module.exports = env => {
 
     plugins: [
       new HtmlWebpackPlugin({
-        template: `./examples/${env.name}/index.html`
+        template: `./${env.name}/index.html`
       }),
       new WasmPackPlugin({
         crateDirectory: path.resolve(__dirname, "./engine/")

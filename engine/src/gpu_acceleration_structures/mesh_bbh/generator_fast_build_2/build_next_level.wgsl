@@ -49,7 +49,7 @@ fn build_next_level(
     id.y * size.x + 
     id.z * size.x * size.y;
 
-TODO: add this check elsewhere in this module
+  //TODO: add this check elsewhere in this module
   if (idx >= params.this_level_node_count) { return; }
 
   let node = tree[idx + params.offset];
