@@ -1,5 +1,4 @@
-<h1>web_cad</h1>
-<h2>A Light Weight Geometry Engine For Web Apps</h2>
+<h1><b><i>web_cad</i></b>: A Light Weight Geometry Engine For Web Apps</h2>
 
 <br>
 <h1>What is It?</h1>
