@@ -6,11 +6,11 @@ web_cad is a geometry engine built on top of WebGPU compute shaders. It is desig
 
 The engine is written in Rust and WGSL, compiled to WASM and SPIR-V, and exposes a js API.
 
-Done:
+<h4>Done:</h4>
 - Surface Sampler
 - Curve Sampler
 - Acceleration Structures
-Coming:
+<h4>Coming:</h4>
 - Ray Tracing
 - Frustum Tracing
 - Reparameterizing algos
