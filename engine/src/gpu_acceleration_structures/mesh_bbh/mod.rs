@@ -49,6 +49,7 @@ impl MeshBBH {
             node_count,
         }
     }
+
     pub fn get_tree(&self) -> &wgpu::Buffer {
         &self.tree
     }

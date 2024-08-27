@@ -147,6 +147,7 @@ impl MeshBBHGeneratorFastBuild2 {
             stats: Stats::new(),
         }
     }
+
     pub fn generate_mesh_bbh(
         &self,
         vertex_buffer: &wgpu::Buffer,

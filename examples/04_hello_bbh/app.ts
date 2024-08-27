@@ -55,8 +55,8 @@ function update_stats() {
 
 const empty = new Float32Array(0);
 // TODO: update this to load html value
-let control_count_u = 10;
-let control_count_v = 10;
+let control_count_u = 25;
+let control_count_v = 25;
 let degree_u = 2;
 let degree_v = 2;
 let total_samples = 0;
