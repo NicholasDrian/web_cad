@@ -64,34 +64,32 @@ let samples_this_second = 0;
 let samples_this_second_queue = new Queue<[number, number]>();
 
 let surface = await scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty, true);
+let debug_lines = await scene.add_surface_bbh_debug_lines(surface);
 
 let control_count_u_slider = <HTMLInputElement>document.getElementById("control count u");
 control_count_u_slider.addEventListener("change", async (_) => {
   control_count_u = Number(control_count_u_slider.value)
-  scene.delete_geometry(surface);
-  surface = await scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty, true);
+  console.log("here");
+  await update_surface();
 });
 
 let control_count_v_slider = <HTMLInputElement>document.getElementById("control count v");
 control_count_v_slider.addEventListener("change", async (_) => {
   control_count_v = Number(control_count_v_slider.value)
-  scene.delete_geometry(surface);
-  surface = await scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty, true);
+  await update_surface();
 });
 
 // TODO: prevent invalid degree
 let degree_u_slider = <HTMLInputElement>document.getElementById("degree u");
 degree_u_slider.addEventListener("change", async (_) => {
   degree_u = Number(degree_u_slider.value)
-  scene.delete_geometry(surface);
-  surface = await scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty, true);
+  await update_surface();
 });
 
 let degree_v_slider = <HTMLInputElement>document.getElementById("degree v");
 degree_v_slider.addEventListener("change", async (_) => {
   degree_v = Number(degree_v_slider.value)
-  scene.delete_geometry(surface);
-  surface = await scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty, true);
+  await update_surface();
 });
 
 
@@ -106,7 +104,10 @@ let viewport = instance.create_viewport(canvas);
 viewport.set_camera_params(new Float32Array([0, 40, -60]), new Float32Array([0, 0, 0]), 2.0, 1.5, 0.001, 100000.0, CameraType.CAD);
 
 async function update_surface() {
-  scene.update_surface_params(surface, degree_u, degree_v, random_controls(control_count_u, control_count_v), empty, empty, empty, false);
+  scene.delete_geometry(surface);
+  scene.delete_geometry(debug_lines);
+  surface = await scene.add_surface(degree_u, degree_v, random_controls(control_count_u, control_count_v), control_count_u, control_count_v, empty, empty, empty, true);
+  debug_lines = await scene.add_surface_bbh_debug_lines(surface);
 }
 
 while (true) {
@@ -117,7 +118,7 @@ while (true) {
   instance.draw_scene_to_viewport(scene, viewport);
 
   // yeild
-  await new Promise(r => setTimeout(r, 100));
+  await new Promise(r => setTimeout(r, 1000));
 
 }
 

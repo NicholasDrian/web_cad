@@ -1,4 +1,4 @@
-RN:
+<h2 style="margin:0px; padding:0px;"> Click <a href="https://nicholasdrian.github.io/web_cad/examples/02_hello_surface/index.html"> <u>HERE</u> </a> to run Web NURBS </h2>
 
 instance is not thread safe. 
   - place instance behind mutex (arc<mutex<Instance>>)
