@@ -2,7 +2,9 @@
 
 <br>
 <h2>What is It?</h2>
-web_cad is a geometry engine built on top of WebGPU compute shaders. It is designed to be blazingly fast, light weight, and reliable. Many of the core features are working, but there is still much to do.
+web_cad is a geometry engine built on top of WebGPU compute shaders. It is designed to be blazingly fast, light as a feather, and reliable as duct tape. Many of the core features are working, but there is still much to do.
+
+The engine is written in Rust and WGSL, compiled to WASM and SPIR-V, and exposes a js API.
 
 <h2>Examples:</h2>
 <h4 style="margin:0px; padding:0px;"> Click <a href="https://nicholasdrian.github.io/web_cad/examples/01_hello_cad/dist/index.html"> <u>HERE</u> </a> to run hello cad</h4>
