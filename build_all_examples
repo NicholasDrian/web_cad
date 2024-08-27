@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# change this to be a for loop over examples
+#
+./build ./examples/01_hello_cad/ js
+./build ./examples/02_hello_surface/ ts
+./build ./examples/03_hello_camera/ ts
+./build ./examples/04_hello_bbh/ ts

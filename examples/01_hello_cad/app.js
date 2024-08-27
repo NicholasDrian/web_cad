@@ -31,9 +31,7 @@ const surface_controls = [
 function add_label(text) {
   let label = document.createElement("h1");
   label.innerHTML = text;
-  console.log(label);
   document.body.appendChild(label);
-  console.log("here");
 }
 
 add_label("mesh:");
