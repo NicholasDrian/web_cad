@@ -28,31 +28,43 @@ const surface_controls = [
 ]
 
 
+function add_label(text) {
+  let label = document.createElement("h1");
+  label.innerHTML = text;
+  console.log(label);
+  document.body.appendChild(label);
+  console.log("here");
+}
 
+add_label("mesh:");
 let mesh_scene = instance.create_scene();
 let mesh = mesh_scene.add_mesh(vertices, normals, indices);
 let canvas1 = document.createElement("canvas");
 document.body.appendChild(canvas1);
 let mesh_viewport = instance.create_viewport(canvas1);
 
+add_label("polyline:");
 let polyline_scene = instance.create_scene();
 let poly = polyline_scene.add_polyline(vertices);
 let canvas2 = document.createElement("canvas");
 document.body.appendChild(canvas2);
 let polyline_viewport = instance.create_viewport(canvas2);
 
+add_label("curve:");
 let curve_scene = instance.create_scene();
 let curve = curve_scene.add_curve(2, vertices, [], []);
 let canvas3 = document.createElement("canvas");
 document.body.appendChild(canvas3);
 let curve_viewport = instance.create_viewport(canvas3);
 
+add_label("surface:");
 let surface_scene = instance.create_scene();
-let surface = await surface_scene.add_surface(2, 2, surface_controls, 3, 3, [], [], []);
+let surface = await surface_scene.add_surface(2, 2, surface_controls, 3, 3, [], [], [], false);
 let canvas4 = document.createElement("canvas");
 document.body.appendChild(canvas4);
 let surface_viewport = instance.create_viewport(canvas4);
 
+add_label("lines:");
 let lines_scene = instance.create_scene();
 let lines = lines_scene.add_lines(vertices, new Uint32Array([0, 1, 2, 3, 4, 0, 0, 2, 1, 3, 2, 4, 3, 0]));
 let canvas5 = document.createElement("canvas");
