@@ -9,7 +9,7 @@ module.exports = env => {
   return {
     entry: [`./${env.name}/app.${env.extension}`],
     output: {
-      path: path.resolve(__dirname, 'dist'),
+      path: path.resolve(__dirname, `./${env.name}/dist`),
       filename: 'app.js',
     },
     module: {

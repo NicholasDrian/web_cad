@@ -1,0 +1,16 @@
+
+#!/bin/bash
+
+if [ -z "$1" ] | [ -z "$2" ]; then
+	echo "
+
+  [ERROR]: missing arg, please specify what to run.
+  Some examples:
+      $./run examples/01_hello_cad js
+      $./run examples/02_hello_surface ts
+      $./run web_cad ts
+    "
+	exit 1
+fi
+
+npm run build -- --env="name=$1" --env="extension=$2"
