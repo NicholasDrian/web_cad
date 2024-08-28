@@ -33,6 +33,7 @@ pub struct InstanceInternal {
     surface_sampler: Rc<SurfaceSampler>,
     mesh_bbh_generator: Rc<MeshBBHGenerator>,
 }
+unsafe impl Send for InstanceInternal {}
 
 impl InstanceInternal {
     pub async fn create() -> Handle {

@@ -8,7 +8,9 @@ target = "wasm32-unknown-unknown"
 
 
 [dependencies]
-wgpu = {version = "0.20", features = ["fragile-send-sync-non-atomic-wasm"] }
+wgpu = {version = "0.20", features = [
+  #  "fragile-send-sync-non-atomic-wasm"
+] }
 web-sys = { version = "0.3", features = [
   "Navigator",
   "Gpu",
