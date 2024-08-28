@@ -2,9 +2,19 @@
 
 <br>
 <h2>What is It?</h2>
-web_cad is a geometry engine built on top of WebGPU compute shaders. It is designed to be blazingly fast, light as a feather, and reliable as duct tape. Many of the core features are working, but there is still much to do.
 
+<div>
+web_cad is a geometry engine built on top of WebGPU compute shaders. It is designed to be blazingly fast, light as a feather, and reliable as duct tape. Many of the core features are working, but there is still much to do.
+</div>
+
+<div>
 The engine is written in Rust and WGSL, compiled to WASM and SPIR-V, and exposes a js API.
+</div>
+
+<div>
+This engines goal is to port all heavy compute to the GPU, and keep all explicit geometry in VRAM. This frees up the RAM and leaves the CPU unblocked, as well as eliminating streaming between RAM and VRAM. 
+</div>
+
 
 <h4>Done:</h4>
 - Surface Sampler
