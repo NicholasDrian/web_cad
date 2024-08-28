@@ -16,6 +16,7 @@ pub struct Surface {
     degree_u: u32,
     degree_v: u32,
     /// Leave empty for default values
+    // TODO: make this optional
     weights: Vec<f32>,
     /// Leave empty for default values
     knots_u: Vec<f32>,
