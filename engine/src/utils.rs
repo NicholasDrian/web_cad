@@ -62,6 +62,7 @@ pub(crate) fn create_compute_pipeline(
         module: &module,
         entry_point,
         compilation_options: wgpu::PipelineCompilationOptions::default(),
+        cache: None,
     })
 }
 

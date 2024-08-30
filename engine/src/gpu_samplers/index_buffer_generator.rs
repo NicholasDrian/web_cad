@@ -60,6 +60,7 @@ impl IndexBufferGenerator {
             module: &shader,
             entry_point: "main",
             compilation_options: wgpu::PipelineCompilationOptions::default(),
+            cache: None
         });
         Self {
             pipeline,

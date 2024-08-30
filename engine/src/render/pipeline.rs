@@ -30,6 +30,7 @@ pub fn create_render_pipeline(
         });
 
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        cache: None,
         label: Some(match primitive {
             PipelinePrimitive::Mesh => "Triangle Pipeline",
             PipelinePrimitive::Lines => "Lines Pipeline",
