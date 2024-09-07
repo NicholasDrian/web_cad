@@ -37,3 +37,4 @@ This engines goal is to port all heavy compute to the GPU, and keep all explicit
 
 <h4 style="margin:0px; padding:0px;"> Click <a href="https://nicholasdrian.github.io/web_cad/docs/working_notes.md"> <u>HERE</u> </a> to view dev notes</h4>
 
+Please Leave a ⭐
